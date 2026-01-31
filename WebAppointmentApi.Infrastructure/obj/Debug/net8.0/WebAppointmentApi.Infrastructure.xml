@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>WebAppointmentApi.Infrastructure</name>
+    </assembly>
+    <members>
+        <member name="T:WebAppointmentApi.Infrastructure.Data.Migrations.InitialCreate">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.InitialCreate.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.InitialCreate.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.InitialCreate.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:WebAppointmentApi.Infrastructure.Data.Migrations.AddPatientSoftDelete">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddPatientSoftDelete.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddPatientSoftDelete.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddPatientSoftDelete.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:WebAppointmentApi.Infrastructure.Data.Migrations.AddAppointmentLogs">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddAppointmentLogs.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddAppointmentLogs.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddAppointmentLogs.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

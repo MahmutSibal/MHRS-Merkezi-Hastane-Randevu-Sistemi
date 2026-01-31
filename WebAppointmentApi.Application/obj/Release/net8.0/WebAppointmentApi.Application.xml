@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>WebAppointmentApi.Application</name>
+    </assembly>
+    <members>
+        <member name="M:WebAppointmentApi.Application.Auth.Abstractions.IAuthService.RegisterAsync(WebAppointmentApi.Application.Patients.Dtos.CreatePatientRequest,System.Threading.CancellationToken)">
+            <summary>
+            Registers a new patient user and returns tokens (login-like response).
+            </summary>
+        </member>
+        <member name="T:WebAppointmentApi.Application.Auth.Services.AuthService">
+            <summary>
+            Authentication and token issuance service.
+            </summary>
+        </member>
+    </members>
+</doc>
