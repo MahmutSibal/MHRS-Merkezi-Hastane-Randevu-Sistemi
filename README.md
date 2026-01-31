@@ -1,36 +1,213 @@
-# MHRS (Merkezi Hastane Randevu Sistemi)
 
-Bu proje, Merkezi Hastane Randevu Sistemi'nin tam kapsamlı bir uygulamasıdır. Backend ve Frontend olmak üzere iki ana bölümden oluşur.
+---
 
-**Geliştirici:** Mahmut Sibal  
-**E-posta:** mahmutsibal9@gmail.com
+# MHRS – Merkezi Hastane Randevu Sistemi
 
-## Proje Yapısı
+Bu proje, **Türkiye’de kullanılan MHRS sistemini referans alarak** geliştirilmiş, uçtan uca çalışan bir **hastane randevu ve yönetim platformudur**.
+Backend ve Frontend katmanları **tamamen ayrık (decoupled)** olup modern web mimarisi prensiplerine göre tasarlanmıştır.
 
-### 1. [Backend (API)](./WebAppointmentApi/README.md)
-- **Konum:** `WebAppointmentApi`
-- **Teknoloji:** .NET 8, Web API
-- Veritabanı işlemleri, kimlik doğrulama (Auth) ve iş mantığı burada çalışır.
+**Amaç:**
+Hastalar, doktorlar ve yöneticiler için randevu süreçlerini dijitalleştirmek, sağlık hizmetlerine erişimi kolaylaştırmak ve yönetilebilir bir sistem sunmak.
 
-### 2. [Frontend (Arayüz)](./WebAppointment.Frontend/README.md)
-- **Konum:** `WebAppointment.Frontend`
-- **Teknoloji:** Next.js 16, React, Tailwind CSS
-- Kullanıcıların randevu alabildiği ve doktorların işlem yapabildiği web arayüzüdür.
+**Geliştirici:** Mahmut Sibal
+**E-posta:** [mahmutsibal9@gmail.com](mailto:mahmutsibal9@gmail.com)
 
-## Hızlı Başlangıç
+---
 
-Projeyi ayağa kaldırmak için her iki projeyi de ayrı terminallerde başlatmanız gerekir.
+## 🧩 Sistem Mimarisi
 
-1. **Backend'i Başlatın:**
-   ```bash
-   cd WebAppointmentApi
-   dotnet run --project WebAppointmentApi.WebApi
-   ```
+Proje **Client–Server** mimarisine sahiptir.
 
-2. **Frontend'i Başlatın:**
-   ```bash
-   cd WebAppointment.Frontend
-   npm run dev
-   ```
+```
+[ Next.js Frontend ]  --->  [ .NET 8 Web API ]  --->  [ SQL Server ]
+         |
+         └── JWT ile kimlik doğrulama
+```
 
-Her iki servis çalıştığında, tarayıcınızdan Frontend adresine (genellikle `http://localhost:3000`) giderek uygulamayı kullanabilirsiniz.
+* Frontend yalnızca API ile haberleşir
+* Backend tüm iş kurallarını ve güvenliği yönetir
+* Veritabanı erişimi yalnızca Backend üzerinden yapılır
+
+---
+
+## 📁 Proje Yapısı
+
+```
+MHRS/
+│
+├── WebAppointmentApi/
+│   ├── WebAppointmentApi.WebApi
+│   ├── WebAppointmentApi.Application
+│   ├── WebAppointmentApi.Domain
+│   └── WebAppointmentApi.Infrastructure
+│
+└── WebAppointment.Frontend/
+    ├── app/
+    ├── components/
+    ├── services/
+    └── styles/
+```
+
+---
+
+## 🔧 Backend (WebAppointmentApi)
+
+**Teknolojiler**
+
+* .NET 8
+* ASP.NET Core Web API
+* Entity Framework Core
+* SQL Server
+* JWT Authentication
+* Clean Architecture yaklaşımı
+
+### Katmanlar
+
+#### 1. Domain
+
+* Entity’ler (User, Doctor, Patient, Appointment vb.)
+* Enum ve temel kurallar
+* Hiçbir framework bağımlılığı yoktur
+
+#### 2. Application
+
+* Business logic
+* DTO’lar
+* Service ve Interface tanımları
+* Validation kuralları
+
+#### 3. Infrastructure
+
+* EF Core DbContext
+* Repository implementasyonları
+* Database migration’lar
+
+#### 4. WebApi
+
+* Controller’lar
+* Auth & Authorization
+* Middleware’ler
+* Swagger yapılandırması
+
+---
+
+### 🔐 Kimlik Doğrulama & Yetkilendirme
+
+* JWT (JSON Web Token) kullanılır
+* Rol bazlı erişim:
+
+  * **Admin**
+  * **Doctor**
+  * **Patient**
+
+Örnek:
+
+```http
+Authorization: Bearer <token>
+```
+
+---
+
+### 📌 Backend’i Çalıştırma
+
+```bash
+cd WebAppointmentApi
+dotnet restore
+dotnet ef database update
+dotnet run --project WebAppointmentApi.WebApi
+```
+
+Varsayılan adres:
+
+```
+https://localhost:5001
+```
+
+Swagger:
+
+```
+https://localhost:5001/swagger
+```
+
+---
+
+## 🎨 Frontend (WebAppointment.Frontend)
+
+**Teknolojiler**
+
+* Next.js 16 (App Router)
+* React
+* Tailwind CSS
+* Axios
+* JWT tabanlı Auth
+
+---
+
+### Frontend Yapısı
+
+#### app/
+
+* Route bazlı sayfalar
+* Server & Client Components
+
+#### components/
+
+* Tekrar kullanılabilir UI bileşenleri
+* Formlar, modal’lar, tablolar
+
+#### services/
+
+* API çağrıları
+* Axios instance
+* Token yönetimi
+
+---
+
+### 🧑‍⚕️ Kullanıcı Rollerine Göre Özellikler
+
+#### Hasta
+
+* Kayıt / giriş
+* Doktor ve branş arama
+* Randevu alma / iptal
+* Randevu geçmişi
+
+#### Doktor
+
+* Günlük randevuları görüntüleme
+* Uygunluk saatleri
+* Hasta listesi
+
+#### Admin
+
+* Doktor / branş yönetimi
+* Kullanıcı yönetimi
+* Sistem kontrolü
+
+---
+
+### 📌 Frontend’i Çalıştırma
+
+```bash
+cd WebAppointment.Frontend
+npm install
+npm run dev
+```
+
+Varsayılan adres:
+
+```
+http://localhost:3000
+```
+
+---
+
+## ⚙️ Ortam Değişkenleri
+
+### Frontend (.env.local)
+
+```env
+NEXT_PUBLIC_API_URL=https://localhost:5001
+```
+
+---
