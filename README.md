@@ -1,4 +1,4 @@
-# WebAppointment – Hastane Randevu Sistemi
+# MHRS – Merkezi Hastane Randevu Sistemi
 
 Modern, ölçeklenebilir ve güvenli bir hastane randevu yönetim platformu. Çok rollü erişim (Hasta, Doktor, Hastane Yöneticisi, Admin), JWT tabanlı kimlik doğrulama, güçlü kurallar ve sezgisel bir Next.js arayüzü ile gelir.
 
