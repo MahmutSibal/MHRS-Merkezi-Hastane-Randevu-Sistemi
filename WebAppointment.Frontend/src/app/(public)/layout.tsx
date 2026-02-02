@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PublicNav } from "@/components/layout/PublicNav";
+import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -23,6 +24,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </div>
         </div>
       </footer>
+
+      {/* Köşede açılır Asistan */}
+      <AssistantWidget />
     </div>
   );
 }

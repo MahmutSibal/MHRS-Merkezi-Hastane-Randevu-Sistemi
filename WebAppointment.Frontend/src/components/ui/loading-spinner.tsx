@@ -16,34 +16,29 @@ export function LoadingSpinner({ size = "md", fullscreen = false, message }: Loa
   };
 
   const spinner = (
-    <div className={cn("animate-spin", sizeClasses[size])}>
-      <svg
-        className="h-full w-full text-blue-600"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="4"
-        ></circle>
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        ></path>
-      </svg>
+    <div className={cn("relative", sizeClasses[size])}>
+      {/* Track */}
+      <span className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-700" aria-hidden="true" />
+      {/* Animated ring */}
+      <span
+        className="absolute inset-0 rounded-full animate-spin"
+        style={{
+          background: "conic-gradient(var(--brand-primary), transparent 40%)",
+          WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 6px), black 0)",
+          mask: "radial-gradient(farthest-side, transparent calc(100% - 6px), black 0)",
+        }}
+        aria-hidden="true"
+      />
+      {/* Center dot */}
+      <span className="absolute left-1/2 top-1/2 size-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--brand-primary)]" aria-hidden="true" />
+      <span className="sr-only">Yükleniyor</span>
     </div>
   );
 
   if (fullscreen) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur z-50">
-        <div className="flex flex-col items-center gap-4 rounded-xl bg-white p-8 shadow-xl dark:bg-slate-800">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur">
+        <div className="flex flex-col items-center gap-4 rounded-xl bg-white/90 p-8 shadow-xl dark:bg-slate-800/90">
           {spinner}
           {message && (
             <p className="text-sm font-medium text-slate-600 dark:text-slate-300">{message}</p>

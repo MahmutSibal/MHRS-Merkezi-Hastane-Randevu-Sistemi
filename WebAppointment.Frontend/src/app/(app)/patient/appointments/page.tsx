@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/badge";
 import { useToast } from "@/components/session/ToastProvider";
 import { apiJson } from "@/lib/api-client";
 
@@ -61,20 +62,26 @@ export default function PatientAppointmentsPage() {
       {isLoading ? <Card><p className="text-sm text-zinc-600">Yükleniyor…</p></Card> : null}
 
       <div className="grid gap-3">
-        {items.map((a) => (
-          <Card key={a.id}>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="text-sm font-medium text-zinc-900">{a.departmentName} • {a.doctorName}</div>
-                <div className="mt-1 text-sm text-zinc-600">{new Date(a.appointmentDateUtc).toLocaleString("tr-TR")}</div>
-                <div className="mt-1 text-xs text-zinc-600">Durum: {a.status}</div>
+        {items.map((a) => {
+          const status = (a.status || "").toLowerCase();
+          const canCancel = status.includes("pending") || status.includes("approved");
+          return (
+            <Card key={a.id}>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-medium text-zinc-900 dark:text-slate-100">{a.departmentName} • {a.doctorName}</div>
+                    <StatusBadge status={a.status} />
+                  </div>
+                  <div className="mt-1 text-sm text-zinc-600 dark:text-slate-400">{new Date(a.appointmentDateUtc).toLocaleString("tr-TR")}</div>
+                </div>
+                <Button variant="danger" onClick={() => cancel(a.id)} disabled={!canCancel}>
+                  İptal
+                </Button>
               </div>
-              <Button variant="danger" onClick={() => cancel(a.id)}>
-                İptal
-              </Button>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

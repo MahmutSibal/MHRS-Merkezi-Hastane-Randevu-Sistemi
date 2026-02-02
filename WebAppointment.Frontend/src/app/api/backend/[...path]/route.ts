@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { getBackendOrigin } from "@/lib/backend";
 
+// Ensure Node.js runtime to safely access process.env
+export const runtime = "nodejs";
+
 const ACCESS_COOKIE = "mhrs_at";
 const REFRESH_COOKIE = "mhrs_rt";
 
@@ -33,6 +36,12 @@ async function proxy(req: NextRequest, params: RouteParams) {
   headers.delete("host");
   headers.delete("cookie");
   if (accessToken) headers.set("authorization", `Bearer ${accessToken}`);
+
+  // Multi-tenant: forward explicit tenant id if provided via env
+  const envTenant = process.env.TENANT_ID ?? process.env.NEXT_PUBLIC_TENANT_ID;
+  if (envTenant && !headers.has("X-Tenant-Id")) {
+    headers.set("X-Tenant-Id", String(envTenant));
+  }
 
   const init: RequestInit = {
     method: req.method,

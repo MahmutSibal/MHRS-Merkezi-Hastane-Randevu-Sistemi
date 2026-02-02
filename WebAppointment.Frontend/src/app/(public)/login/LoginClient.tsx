@@ -54,6 +54,7 @@ export default function LoginClient() {
       }
 
       if (data.role === "Admin") router.replace("/admin");
+      else if (data.role === "HospitalAdmin") router.replace("/hospital/departments");
       else if (data.role === "Doctor") router.replace("/doctor");
       else router.replace("/patient");
     } catch (err) {

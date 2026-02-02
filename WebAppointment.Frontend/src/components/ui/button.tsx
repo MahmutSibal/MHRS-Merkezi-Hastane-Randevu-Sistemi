@@ -29,12 +29,12 @@ export function Button({
 
   const styles =
     variant === "primary"
-      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-lg hover:from-blue-700 hover:to-blue-800 active:scale-95"
+      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-lg hover:from-blue-700 hover:to-blue-800 active:scale-95 focus-visible:shadow-lg"
       : variant === "danger"
-        ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md hover:shadow-lg hover:from-red-600 hover:to-red-700 active:scale-95"
+        ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md hover:shadow-lg hover:from-red-600 hover:to-red-700 active:scale-95 focus-visible:shadow-lg"
         : variant === "outline"
-        ? "border-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 active:scale-95"
-        : "border border-slate-300 bg-white text-slate-900 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 active:scale-95";
+        ? "border-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 active:scale-95 focus-visible:shadow-lg"
+        : "border border-slate-300 bg-white/90 text-slate-900 shadow-sm backdrop-blur hover:bg-white dark:border-slate-600 dark:bg-slate-800/90 dark:text-slate-100 dark:hover:bg-slate-700 active:scale-95 focus-visible:shadow-lg";
 
   return (
     <button

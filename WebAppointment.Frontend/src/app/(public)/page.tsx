@@ -1,43 +1,12 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import Hero from "@/components/layout/Hero";
 
 export default function HomePage() {
   return (
     <div className="space-y-12">
-      <section className="space-y-8">
-        <div className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-          <span className="flex h-2 w-2 rounded-full bg-blue-600"></span>
-          <span>MHRS - Merkezi Hastane Randevu Sistemi</span>
-        </div>
-
-        <div className="space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
-            Sağlık Hizmetlerini
-            <span className="block bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text py-2 text-transparent">
-              Kolayca Yönetiniz
-            </span>
-          </h1>
-
-          <p className="max-w-2xl text-lg leading-8 text-slate-600 dark:text-slate-300">
-            Hasta, doktor ve yönetici panelleriyle; randevu oluşturma, onaylama ve raporlama işlemlerinin tümü tek bir sistemde. Modern, hızlı ve güvenli.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Link
-            className="inline-flex h-12 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-6 text-base font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:from-blue-700 hover:to-blue-800 active:scale-95 sm:h-11 sm:text-sm"
-            href="/login"
-          >
-            Giriş Yap
-          </Link>
-          <Link
-            className="inline-flex h-12 items-center justify-center rounded-lg border-2 border-slate-300 bg-white px-6 text-base font-semibold text-slate-900 shadow-md transition-all hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 active:scale-95 sm:h-11 sm:text-sm"
-            href="/register"
-          >
-            Hasta Kaydı Oluştur
-          </Link>
-        </div>
-      </section>
+      {/* Hero section with provided image */}
+      <Hero />
 
       <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <Card 

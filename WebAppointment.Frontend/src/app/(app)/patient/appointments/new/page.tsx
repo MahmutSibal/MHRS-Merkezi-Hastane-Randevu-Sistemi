@@ -10,6 +10,7 @@ import { TimePicker } from "@/components/ui/time-picker";
 import { useToast } from "@/components/session/ToastProvider";
 import { apiJson } from "@/lib/api-client";
 
+type HospitalDto = { id: number; name: string; address?: string | null; latitude?: number | null; longitude?: number | null };
 type DepartmentDto = { id: number; name: string };
 type DoctorDto = { id: number; name: string; departmentId: number; departmentName: string; isActive: boolean; userId: string | null };
 
@@ -22,9 +23,11 @@ function withTurkeyOffset(date: string, time: string) {
 export default function NewAppointmentPage() {
   const router = useRouter();
   const toast = useToast();
+  const [hospitals, setHospitals] = useState<HospitalDto[]>([]);
   const [departments, setDepartments] = useState<DepartmentDto[]>([]);
   const [doctors, setDoctors] = useState<DoctorDto[]>([]);
 
+  const [hospitalId, setHospitalId] = useState<number>(0);
   const [departmentId, setDepartmentId] = useState<number>(0);
   const [doctorId, setDoctorId] = useState<number>(0);
   const [date, setDate] = useState<string>("");
@@ -39,17 +42,47 @@ export default function NewAppointmentPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const deps = await apiJson<DepartmentDto[]>("/backend/catalog/departments");
-        setDepartments(deps);
-        const firstId = deps[0]?.id ?? 0;
-        setDepartmentId(firstId);
+        // Try geolocation for nearest hospitals
+        let nearest: HospitalDto[] | null = null;
+        if (typeof navigator !== "undefined" && navigator.geolocation) {
+          const pos = await new Promise<GeolocationPosition | null>((resolve) => {
+            navigator.geolocation.getCurrentPosition(
+              (p) => resolve(p),
+              () => resolve(null),
+              { enableHighAccuracy: true, timeout: 5000 }
+            );
+          });
+          if (pos) {
+            nearest = await apiJson<HospitalDto[]>(`/backend/catalog/hospitals?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&take=10`);
+          }
+        }
+
+        const hosps = nearest ?? await apiJson<HospitalDto[]>("/backend/catalog/hospitals");
+        setHospitals(hosps);
+        const firstHospitalId = hosps[0]?.id ?? 0;
+        setHospitalId(firstHospitalId);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Yükleme başarısız.");
+        setError(e instanceof Error ? e.message : "Hastaneler yüklenemedi.");
       } finally {
         setIsLoading(false);
       }
     })();
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      if (!hospitalId) { setDepartments([]); setDepartmentId(0); return; }
+      setError(null);
+      try {
+        const deps = await apiJson<DepartmentDto[]>(`/backend/catalog/departments?hospitalId=${hospitalId}`);
+        setDepartments(deps);
+        const firstId = deps[0]?.id ?? 0;
+        setDepartmentId(firstId);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Bölümler yüklenemedi.");
+      }
+    })();
+  }, [hospitalId]);
 
   useEffect(() => {
     (async () => {
@@ -89,7 +122,7 @@ export default function NewAppointmentPage() {
 
   return (
     <div className="grid gap-6">
-      <PageHeader title="Yeni Randevu" subtitle="Bölüm ve doktor seçip tarih/saati belirleyin." />
+      <PageHeader title="Yeni Randevu" subtitle="Önce hastane, sonra bölüm ve doktor seçin." />
 
       {error ? (
         <Card>
@@ -104,6 +137,21 @@ export default function NewAppointmentPage() {
       <Card>
         <div className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Hastane</label>
+              <select
+                className="w-full rounded-lg border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-900"
+                value={hospitalId}
+                onChange={(e) => setHospitalId(Number(e.target.value))}
+              >
+                <option value={0}>Hastane seçin...</option>
+                {hospitals.map((h) => (
+                  <option key={h.id} value={h.id}>
+                    {h.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Bölüm</label>
               <select
@@ -163,7 +211,7 @@ export default function NewAppointmentPage() {
           <Button 
             onClick={submit} 
             isLoading={isSubmitting} 
-            disabled={!doctorId || !date || !time}
+            disabled={!hospitalId || !departmentId || !doctorId || !date || !time}
             className="w-full"
           >
             Randevu Al

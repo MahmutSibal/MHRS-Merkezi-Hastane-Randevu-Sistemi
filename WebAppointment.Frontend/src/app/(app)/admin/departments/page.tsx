@@ -9,6 +9,7 @@ import { useToast } from "@/components/session/ToastProvider";
 import { apiJson } from "@/lib/api-client";
 
 type DepartmentDto = { id: number; name: string };
+type HospitalDto = { id: number; name: string };
 
 export default function AdminDepartmentsPage() {
   const toast = useToast();
@@ -17,14 +18,20 @@ export default function AdminDepartmentsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [newName, setNewName] = useState("");
+  const [hospitals, setHospitals] = useState<HospitalDto[]>([]);
+  const [selectedHospitalId, setSelectedHospitalId] = useState<number>(0);
   const [edit, setEdit] = useState<Record<number, string>>({});
 
   async function load() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiJson<DepartmentDto[]>("/backend/admin/departments");
-      setItems(data);
+      const [deps, hosps] = await Promise.all([
+        apiJson<DepartmentDto[]>("/backend/admin/departments"),
+        apiJson<HospitalDto[]>("/backend/admin/hospitals"),
+      ]);
+      setItems(deps);
+      setHospitals(hosps);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Yükleme başarısız.");
     } finally {
@@ -43,9 +50,10 @@ export default function AdminDepartmentsPage() {
     try {
       await apiJson<DepartmentDto>("/backend/admin/departments", {
         method: "POST",
-        body: JSON.stringify({ name: newName }),
+        body: JSON.stringify({ name: newName, hospitalId: selectedHospitalId }),
       });
       setNewName("");
+      setSelectedHospitalId(0);
       toast.success("Bölüm başarıyla eklendi");
       await load();
     } catch (e) {
@@ -96,9 +104,19 @@ export default function AdminDepartmentsPage() {
       <PageHeader title="Bölümler" subtitle="Bölüm listele/ekle/güncelle." />
 
       <Card>
-        <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+        <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
           <Input label="Yeni bölüm adı" value={newName} onChange={(e) => setNewName(e.target.value)} />
-          <Button onClick={create} disabled={!newName.trim()}>
+          <select
+            className="rounded-lg border-2 border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            value={selectedHospitalId}
+            onChange={(e) => setSelectedHospitalId(Number(e.target.value))}
+          >
+            <option value={0}>Hastane seçin…</option>
+            {hospitals.map((h) => (
+              <option key={h.id} value={h.id}>{h.name}</option>
+            ))}
+          </select>
+          <Button onClick={create} disabled={!newName.trim() || selectedHospitalId === 0}>
             Ekle
           </Button>
         </div>

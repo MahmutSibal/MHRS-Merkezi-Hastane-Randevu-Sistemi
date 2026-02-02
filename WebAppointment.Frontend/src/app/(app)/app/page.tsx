@@ -6,6 +6,7 @@ export default async function AppIndexPage() {
   if (!session) redirect("/login");
 
   if (session.role === "Admin") redirect("/admin");
+  if (session.role === "HospitalAdmin") redirect("/hospital/departments");
   if (session.role === "Doctor") redirect("/doctor");
   redirect("/patient");
 }

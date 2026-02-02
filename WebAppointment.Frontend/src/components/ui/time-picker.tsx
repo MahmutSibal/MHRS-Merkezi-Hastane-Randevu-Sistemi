@@ -43,7 +43,7 @@ export function TimePicker({ value = "09:00", onChange, label, error, hint }: Ti
             aria-describedby={describedById}
             aria-invalid={error ? "true" : "false"}
             className={cn(
-              "h-10 w-full rounded-lg border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-900",
+              "h-10 w-full rounded-2xl border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-all duration-200 focus:border-blue-600 focus:shadow-[0_0_0_4px_rgba(37,99,235,0.22)] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:shadow-[0_0_0_4px_rgba(147,197,253,0.22)]",
               error ? "border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-900" : "",
             )}
           >
@@ -65,7 +65,7 @@ export function TimePicker({ value = "09:00", onChange, label, error, hint }: Ti
             aria-describedby={describedById}
             aria-invalid={error ? "true" : "false"}
             className={cn(
-              "h-10 w-full rounded-lg border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-900",
+              "h-10 w-full rounded-2xl border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-all duration-200 focus:border-blue-600 focus:shadow-[0_0_0_4px_rgba(37,99,235,0.22)] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:shadow-[0_0_0_4px_rgba(147,197,253,0.22)]",
               error ? "border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-900" : "",
             )}
           >

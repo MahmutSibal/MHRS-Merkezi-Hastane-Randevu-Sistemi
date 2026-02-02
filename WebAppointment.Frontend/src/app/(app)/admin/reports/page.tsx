@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiJson } from "@/lib/api-client";
+import { Bar, Doughnut } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+ChartJS.register(BarElement, CategoryScale, LinearScale, ArcElement, Tooltip, Legend);
 
 type TopDoctorDto = { doctorId: number; doctorName: string; appointmentCount: number };
 
@@ -36,6 +48,48 @@ export default function AdminReportsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const kpis = useMemo(() => {
+    const total = items.reduce((sum, x) => sum + x.appointmentCount, 0);
+    const top = items[0];
+    const unique = items.length;
+    return { total, topName: top?.doctorName ?? "-", unique };
+  }, [items]);
+
+  const barData = useMemo(() => ({
+    labels: items.map((x) => x.doctorName),
+    datasets: [
+      {
+        label: "Randevu",
+        data: items.map((x) => x.appointmentCount),
+        backgroundColor: "rgba(37,99,235,0.6)",
+        borderRadius: 8,
+      },
+    ],
+  }), [items]);
+
+  const donutData = useMemo(() => ({
+    labels: items.map((x) => x.doctorName),
+    datasets: [
+      {
+        label: "Pay",
+        data: items.map((x) => x.appointmentCount),
+        backgroundColor: [
+          "#2563eb",
+          "#60a5fa",
+          "#93c5fd",
+          "#38bdf8",
+          "#22d3ee",
+          "#06b6d4",
+          "#0ea5e9",
+          "#0284c7",
+          "#075985",
+          "#1e40af",
+        ].slice(0, items.length),
+        borderWidth: 0,
+      },
+    ],
+  }), [items]);
+
   return (
     <div className="grid gap-6">
       <PageHeader title="Raporlar" subtitle="En çok randevu alan doktorlar." />
@@ -48,10 +102,46 @@ export default function AdminReportsPage() {
         </div>
       </Card>
 
+      {/* KPI Cards */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card title="Toplam Randevu" description={`${kpis.total}`} />
+        <Card title="En Yoğun Doktor" description={kpis.topName} />
+        <Card title="Doktor Sayısı" description={`${kpis.unique}`} />
+      </div>
+
       {error ? <Card><p className="text-sm text-red-600">{error}</p></Card> : null}
       {isLoading ? <Card><p className="text-sm text-zinc-600">Yükleniyor…</p></Card> : null}
 
-      <Card>
+      {/* Charts */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card title="Randevu Dağılımı (Bar)">
+          <div className="h-64">
+            <Bar
+              data={barData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } },
+              }}
+            />
+          </div>
+        </Card>
+        <Card title="Randevu Payları (Donut)">
+          <div className="h-64">
+            <Doughnut
+              data={donutData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: "bottom" } },
+              }}
+            />
+          </div>
+        </Card>
+      </div>
+
+      <Card title="Detaylı Liste">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="text-xs text-zinc-600">

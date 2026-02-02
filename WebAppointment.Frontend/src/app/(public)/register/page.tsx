@@ -55,8 +55,15 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl">
-      <Panel title="Hasta Kaydı Oluştur" description="Yeni bir hasta hesabı oluşturun ve sisteme katılın.">
+    <div className="space-y-6">
+      <div className="rounded-xl border border-slate-200 bg-white/70 p-3 text-center text-xs font-medium text-slate-700 shadow-sm glass dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-200">
+        MHRS — Kayıt işlemleriniz güvenle saklanır
+      </div>
+      <div className="relative overflow-hidden rounded-2xl">
+        <div className="absolute inset-0 hero-bg" />
+        <div className="absolute inset-0 light-hero-overlay md:hero-overlay" />
+        <div className="relative mx-auto w-full max-w-2xl p-6 sm:p-8">
+          <Panel title="Hasta Kaydı Oluştur" description="Yeni bir hasta hesabı oluşturun ve sisteme katılın.">
         <form className="space-y-6" onSubmit={onSubmit}>
           <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-950">
             <p className="text-sm text-blue-800 dark:text-blue-200">
@@ -150,7 +157,9 @@ export default function RegisterPage() {
             </p>
           </div>
         </form>
-      </Panel>
+          </Panel>
+        </div>
+      </div>
     </div>
   );
 }

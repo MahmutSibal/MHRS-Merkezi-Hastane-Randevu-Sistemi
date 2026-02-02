@@ -9,8 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "@react-google-maps/api": "^2.20.8",
+    "chart.js": "^4.4.1",
     "next": "16.1.6",
     "react": "19.2.3",
+    "react-chartjs-2": "^5.2.0",
     "react-dom": "19.2.3"
   },
   "devDependencies": {

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/components/session/ToastProvider";
 import { apiJson } from "@/lib/api-client";
@@ -85,25 +86,38 @@ export default function DoctorAppointmentsPage() {
       {isLoading ? <Card><p className="text-sm text-slate-600 dark:text-slate-400">Yükleniyor…</p></Card> : null}
 
       <div className="grid gap-3">
-        {items.map((a) => (
-          <Card key={a.id}>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{a.patientEmail}</div>
-                <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                  {new Date(a.startAtUtc).toLocaleString("tr-TR")} – {new Date(a.endAtUtc).toLocaleTimeString("tr-TR")}
+        {items.map((a) => {
+          const status = (a.status || "").toLowerCase();
+          const canApprove = status.includes("pending");
+          const canComplete = status.includes("approved");
+          return (
+            <Card key={a.id}>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{a.patientEmail}</div>
+                    <StatusBadge status={a.status} />
+                  </div>
+                  <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                    {new Date(a.startAtUtc).toLocaleString("tr-TR")} – {new Date(a.endAtUtc).toLocaleTimeString("tr-TR")}
+                  </div>
                 </div>
-                <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">Durum: {a.status}</div>
+                <div className="flex gap-2">
+                  {canApprove ? (
+                    <Button variant="secondary" onClick={() => approve(a.id)}>
+                      Onayla
+                    </Button>
+                  ) : null}
+                  {canComplete ? (
+                    <Button onClick={() => complete(a.id)}>
+                      Tamamla
+                    </Button>
+                  ) : null}
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button variant="secondary" onClick={() => approve(a.id)}>
-                  Onayla
-                </Button>
-                <Button onClick={() => complete(a.id)}>Tamamla</Button>
-              </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
