@@ -175,8 +175,93 @@ Backend `appsettings.json` çok-kiracılık örneği:
 }
 ```
 
+Varsayılan adres:
+
+```
+https://localhost:5001
+```
+
+Swagger:
+
+```
+https://localhost:5001/swagger
+```
+
 ---
 
+## 🎨 Frontend (WebAppointment.Frontend)
+
+**Teknolojiler**
+
+* Next.js 16 (App Router)
+* React
+* Tailwind CSS
+* Axios
+* JWT tabanlı Auth
+
+---
+
+### Frontend Yapısı
+
+#### app/
+
+* Route bazlı sayfalar
+* Server & Client Components
+
+#### components/
+
+* Tekrar kullanılabilir UI bileşenleri
+* Formlar, modal’lar, tablolar
+
+#### services/
+
+* API çağrıları
+* Axios instance
+* Token yönetimi
+
+---
+
+### 🧑‍⚕️ Kullanıcı Rollerine Göre Özellikler
+
+#### Hasta
+
+* Kayıt / giriş
+* Doktor ve branş arama
+* Randevu alma / iptal
+* Randevu geçmişi
+
+#### Doktor
+
+* Günlük randevuları görüntüleme
+* Uygunluk saatleri
+* Hasta listesi
+
+#### Admin
+
+* Doktor / branş yönetimi
+* Kullanıcı yönetimi
+* Sistem kontrolü
+
+---
+
+### 📌 Frontend’i Çalıştırma
+
+```bash
+cd WebAppointment.Frontend
+npm install
+npm run dev
+```
+
+Varsayılan adres:
+
+```
+http://localhost:3000
+>>>>>>> c196c44a62e0dc2280edecce0b3c570cf0a6dc15
+```
+
+---
+
+<<<<<<< HEAD
 ## Hızlı Deneme Senaryoları
 
 - **Hasta Kaydı & Giriş**
@@ -211,3 +296,14 @@ Backend `appsettings.json` çok-kiracılık örneği:
 ## Lisans
 
 Bu proje iç kullanım amacıyla sağlanmıştır. (Lisans bilgisi eklemek isterseniz bu bölümü güncelleyiniz.)
+=======
+## ⚙️ Ortam Değişkenleri
+
+### Frontend (.env.local)
+
+```env
+NEXT_PUBLIC_API_URL=https://localhost:5001
+```
+
+---
+>>>>>>> c196c44a62e0dc2280edecce0b3c570cf0a6dc15
