@@ -1,7 +1,9 @@
-<<<<<<< HEAD
 # WebAppointment – Hastane Randevu Sistemi
 
 Modern, ölçeklenebilir ve güvenli bir hastane randevu yönetim platformu. Çok rollü erişim (Hasta, Doktor, Hastane Yöneticisi, Admin), JWT tabanlı kimlik doğrulama, güçlü kurallar ve sezgisel bir Next.js arayüzü ile gelir.
+
+### Dokümantasyon
+- Ayrıntılı açıklama: [docs/MHRS-Nedir-ve-Bu-Sistemi-Neden-Kullanmalisiniz.md](docs/MHRS-Nedir-ve-Bu-Sistemi-Neden-Kullanmalisiniz.md)
 
 ---
 
@@ -174,213 +176,10 @@ Backend `appsettings.json` çok-kiracılık örneği:
 "MultiTenancy": {
   "DefaultTenantId": 1
 }
-=======
-
----
-
-# MHRS – Merkezi Hastane Randevu Sistemi
-
-Bu proje, **Türkiye’de kullanılan MHRS sistemini referans alarak** geliştirilmiş, uçtan uca çalışan bir **hastane randevu ve yönetim platformudur**.
-Backend ve Frontend katmanları **tamamen ayrık (decoupled)** olup modern web mimarisi prensiplerine göre tasarlanmıştır.
-
-**Amaç:**
-Hastalar, doktorlar ve yöneticiler için randevu süreçlerini dijitalleştirmek, sağlık hizmetlerine erişimi kolaylaştırmak ve yönetilebilir bir sistem sunmak.
-
-**Geliştirici:** Mahmut Sibal
-**E-posta:** [mahmutsibal9@gmail.com](mailto:mahmutsibal9@gmail.com)
-
----
-
-## 🧩 Sistem Mimarisi
-
-Proje **Client–Server** mimarisine sahiptir.
-
-```
-[ Next.js Frontend ]  --->  [ .NET 8 Web API ]  --->  [ SQL Server ]
-         |
-         └── JWT ile kimlik doğrulama
-```
-
-* Frontend yalnızca API ile haberleşir
-* Backend tüm iş kurallarını ve güvenliği yönetir
-* Veritabanı erişimi yalnızca Backend üzerinden yapılır
-
----
-
-## 📁 Proje Yapısı
-
-```
-MHRS/
-│
-├── WebAppointmentApi/
-│   ├── WebAppointmentApi.WebApi
-│   ├── WebAppointmentApi.Application
-│   ├── WebAppointmentApi.Domain
-│   └── WebAppointmentApi.Infrastructure
-│
-└── WebAppointment.Frontend/
-    ├── app/
-    ├── components/
-    ├── services/
-    └── styles/
 ```
 
 ---
 
-## 🔧 Backend (WebAppointmentApi)
-
-**Teknolojiler**
-
-* .NET 8
-* ASP.NET Core Web API
-* Entity Framework Core
-* SQL Server
-* JWT Authentication
-* Clean Architecture yaklaşımı
-
-### Katmanlar
-
-#### 1. Domain
-
-* Entity’ler (User, Doctor, Patient, Appointment vb.)
-* Enum ve temel kurallar
-* Hiçbir framework bağımlılığı yoktur
-
-#### 2. Application
-
-* Business logic
-* DTO’lar
-* Service ve Interface tanımları
-* Validation kuralları
-
-#### 3. Infrastructure
-
-* EF Core DbContext
-* Repository implementasyonları
-* Database migration’lar
-
-#### 4. WebApi
-
-* Controller’lar
-* Auth & Authorization
-* Middleware’ler
-* Swagger yapılandırması
-
----
-
-### 🔐 Kimlik Doğrulama & Yetkilendirme
-
-* JWT (JSON Web Token) kullanılır
-* Rol bazlı erişim:
-
-  * **Admin**
-  * **Doctor**
-  * **Patient**
-
-Örnek:
-
-```http
-Authorization: Bearer <token>
-```
-
----
-
-### 📌 Backend’i Çalıştırma
-
-```bash
-cd WebAppointmentApi
-dotnet restore
-dotnet ef database update
-dotnet run --project WebAppointmentApi.WebApi
-```
-
-Varsayılan adres:
-
-```
-https://localhost:5001
-```
-
-Swagger:
-
-```
-https://localhost:5001/swagger
-```
-
----
-
-## 🎨 Frontend (WebAppointment.Frontend)
-
-**Teknolojiler**
-
-* Next.js 16 (App Router)
-* React
-* Tailwind CSS
-* Axios
-* JWT tabanlı Auth
-
----
-
-### Frontend Yapısı
-
-#### app/
-
-* Route bazlı sayfalar
-* Server & Client Components
-
-#### components/
-
-* Tekrar kullanılabilir UI bileşenleri
-* Formlar, modal’lar, tablolar
-
-#### services/
-
-* API çağrıları
-* Axios instance
-* Token yönetimi
-
----
-
-### 🧑‍⚕️ Kullanıcı Rollerine Göre Özellikler
-
-#### Hasta
-
-* Kayıt / giriş
-* Doktor ve branş arama
-* Randevu alma / iptal
-* Randevu geçmişi
-
-#### Doktor
-
-* Günlük randevuları görüntüleme
-* Uygunluk saatleri
-* Hasta listesi
-
-#### Admin
-
-* Doktor / branş yönetimi
-* Kullanıcı yönetimi
-* Sistem kontrolü
-
----
-
-### 📌 Frontend’i Çalıştırma
-
-```bash
-cd WebAppointment.Frontend
-npm install
-npm run dev
-```
-
-Varsayılan adres:
-
-```
-http://localhost:3000
->>>>>>> c196c44a62e0dc2280edecce0b3c570cf0a6dc15
-```
-
----
-
-<<<<<<< HEAD
 ## Hızlı Deneme Senaryoları
 
 - **Hasta Kaydı & Giriş**
@@ -415,14 +214,36 @@ http://localhost:3000
 ## Lisans
 
 Bu proje iç kullanım amacıyla sağlanmıştır. (Lisans bilgisi eklemek isterseniz bu bölümü güncelleyiniz.)
-=======
-## ⚙️ Ortam Değişkenleri
-
-### Frontend (.env.local)
-
-```env
-NEXT_PUBLIC_API_URL=https://localhost:5001
-```
 
 ---
->>>>>>> c196c44a62e0dc2280edecce0b3c570cf0a6dc15
+
+## Screenshots
+
+Aşağıda sistemin kilit ekranlarından bazı örnekler yer alır:
+
+![Giriş Ekranı](WebAppointment.Screenshots/Giris_Ekrani.PNG)
+
+![Hasta Kayıt Ekranı](WebAppointment.Screenshots/Hasta_Kayit_Ekrani.PNG)
+
+![Hasta Randevu Portal ekranı](WebAppointment.Screenshots/Hasta_Randevu_Portal_ekrani.PNG)
+
+![Dashboard ekranı](WebAppointment.Screenshots/Dashboard_Ekrani.PNG)
+
+![Doktor Paneli ekranı](WebAppointment.Screenshots/Doktor_Paneli_Ekrani.PNG)
+
+![Doktor Takvim ekranı](WebAppointment.Screenshots/Doktor_Takvim_ekrani.PNG)
+
+![Hastane Bölüm ekleme ekranı](WebAppointment.Screenshots/Hastane_Bolum_ekleme_ekrani.PNG)
+
+![Hastane Doktor ekleme ekranı](WebAppointment.Screenshots/Hastane_Doktor_ekleme_ekrani.PNG)
+
+![Admin Hastane Yönetim ekranı](WebAppointment.Screenshots/Admin_Hastane_Yonetim_Ekrani.PNG)
+
+---
+
+## İletişim
+
+- İsim: Mahmut Sibal
+- GitHub: [MahmutSibal](https://github.com/MahmutSibal)
+- E-posta: [mahmutsibal9@gmail.com](mailto:mahmutsibal9@gmail.com)
+
