@@ -15,4 +15,7 @@ public sealed class ReportService : IReportService
 
     public Task<IReadOnlyList<TopDoctorDto>> GetTopDoctorsLastDaysAsync(int days, int take, CancellationToken ct)
         => _reports.GetTopDoctorsLastDaysAsync(days, take, ct);
+
+    public Task<AppointmentSummaryDto> GetAppointmentSummaryAsync(int days, CancellationToken ct)
+        => _reports.GetAppointmentSummaryAsync(days, ct);
 }
