@@ -83,6 +83,7 @@ public sealed class DoctorAppointmentService : IDoctorAppointmentService
             Message = "Randevunuz onaylandı.",
             CreatedAtUtc = _clock.UtcNow,
             IsSent = false,
+            IsRead = false,
         }, ct);
 
         await _appointments.SaveChangesAsync(ct);
@@ -123,6 +124,7 @@ public sealed class DoctorAppointmentService : IDoctorAppointmentService
             Message = "Randevunuz tamamlandı.",
             CreatedAtUtc = _clock.UtcNow,
             IsSent = false,
+            IsRead = false,
         }, ct);
 
         await _appointments.SaveChangesAsync(ct);

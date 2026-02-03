@@ -23,6 +23,32 @@ public sealed class PatientRepository : IPatientRepository
     public async Task<IReadOnlyList<Patient>> ListAsync(CancellationToken ct)
         => await _db.Patients.AsNoTracking().Include(x => x.User).OrderBy(x => x.Id).ToListAsync(ct);
 
+    public async Task<IReadOnlyList<Patient>> ListByHospitalAsync(int hospitalId, CancellationToken ct)
+    {
+        return await _db.Patients
+            .AsNoTracking()
+            .Include(x => x.User)
+            .Where(p => _db.Appointments.Any(a =>
+                a.UserId == p.UserId &&
+                a.Doctor != null &&
+                a.Doctor.Department != null &&
+                a.Doctor.Department.HospitalId == hospitalId))
+            .OrderBy(x => x.Id)
+            .ToListAsync(ct);
+    }
+
+    public async Task<bool> IsPatientInHospitalAsync(int patientId, int hospitalId, CancellationToken ct)
+    {
+        return await _db.Patients
+            .AsNoTracking()
+            .Where(p => p.Id == patientId)
+            .AnyAsync(p => _db.Appointments.Any(a =>
+                a.UserId == p.UserId &&
+                a.Doctor != null &&
+                a.Doctor.Department != null &&
+                a.Doctor.Department.HospitalId == hospitalId), ct);
+    }
+
     public Task AddAsync(Patient patient, CancellationToken ct)
     {
         _db.Patients.Add(patient);

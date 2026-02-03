@@ -142,8 +142,8 @@ public sealed class AppointmentRepository : IAppointmentRepository
 
                 await connection.ExecuteAsync(
                         new CommandDefinition(
-                                @"INSERT INTO Notifications (AppointmentId, UserId, Message, CreatedAtUtc, IsSent)
-                                    VALUES (@AppointmentId, @UserId, @Message, @CreatedAtUtc, 0);",
+                                @"INSERT INTO Notifications (AppointmentId, UserId, Message, CreatedAtUtc, IsSent, IsRead)
+                                    VALUES (@AppointmentId, @UserId, @Message, @CreatedAtUtc, 0, 0);",
                                 new
                                 {
                                         AppointmentId = appointmentId,
@@ -229,12 +229,45 @@ public sealed class AppointmentRepository : IAppointmentRepository
         )).ToList();
     }
 
-    public async Task<IReadOnlyList<AdminAppointmentDto>> ListAdminDtosAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<AdminAppointmentDto>> ListAdminDtosAsync(AppointmentListFilter? filter, CancellationToken ct)
     {
         // Avoid AutoMapper ProjectTo with enum.ToString() (often not SQL-translatable).
         // Also guard against Department query filter nulling required navigations.
-        var rows = await _db.Appointments.AsNoTracking()
+        var query = _db.Appointments.AsNoTracking();
+
+        if (filter?.HospitalId is not null)
+        {
+            var hospitalId = filter.HospitalId.Value;
+            query = query.Where(x =>
+                x.Doctor != null &&
+                x.Doctor.Department != null &&
+                x.Doctor.Department.HospitalId == hospitalId);
+        }
+
+        if (filter?.FromUtc is not null)
+        {
+            query = query.Where(x => x.StartAt >= filter.FromUtc.Value);
+        }
+
+        if (filter?.ToUtc is not null)
+        {
+            query = query.Where(x => x.StartAt <= filter.ToUtc.Value);
+        }
+
+        if (filter?.Status is not null)
+        {
+            query = query.Where(x => x.Status == filter.Status.Value);
+        }
+
+        var skip = Math.Max(filter?.Skip ?? 0, 0);
+        var take = filter?.Take ?? 200;
+        if (take <= 0) take = 200;
+        if (take > 500) take = 500;
+
+        var rows = await query
             .OrderByDescending(x => x.StartAt)
+            .Skip(skip)
+            .Take(take)
             .Select(x => new
             {
                 x.Id,

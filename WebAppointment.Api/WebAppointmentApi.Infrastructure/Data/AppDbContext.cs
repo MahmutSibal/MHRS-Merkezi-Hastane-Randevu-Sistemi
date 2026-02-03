@@ -174,6 +174,7 @@ public sealed class AppDbContext : DbContext
             b.Property(x => x.Message).HasMaxLength(500).IsRequired();
             b.Property(x => x.CreatedAtUtc).IsRequired();
             b.Property(x => x.IsSent).IsRequired();
+            b.Property(x => x.IsRead).IsRequired();
             b.Property(x => x.TenantId).IsRequired();
             b.HasIndex(x => new { x.UserId, x.CreatedAtUtc });
             b.HasQueryFilter(x => x.TenantId == _tenant.TenantId);

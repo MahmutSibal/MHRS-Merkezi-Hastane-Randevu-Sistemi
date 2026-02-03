@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WebAppointmentApi.Application.Common.Abstractions;
+using WebAppointmentApi.Infrastructure.BackgroundJobs;
 using WebAppointmentApi.Infrastructure.Data;
 using WebAppointmentApi.Infrastructure.Repositories;
 using WebAppointmentApi.Infrastructure.Security;
@@ -26,10 +27,13 @@ public static class DependencyInjection
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IReportRepository, ReportRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
 
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
+        services.AddSingleton<IBackgroundJobQueue, BackgroundJobQueue>();
+        services.AddHostedService<QueuedBackgroundService>();
 
         return services;
     }

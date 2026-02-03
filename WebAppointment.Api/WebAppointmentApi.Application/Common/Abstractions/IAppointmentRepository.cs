@@ -19,7 +19,7 @@ public interface IAppointmentRepository
 
     // Case 6: DTO-only listing with projection (no entity return from service layer)
     Task<IReadOnlyList<AppointmentDto>> ListMyDtosAsync(Guid userId, CancellationToken ct);
-    Task<IReadOnlyList<AdminAppointmentDto>> ListAdminDtosAsync(CancellationToken ct);
+    Task<IReadOnlyList<AdminAppointmentDto>> ListAdminDtosAsync(AppointmentListFilter? filter, CancellationToken ct);
 
     Task<IReadOnlyList<Appointment>> ListAllAsync(CancellationToken ct);
     Task<Appointment?> FindByIdAsync(Guid appointmentId, CancellationToken ct);

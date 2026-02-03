@@ -112,7 +112,12 @@ public sealed class AppointmentService : IAppointmentService
 
     public async Task<IReadOnlyList<AdminAppointmentDto>> GetAdminAllAsync(CancellationToken ct)
     {
-        return await _appointments.ListAdminDtosAsync(ct);
+        return await _appointments.ListAdminDtosAsync(null, ct);
+    }
+
+    public async Task<IReadOnlyList<AdminAppointmentDto>> GetAdminAsync(AppointmentListFilter filter, CancellationToken ct)
+    {
+        return await _appointments.ListAdminDtosAsync(filter, ct);
     }
 
     public async Task CancelAsync(Guid userId, Guid appointmentId, CancellationToken ct)

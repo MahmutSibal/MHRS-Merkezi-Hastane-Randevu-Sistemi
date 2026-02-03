@@ -10,6 +10,7 @@ public sealed class Notification : IMultiTenant
     public string Message { get; set; } = string.Empty;
     public DateTimeOffset CreatedAtUtc { get; set; }
     public bool IsSent { get; set; }
+    public bool IsRead { get; set; }
 
     public int TenantId { get; set; }
 }
