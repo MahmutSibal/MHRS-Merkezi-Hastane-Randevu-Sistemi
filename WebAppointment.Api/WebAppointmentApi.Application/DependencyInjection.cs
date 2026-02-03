@@ -10,6 +10,8 @@ using WebAppointmentApi.Application.Departments.Abstractions;
 using WebAppointmentApi.Application.Departments.Services;
 using WebAppointmentApi.Application.Doctors.Abstractions;
 using WebAppointmentApi.Application.Doctors.Services;
+using WebAppointmentApi.Application.Notifications.Abstractions;
+using WebAppointmentApi.Application.Notifications.Services;
 using WebAppointmentApi.Application.Patients.Abstractions;
 using WebAppointmentApi.Application.Patients.Services;
 using WebAppointmentApi.Application.Reports.Abstractions;
@@ -34,6 +36,7 @@ public static class DependencyInjection
         services.AddScoped<WebAppointmentApi.Application.Hospitals.Abstractions.IHospitalService, WebAppointmentApi.Application.Hospitals.Services.HospitalService>();
         services.AddScoped<IPatientService, PatientService>();
         services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<INotificationService, NotificationService>();
 
         return services;
     }

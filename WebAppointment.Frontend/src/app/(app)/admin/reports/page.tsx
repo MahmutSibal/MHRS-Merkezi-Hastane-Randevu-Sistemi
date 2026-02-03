@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiJson } from "@/lib/api-client";
-import { Bar, Doughnut } from "react-chartjs-2";
+import { Bar, Doughnut, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   BarElement,
@@ -15,16 +15,30 @@ import {
   ArcElement,
   Tooltip,
   Legend,
+  LineElement,
+  PointElement,
 } from "chart.js";
 
-ChartJS.register(BarElement, CategoryScale, LinearScale, ArcElement, Tooltip, Legend);
+ChartJS.register(BarElement, CategoryScale, LinearScale, ArcElement, Tooltip, Legend, LineElement, PointElement);
 
 type TopDoctorDto = { doctorId: number; doctorName: string; appointmentCount: number };
+type AppointmentSummaryDto = {
+  days: number;
+  statusSummary: {
+    pending: number;
+    approved: number;
+    completed: number;
+    cancelled: number;
+    total: number;
+  };
+  dailyCounts: { date: string; count: number }[];
+};
 
 export default function AdminReportsPage() {
   const [days, setDays] = useState("30");
   const [take, setTake] = useState("10");
   const [items, setItems] = useState<TopDoctorDto[]>([]);
+  const [summary, setSummary] = useState<AppointmentSummaryDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,10 +46,14 @@ export default function AdminReportsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiJson<TopDoctorDto[]>(
-        `/backend/admin/reports/top-doctors?days=${encodeURIComponent(days)}&take=${encodeURIComponent(take)}`
-      );
-      setItems(data);
+      const [doctors, summaryResponse] = await Promise.all([
+        apiJson<TopDoctorDto[]>(
+          `/backend/admin/reports/top-doctors?days=${encodeURIComponent(days)}&take=${encodeURIComponent(take)}`
+        ),
+        apiJson<AppointmentSummaryDto>(`/backend/admin/reports/appointment-summary?days=${encodeURIComponent(days)}`),
+      ]);
+      setItems(doctors);
+      setSummary(summaryResponse);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Yükleme başarısız.");
     } finally {
@@ -53,7 +71,7 @@ export default function AdminReportsPage() {
     const top = items[0];
     const unique = items.length;
     return { total, topName: top?.doctorName ?? "-", unique };
-  }, [items]);
+  }, [items, summary]);
 
   const barData = useMemo(() => ({
     labels: items.map((x) => x.doctorName),
@@ -89,6 +107,42 @@ export default function AdminReportsPage() {
       },
     ],
   }), [items]);
+
+  const statusDonutData = useMemo(() => {
+    if (!summary) {
+      return { labels: [], datasets: [] };
+    }
+    return {
+      labels: ["Beklemede", "Onaylandı", "Tamamlandı", "İptal"],
+      datasets: [
+        {
+          label: "Durum",
+          data: [
+            summary.statusSummary.pending,
+            summary.statusSummary.approved,
+            summary.statusSummary.completed,
+            summary.statusSummary.cancelled,
+          ],
+          backgroundColor: ["#f59e0b", "#38bdf8", "#22c55e", "#f87171"],
+          borderWidth: 0,
+        },
+      ],
+    };
+  }, [summary]);
+
+  const lineData = useMemo(() => ({
+    labels: summary?.dailyCounts.map((x) => x.date) ?? [],
+    datasets: [
+      {
+        label: "Günlük Randevu",
+        data: summary?.dailyCounts.map((x) => x.count) ?? [],
+        borderColor: "#2563eb",
+        backgroundColor: "rgba(37,99,235,0.2)",
+        tension: 0.35,
+        fill: true,
+      },
+    ],
+  }), [summary]);
 
   return (
     <div className="grid gap-6">
@@ -135,6 +189,34 @@ export default function AdminReportsPage() {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { position: "bottom" } },
+              }}
+            />
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card title="Randevu Durumları">
+          <div className="h-64">
+            <Doughnut
+              data={statusDonutData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: "bottom" } },
+              }}
+            />
+          </div>
+        </Card>
+        <Card title="Günlük Randevu Trendleri">
+          <div className="h-64">
+            <Line
+              data={lineData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } },
               }}
             />
           </div>
