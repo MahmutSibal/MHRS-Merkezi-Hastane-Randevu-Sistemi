@@ -6,6 +6,7 @@ import { useSession } from "@/components/session/useSession";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, DepartmentIcon, DoctorIcon, PatientIcon, AppointmentIcon, ReportIcon } from "@/components/ui/icons";
 import { Logo } from "@/components/ui/logo";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 
 function NavLink({ href, label, icon: Icon }: { href: string; label: string; icon?: React.ComponentType<React.SVGProps<SVGSVGElement>> }) {
   const pathname = usePathname();
@@ -52,6 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {isLoading ? "Yükleniyor…" : session?.email}
               {role && <span className="ml-1 text-slate-500 dark:text-slate-500">({role})</span>}
             </div>
+            <NotificationCenter />
             <Button variant="secondary" onClick={logout} size="sm">
               Çıkış
             </Button>

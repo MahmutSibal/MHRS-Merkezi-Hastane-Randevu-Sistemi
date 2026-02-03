@@ -113,6 +113,22 @@ Modern, ölçeklenebilir ve güvenli bir hastane randevu yönetim platformu. Ço
 - SQL Server (LocalDB/Developer/Container), `localhost` erişilebilir
 - Opsiyonel: Google Maps ve Gemini API anahtarları
 
+### Test ve Kalite Kontrolleri
+
+Backend testleri:
+
+```powershell
+cd WebAppointment.Api
+dotnet test
+```
+
+Frontend kalite kontrolleri:
+
+```powershell
+cd WebAppointment.Frontend
+npm run lint
+```
+
 ### Backend’i Çalıştırma
 
 ```powershell
@@ -200,8 +216,15 @@ Backend `appsettings.json` çok-kiracılık örneği:
 - Role-based guard: Frontend middleware ile hassas route’lar korunur
 - Rate limit: kullanıcı/IP bazlı kısıtlama
 - ProblemDetails ile tutarlı hata formatı; frontend `apiJson` bunları kullanıcı dostu mesaja çevirir
+- Rate limiting, JWT secret ve bağlantı dizileri gibi kritik değerleri production ortamında bir secret manager üzerinden yönetin.
 
 ---
+
+## Katkı Rehberi (CONTRIBUTING)
+
+- Yeni özellikler için küçük, odaklı branch’ler açın.
+- PR’larda değişiklik amacı, test sonuçları ve olası riskleri netçe belirtin.
+- Kodunuzu göndermeden önce ilgili test/kalite kontrollerini çalıştırın.
 
 ## Sık Karşılaşılan Sorunlar
 
@@ -213,7 +236,7 @@ Backend `appsettings.json` çok-kiracılık örneği:
 
 ## Lisans
 
-Bu proje iç kullanım amacıyla sağlanmıştır. (Lisans bilgisi eklemek isterseniz bu bölümü güncelleyiniz.)
+Bu proje MIT lisansı ile sunulmaktadır. Ayrıntılar için `LICENSE` dosyasına bakınız.
 
 ---
 
@@ -246,4 +269,3 @@ Aşağıda sistemin kilit ekranlarından bazı örnekler yer alır:
 - İsim: Mahmut Sibal
 - GitHub: [MahmutSibal](https://github.com/MahmutSibal)
 - E-posta: [mahmutsibal9@gmail.com](mailto:mahmutsibal9@gmail.com)
-
