@@ -1,6 +1,27 @@
 # MHRS – Merkezi Hastane Randevu Sistemi
 
+![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
+![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
+![License: MIT](https://img.shields.io/badge/License-MIT-green)
+
 Modern, ölçeklenebilir ve güvenli bir hastane randevu yönetim platformu. Çok rollü erişim (Hasta, Doktor, Hastane Yöneticisi, Admin), JWT tabanlı kimlik doğrulama, güçlü kurallar ve sezgisel bir Next.js arayüzü ile gelir.
+
+---
+
+## İçindekiler
+
+- [Özellikler](#özellikler)
+- [Mimari](#mimari)
+- [Hızlı Başlangıç](#hızlı-başlangıç)
+- [Backend – Ayrıntılar](#backend--ayrıntılar)
+- [Frontend – Ayrıntılar](#frontend--ayrıntılar)
+- [Ortam Değişkenleri](#ortam-değişkenleri)
+- [Hızlı Deneme Senaryoları](#hızlı-deneme-senaryoları)
+- [Güvenlik Notları](#güvenlik-notları)
+- [Sık Karşılaşılan Sorunlar](#sık-karşılaşılan-sorunlar)
+- [QA Düzeltme Kontrol Listesi](#qa-düzeltme-kontrol-listesi)
+- [Lisans](#lisans)
 
 ### Dokümantasyon
 - Ayrıntılı açıklama: [docs/MHRS-Nedir-ve-Bu-Sistemi-Neden-Kullanmalisiniz.md](docs/MHRS-Nedir-ve-Bu-Sistemi-Neden-Kullanmalisiniz.md)
@@ -33,6 +54,26 @@ Modern, ölçeklenebilir ve güvenli bir hastane randevu yönetim platformu. Ço
   - Rol korumalı middleware: [WebAppointment.Frontend/middleware.ts](WebAppointment.Frontend/middleware.ts)
 
 ---
+
+## Hızlı Başlangıç
+
+Yerel geliştirme için asgari adımlar:
+
+```powershell
+# 1) Backend
+cd WebAppointment.Api/WebAppointmentApi.WebApi
+dotnet restore
+dotnet ef database update --project ..\WebAppointmentApi.Infrastructure --startup-project .
+dotnet run
+
+# 2) Frontend (yeni bir terminalde)
+cd ..\..\WebAppointment.Frontend
+npm install
+npm run dev
+```
+
+- Varsayılan adresler: Backend http://localhost:5233, Frontend http://localhost:3000
+- Backend bağlantı dizinini ve JWT anahtarını ihtiyaçlarınıza göre özelleştirin (aşağıya bakınız).
 
 ## Backend – Ayrıntılar
 
@@ -306,6 +347,13 @@ _Sistem geneli yönetim ve raporlara erişim. Tenant, kullanıcı ve güvenlik p
 
 ---
 
+## Katkıda Bulunanlar
+
+- Test desteği: Elif Küçük ([GitHub: ekucuk-eng](https://github.com/ekucuk-eng), [LinkedIn](https://www.linkedin.com/in/elif-k%C3%BC%C3%A7%C3%BCk-187258326/))
+- Tüm liste için bkz. [CONTRIBUTORS.md](CONTRIBUTORS.md)
+
+---
+
 ## QA Düzeltme Kontrol Listesi
 
 - ✅ Doktor Entity: `Title (Unvan)` alanı eklendi, API cevaplarında döndürülüyor.
@@ -322,3 +370,17 @@ _Sistem geneli yönetim ve raporlara erişim. Tenant, kullanıcı ve güvenlik p
 - ✅ AI Asistan (Oturum): Oturum değişince/çıkışta sohbet geçmişi sıfırlanır; farklı admin hesapları arasında kalıcı olmaz.
 - ✅ Kullanıcı Dostu Hatalar: Teknik detaylar gizlenir; anlaşılır mesajlar gösterilir.
 - ✅ Durum Yönetimi: Auth ve chat state izolasyonu; sızıntılar önlendi.
+
+---
+
+## Proje Yapısı (Özet)
+
+```
+WebAppointment.Api/
+  WebAppointmentApi.Domain/         # Entity ve temel kavramlar
+  WebAppointmentApi.Application/    # İş kuralları, DTO, Validasyon
+  WebAppointmentApi.Infrastructure/ # EF Core, Repos, Güvenlik
+  WebAppointmentApi.WebApi/         # API (Controllers, Middleware)
+WebAppointment.Frontend/            # Next.js 16 uygulaması
+docs/                               # Dokümantasyon
+```

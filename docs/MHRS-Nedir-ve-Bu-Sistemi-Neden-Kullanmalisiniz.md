@@ -1,5 +1,21 @@
 # MHRS Nedir? Bu Sistemi Neden Kullanmalısınız?
 
+> Özet: MHRS (Merkezi Hastane Randevu Sistemi) deneyimini kurum içi ve özelleştirilebilir bir yapıda örnekleyen modern, çok-kiracılı bir randevu platformu.
+
+---
+
+## İçindekiler
+
+- [MHRS Nedir?](#mhrs-nedir)
+- [Bu Sistemi Neden Kullanmalısınız?](#bu-sistemi-neden-kullanmalısınız)
+- [Öne Çıkan Özellikler](#öne-çıkan-özellikler)
+- [Mimari ve Teknolojiler](#mimari-ve-teknolojiler)
+- [MHRS’ye Göre Konumlandırma](#mhrse-göre-konumlandırma)
+- [KVKK ve Güvenlik Notları](#kvkk-ve-güvenlik-notları)
+- [Kurulum ve İlk Çalıştırma](#kurulum-ve-ilk-çalıştırma)
+- [SSS (Sık Sorulan Sorular)](#sss-sık-sorulan-sorular)
+- [Yazar ve İletişim](#yazar-ve-iletişim)
+
 Bu doküman, Türkiye'de yaygın olarak kullanılan MHRS (Merkezi Hastane Randevu Sistemi) konseptini açıklarken, bu depodaki "WebAppointment – Hastane Randevu Sistemi" uygulamasının neden tercih edilebileceğini iş gerekçeleri ve teknik açıdan detaylandırır.
 
 ---
@@ -70,6 +86,14 @@ Kimler için uygun?
   - Proxy ile backend iletişimi ve JWT cookie’leri
   - Modern UI bileşenleri ve grafik görselleştirme
 
+Hızlı bakış (ASCII mimari):
+
+```
+Kullanıcı → Next.js (App Router) → /api/backend → Web API (.NET 8)
+                                          ↓
+                                 EF Core / SQL Server
+```
+
 ---
 
 ## MHRS’ye Göre Konumlandırma
@@ -95,7 +119,7 @@ Kimler için uygun?
 
 ## Kurulum ve İlk Çalıştırma
 
-Kurulum adımları kök dokümanda yer alır: [README.md](README.md)
+Kurulum adımları kök dokümanda yer alır: [README.md](../README.md)
 - Veritabanı bağlantıları: [WebAppointment.Api/WebAppointmentApi.WebApi/appsettings.json](WebAppointment.Api/WebAppointmentApi.WebApi/appsettings.json)
 - Migration komutları ve çalışma talimatları README’de örneklerle mevcuttur.
 

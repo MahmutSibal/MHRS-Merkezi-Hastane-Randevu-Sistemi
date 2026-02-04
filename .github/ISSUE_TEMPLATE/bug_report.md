@@ -1,38 +1,31 @@
 ---
 name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
+about: Yardıma ihtiyacı olan bir hatayı bildirin
+title: "[Bug]: "
+labels: [bug, needs-triage]
 assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+**Özet**
+Kısaca hatayı açıklayın.
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+**Tekrarlama Adımları**
+1. ... sayfasına gidin
+2. ... butonuna tıklayın
+3. ... gerçekleştiğinde hata oluşuyor
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+**Beklenen Davranış**
+Ne olmasını bekliyordunuz?
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**Ekran Görüntüsü/Video**
+Varsa görsel/video ekleyin.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+**Ortam Bilgisi**
+- Backend: .NET SDK ve Web API sürümü (örn. .NET 8)
+- Frontend: Node.js/Next.js sürümü (örn. Node 20, Next 16)
+- Veritabanı: SQL Server sürümü
+- Tarayıcı/OS: (örn. Chrome 122 / Windows 11)
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
-
-**Additional context**
-Add any other context about the problem here.
+**Loglar ve Ek Bilgi**
+İlgili hata mesajları/stack trace ve ek bağlam bilgileri.

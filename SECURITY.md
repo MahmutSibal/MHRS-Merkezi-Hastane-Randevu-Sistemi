@@ -1,21 +1,34 @@
 # Security Policy
 
-## Supported Versions
+Bu proje için güvenlik süreçleri aşağıdaki gibidir.
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+## Desteklenen Sürümler
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+- Aktif geliştirme: `main` (güncel)
+- Yayınlanan tag’ler: kritik güvenlik düzeltmeleri için mümkünse yama yayınlanır.
 
-## Reporting a Vulnerability
+## Güvenlik Açığı Bildirimi
 
-Use this section to tell people how to report a vulnerability.
+Lütfen sorumlu açıklama (responsible disclosure) prensiplerini takip edin ve açığı herkese açık issue olarak paylaşmayın.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+- Tercih edilen yöntem: GitHub Security Advisory üzerinden özel rapor oluşturun.
+- Alternatif: E-posta ile bildirim – mahmutsibal9@gmail.com
+
+Bildirimde bulunurken mümkünse şunları ekleyin:
+- Etkilenen alan (Backend/Frontend/Infra), sürümler ve ortam bilgisi
+- Yeniden üretim adımları ve PoC (mümkünse)
+- Etki alanı (yetki yükseltme, veri sızıntısı, DoS vb.)
+
+## SLA ve İletişim
+
+- İlk yanıt: 72 saat içinde
+- Analiz ve sınıflandırma: 7 gün içinde
+- Düzeltme/mitigasyon planı: 30 gün içinde (kritik konularda önceliklendirilir)
+
+## Neleri Bildirmemelisiniz
+
+- Demo/örnek verilerdeki doğruluk sorunları
+- Harici servis kesintileri (ör. üçüncü parti API’ler)
+- Varsayılan örnek anahtarlar (README’de yer alan “değiştirin” uyarıları)
+
+Teşekkürler: Sorumlu bildirimleriniz için projeye katkı verenler listesinde teşekkür ederiz.
