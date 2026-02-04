@@ -43,7 +43,7 @@ public sealed class HospitalAdminDoctorsController : ControllerBase
         if (hospitalId is null) return Array.Empty<DoctorDto>();
         var entities = await _doctorRepo.ListAsync(ct);
         var filtered = entities.Where(x => x.Department?.HospitalId == hospitalId.Value).ToList();
-        return filtered.Select(x => new DoctorDto(x.Id, x.Name, x.DepartmentId, x.Department?.Name ?? string.Empty, x.IsActive, x.UserId)).ToList();
+        return filtered.Select(x => new DoctorDto(x.Id, x.Name, x.Title, x.DepartmentId, x.Department?.Name ?? string.Empty, x.IsActive, x.UserId)).ToList();
     }
 
     [HttpPost]
@@ -82,6 +82,21 @@ public sealed class HospitalAdminDoctorsController : ControllerBase
         var dept = await _departments.FindByIdAsync(doc.DepartmentId, ct);
         if (dept is null || dept.HospitalId != hospitalId.Value) return Forbid();
         await _doctors.DeleteAsync(id, ct);
+        return NoContent();
+    }
+
+    [HttpPatch("{id:int}/credentials")]
+    [Authorize(Policy = "CanManageDepartment")]
+    public async Task<IActionResult> UpdateCredentials([FromRoute] int id, [FromBody] UpdateDoctorCredentialsRequest request, CancellationToken ct)
+    {
+        var hospitalId = await GetCurrentHospitalIdAsync(ct);
+        if (hospitalId is null) return Forbid();
+        var list = await _doctors.ListAsync(ct);
+        var doc = list.SingleOrDefault(x => x.Id == id);
+        if (doc is null) return NotFound();
+        var dept = await _departments.FindByIdAsync(doc.DepartmentId, ct);
+        if (dept is null || dept.HospitalId != hospitalId.Value) return Forbid();
+        await _doctors.UpdateCredentialsAsync(id, request, ct);
         return NoContent();
     }
 }

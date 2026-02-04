@@ -303,3 +303,22 @@ _Sistem geneli yönetim ve raporlara erişim. Tenant, kullanıcı ve güvenlik p
 - İsim: Mahmut Sibal
 - GitHub: [MahmutSibal](https://github.com/MahmutSibal)
 - E-posta: [mahmutsibal9@gmail.com](mailto:mahmutsibal9@gmail.com)
+
+---
+
+## QA Düzeltme Kontrol Listesi
+
+- ✅ Doktor Entity: `Title (Unvan)` alanı eklendi, API cevaplarında döndürülüyor.
+- ✅ Doktor oluşturma/güncelleme: `Title` zorunlu alan olarak doğrulanıyor.
+- ✅ E-posta doğrulama: RFC benzeri kontrol + Türkçe karakter (ı, İ) engeli.
+- ✅ Şifre doğrulama: Min. 8 karakter, sadece rakam olamaz; zayıf şifre reddedilir.
+- ✅ Hospital Admin: Doktor e-posta/şifre güncelleme için güvenli `PUT /api/hospitaladmin/doctors/{id}/credentials` endpoint’i eklendi.
+- ✅ Hospital Admin: Doktor pasifleştirme (`DELETE`) korunmuş ve güvenli (departman/hastane sahipliği kontrolü).
+- ✅ Hospital Admin: Yanlış girilmiş departman adlarını ve doktor bilgilerini düzenleme endpoint’leri mevcut ve güvenli.
+- ✅ Global Hata Yakalama: Son kullanıcıya stack trace asla gösterilmez; backend log’da detaylar kalır.
+- ✅ Frontend Doktor UI: Doktor adı yanında bölüm ve unvan gösterimi (örn. “Tuğba Çoban – İç Hastalıkları – Uz. Dr.”).
+- ✅ Frontend Form UX: E-posta/şifre için anlık doğrulama mesajları; geçersizken gönderim engellenir.
+- ✅ AI Asistan (UI): Karanlık modda mesajları görünür kılan kontrast düzeltmesi yapıldı.
+- ✅ AI Asistan (Oturum): Oturum değişince/çıkışta sohbet geçmişi sıfırlanır; farklı admin hesapları arasında kalıcı olmaz.
+- ✅ Kullanıcı Dostu Hatalar: Teknik detaylar gizlenir; anlaşılır mesajlar gösterilir.
+- ✅ Durum Yönetimi: Auth ve chat state izolasyonu; sızıntılar önlendi.

@@ -27,26 +27,54 @@ public sealed class ExceptionHandlingMiddleware : IMiddleware
         {
             _logger.LogError(ex, "Unhandled exception");
 
-            var (status, title) = ex switch
+            var status = ex switch
             {
-                ValidationException => ((int)HttpStatusCode.BadRequest, "Validation error"),
-                UnauthorizedException => ((int)HttpStatusCode.Unauthorized, "Unauthorized"),
-                ForbiddenException => ((int)HttpStatusCode.Forbidden, "Forbidden"),
-                NotFoundException => ((int)HttpStatusCode.NotFound, "Not found"),
-                ConflictException => ((int)HttpStatusCode.Conflict, "Conflict"),
-                _ => ((int)HttpStatusCode.InternalServerError, "Server error")
+                ValidationException => (int)HttpStatusCode.BadRequest,
+                UnauthorizedException => (int)HttpStatusCode.Unauthorized,
+                ForbiddenException => (int)HttpStatusCode.Forbidden,
+                NotFoundException => (int)HttpStatusCode.NotFound,
+                ConflictException => (int)HttpStatusCode.Conflict,
+                _ => (int)HttpStatusCode.InternalServerError
             };
 
             context.Response.StatusCode = status;
             context.Response.ContentType = "application/problem+json";
 
+            // Son kullanıcı mesajlarını daima kullanıcı dostu ve kod/numara içermeyen şekilde ver.
+            string userMessage;
+            if (ex is ValidationException vex)
+            {
+                // İlk hata mesajını yüzeye çıkar
+                var first = vex.Errors?.FirstOrDefault();
+                userMessage = first?.ErrorMessage ?? "Geçersiz giriş. Lütfen bilgileri kontrol edin.";
+            }
+            else if (ex is UnauthorizedException)
+            {
+                userMessage = "Oturum açmanız gerekiyor.";
+            }
+            else if (ex is ForbiddenException)
+            {
+                userMessage = "Bu işlemi yapma izniniz yok.";
+            }
+            else if (ex is NotFoundException)
+            {
+                userMessage = "Aradığınız kayıt bulunamadı.";
+            }
+            else if (ex is ConflictException)
+            {
+                userMessage = "İstek mevcut durumla çakışıyor.";
+            }
+            else
+            {
+                userMessage = "Beklenmeyen bir hata oluştu.";
+            }
+
             var details = new ProblemDetails
             {
-                Status = status,
-                Title = title,
-                Detail = status >= 500
-                    ? (_env.IsDevelopment() ? ex.ToString() : "An unexpected error occurred.")
-                    : ex.Message,
+                // Body'de status kodunu göstermemek için null bırak (HTTP status header yine set edilecek)
+                Status = null,
+                Title = "İstek işlenemedi",
+                Detail = userMessage,
                 Instance = context.Request.Path,
             };
 

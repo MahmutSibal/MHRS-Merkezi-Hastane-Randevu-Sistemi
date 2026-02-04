@@ -8,4 +8,5 @@ public interface IDoctorService
     Task<DoctorDto> CreateAsync(CreateDoctorRequest request, CancellationToken ct);
     Task<DoctorDto> UpdateAsync(int doctorId, UpdateDoctorRequest request, CancellationToken ct);
     Task DeleteAsync(int doctorId, CancellationToken ct);
+    Task UpdateCredentialsAsync(int doctorId, UpdateDoctorCredentialsRequest request, CancellationToken ct);
 }

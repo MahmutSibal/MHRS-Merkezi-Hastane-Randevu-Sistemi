@@ -94,5 +94,17 @@
         <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddHospitalType.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:WebAppointmentApi.Infrastructure.Data.Migrations.AddDoctorTitle">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddDoctorTitle.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddDoctorTitle.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddDoctorTitle.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
     </members>
 </doc>

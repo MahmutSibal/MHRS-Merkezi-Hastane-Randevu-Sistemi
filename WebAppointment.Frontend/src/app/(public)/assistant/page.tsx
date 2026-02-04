@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { apiJson } from "@/lib/api-client";
+import { SessionContext } from "@/components/session/SessionProvider";
 
  type DepartmentDto = { id: number; name: string };
- type DoctorDto = { id: number; name: string; departmentId: number; departmentName: string };
+ type DoctorDto = { id: number; name: string; departmentId: number; departmentName: string; title?: string };
 
  type Message = { id: string; role: "assistant" | "user"; text: string };
  type Step =
@@ -31,6 +32,7 @@ function withTurkeyOffset(date: string, time: string) {
 }
 
 export default function AssistantPage() {
+  const { session } = useContext(SessionContext);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -54,6 +56,25 @@ export default function AssistantPage() {
       { id: uid(), role: "assistant", text: "Merhaba! E-posta adresinizi yazar mısınız?" },
     ]);
   }, []);
+
+  // Oturum değiştiğinde (login/logout veya kullanıcı switch) sohbeti temizle
+  const lastUserRef = useRef<string | null>(null);
+  useEffect(() => {
+    const currentUser = session?.userId ?? null;
+    if (currentUser !== lastUserRef.current) {
+      lastUserRef.current = currentUser;
+      setMessages([{ id: uid(), role: "assistant", text: "Merhaba! E-posta adresinizi yazar mısınız?" }]);
+      setStep("email");
+      setEmail("");
+      setPassword("");
+      setDepartments([]);
+      setDepartmentId(0);
+      setDoctors([]);
+      setDoctorId(0);
+      setDate("");
+      setTime("09:00");
+    }
+  }, [session]);
 
   const selectedDepartment = useMemo(() => departments.find(d => d.id === departmentId) ?? null, [departments, departmentId]);
   const selectedDoctor = useMemo(() => doctors.find(d => d.id === doctorId) ?? null, [doctors, doctorId]);
@@ -138,7 +159,7 @@ export default function AssistantPage() {
           if (docs.length === 0) {
             addAssistant("Bu bölümde doktor bulunamadı. Başka bir bölüm seçiniz.");
           } else {
-            const list = docs.map(d => `- ${d.name}`).join("\n");
+            const list = docs.map(d => `- ${d.name}${d.title ? ` – ${d.title}` : ""}`).join("\n");
             const text = await replyWithGemini(`Seçilen bölüm: ${match.name}. Uygun doktorlar:\n${list}\nHangi doktoru istersiniz? Lütfen doktor adını yazın.`);
             addAssistant(text);
             setStep("doctor");
@@ -204,7 +225,14 @@ export default function AssistantPage() {
       <Card>
         <div className="h-[60vh] overflow-y-auto space-y-3 pr-1">
           {messages.map(m => (
-            <div key={m.id} className={m.role === "assistant" ? "text-slate-800" : "text-blue-700"}>
+            <div
+              key={m.id}
+              className={
+                m.role === "assistant"
+                  ? "text-slate-800 dark:text-slate-100"
+                  : "text-blue-700 dark:text-blue-300"
+              }
+            >
               <div className="rounded-2xl border border-slate-200 bg-white p-3 soft-shadow inline-block max-w-[80%] dark:border-slate-700 dark:bg-slate-800/90">
                 <pre className="whitespace-pre-wrap text-sm leading-6">{m.text}</pre>
               </div>

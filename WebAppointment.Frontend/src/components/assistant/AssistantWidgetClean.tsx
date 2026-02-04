@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
 import { LogoMark } from "@/components/ui/logo";
 import { apiJson } from "@/lib/api-client";
+import { SessionContext } from "@/components/session/SessionProvider";
 
 type Message = { id: string; role: "assistant" | "user"; text: string };
 type Intent = "none" | "register" | "appointment";
@@ -22,6 +23,7 @@ type Step =
 function uid() { return Math.random().toString(36).slice(2); }
 
 export function AssistantWidget({ className }: { className?: string }) {
+  const { session } = useContext(SessionContext);
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -57,6 +59,13 @@ export function AssistantWidget({ className }: { className?: string }) {
       setStep("start");
     }
   }, [open, messages.length]);
+
+  // Reset chat on session changes (login/logout or switch accounts)
+  useEffect(() => {
+    setMessages([]);
+    setIntent("none");
+    setStep("start");
+  }, [session?.userId]);
 
   function addAssistant(text: string) { setMessages(m => [...m, { id: uid(), role: "assistant", text }]); }
   function addUser(text: string) { setMessages(m => [...m, { id: uid(), role: "user", text }]); }
@@ -258,7 +267,7 @@ export function AssistantWidget({ className }: { className?: string }) {
             </div>
             <div className="mt-4 h-[380px] overflow-y-auto space-y-3 pr-1">
               {messages.map(m => (
-                <div key={m.id} className={m.role === "assistant" ? "text-slate-800" : "text-blue-700"}>
+                <div key={m.id} className={m.role === "assistant" ? "text-slate-800 dark:text-slate-100" : "text-blue-700 dark:text-blue-300"}>
                   <div className="rounded-2xl border border-slate-200 bg-white p-3 soft-shadow inline-block max-w-[85%] dark:border-slate-700 dark:bg-slate-800/90">
                     <pre className="whitespace-pre-wrap text-sm leading-6">{m.text}</pre>
                   </div>

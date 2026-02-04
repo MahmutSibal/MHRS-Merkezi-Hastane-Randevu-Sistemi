@@ -3547,11 +3547,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\WebAppointmentApi.Infrastructure.csproj",
+      "projectUniqueName": "c:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\WebAppointmentApi.Infrastructure.csproj",
       "projectName": "WebAppointmentApi.Infrastructure",
-      "projectPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\WebAppointmentApi.Infrastructure.csproj",
+      "projectPath": "c:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\WebAppointmentApi.Infrastructure.csproj",
       "packagesPath": "C:\\Users\\-\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\obj\\",
+      "outputPath": "c:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

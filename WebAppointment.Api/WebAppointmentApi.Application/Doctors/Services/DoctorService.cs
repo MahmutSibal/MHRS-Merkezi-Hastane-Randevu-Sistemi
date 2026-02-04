@@ -35,6 +35,7 @@ public sealed class DoctorService : IDoctorService
         return list.Select(x => new DoctorDto(
             x.Id,
             x.Name,
+            x.Title,
             x.DepartmentId,
             x.Department?.Name ?? string.Empty,
             x.IsActive,
@@ -47,6 +48,10 @@ public sealed class DoctorService : IDoctorService
         {
             throw new ConflictException("Doctor name is required.");
         }
+        if (string.IsNullOrWhiteSpace(request.Title))
+        {
+            throw new ConflictException("Doctor title is required.");
+        }
 
         var department = await _departments.FindByIdAsync(request.DepartmentId, ct);
         if (department is null)
@@ -54,7 +59,7 @@ public sealed class DoctorService : IDoctorService
             throw new NotFoundException("Department not found.");
         }
 
-        // UserId direkt verildiyse var mý kontrol et.
+        // UserId direkt verildiyse var mï¿½ kontrol et.
         if (request.UserId is not null)
         {
             var exists = await _users.ExistsByIdAsync(request.UserId.Value, ct);
@@ -64,13 +69,13 @@ public sealed class DoctorService : IDoctorService
             }
         }
 
-        // Email/Password verilmiþse doktor için kullanýcý hesabý üret.
+        // Email/Password verilmiï¿½se doktor iï¿½in kullanï¿½cï¿½ hesabï¿½ ï¿½ret.
         // (UserId ile birlikte verilmesini desteklemiyoruz.)
         if (!string.IsNullOrWhiteSpace(request.Email) || !string.IsNullOrWhiteSpace(request.Password))
         {
             if (request.UserId is not null)
             {
-                throw new ConflictException("UserId ile birlikte Email/Password gönderilemez.");
+                throw new ConflictException("UserId ile birlikte Email/Password gï¿½nderilemez.");
             }
 
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
@@ -82,7 +87,7 @@ public sealed class DoctorService : IDoctorService
             var existing = await _users.FindByEmailAsync(normalizedEmail, ct);
             if (existing is not null)
             {
-                throw new ConflictException("Email zaten kayýtlý.");
+                throw new ConflictException("Email zaten kayï¿½tlï¿½.");
             }
 
             await _uow.BeginAsync(ct);
@@ -101,6 +106,7 @@ public sealed class DoctorService : IDoctorService
                 var doctorWithUser = new Doctor
                 {
                     Name = request.Name.Trim(),
+                    Title = request.Title.Trim(),
                     DepartmentId = request.DepartmentId,
                     IsActive = true,
                     UserId = user.Id,
@@ -114,6 +120,7 @@ public sealed class DoctorService : IDoctorService
                 return new DoctorDto(
                     doctorWithUser.Id,
                     doctorWithUser.Name,
+                    doctorWithUser.Title,
                     doctorWithUser.DepartmentId,
                     department.Name,
                     doctorWithUser.IsActive,
@@ -129,6 +136,7 @@ public sealed class DoctorService : IDoctorService
         var doctor = new Doctor
         {
             Name = request.Name.Trim(),
+            Title = request.Title.Trim(),
             DepartmentId = request.DepartmentId,
             IsActive = true,
             UserId = request.UserId,
@@ -140,6 +148,7 @@ public sealed class DoctorService : IDoctorService
         return new DoctorDto(
             doctor.Id,
             doctor.Name,
+            doctor.Title,
             doctor.DepartmentId,
             department.Name,
             doctor.IsActive,
@@ -158,6 +167,10 @@ public sealed class DoctorService : IDoctorService
         {
             throw new ConflictException("Doctor name is required.");
         }
+        if (string.IsNullOrWhiteSpace(request.Title))
+        {
+            throw new ConflictException("Doctor title is required.");
+        }
 
         var department = await _departments.FindByIdAsync(request.DepartmentId, ct);
         if (department is null)
@@ -175,6 +188,7 @@ public sealed class DoctorService : IDoctorService
         }
 
         doctor.Name = request.Name.Trim();
+        doctor.Title = request.Title.Trim();
         doctor.DepartmentId = request.DepartmentId;
         doctor.IsActive = request.IsActive;
         doctor.UserId = request.UserId;
@@ -184,6 +198,7 @@ public sealed class DoctorService : IDoctorService
         return new DoctorDto(
             doctor.Id,
             doctor.Name,
+            doctor.Title,
             doctor.DepartmentId,
             department.Name,
             doctor.IsActive,
@@ -200,5 +215,85 @@ public sealed class DoctorService : IDoctorService
 
         doctor.IsActive = false;
         await _doctors.SaveChangesAsync(ct);
+    }
+
+    public async Task UpdateCredentialsAsync(int doctorId, UpdateDoctorCredentialsRequest request, CancellationToken ct)
+    {
+        var doctor = await _doctors.FindByIdAsync(doctorId, ct);
+        if (doctor is null)
+        {
+            throw new NotFoundException("Doctor not found.");
+        }
+
+        // If no changes provided, no-op
+        var newEmail = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email!.Trim();
+        var newPassword = string.IsNullOrWhiteSpace(request.Password) ? null : request.Password!;
+
+        if (newEmail is null && newPassword is null) return;
+
+        await _uow.BeginAsync(ct);
+        try
+        {
+            User? user = null;
+            if (doctor.UserId is not null)
+            {
+                user = await _users.FindByIdAsync(doctor.UserId.Value, ct);
+            }
+
+            // If user doesn't exist yet and credentials provided, create new user
+            if (user is null)
+            {
+                if (newEmail is null || newPassword is null)
+                {
+                    throw new ConflictException("Email ve Password birlikte zorunludur.");
+                }
+
+                var normalized = newEmail.Trim().ToUpperInvariant();
+                var existsByEmail = await _users.FindByEmailAsync(normalized, ct);
+                if (existsByEmail is not null)
+                {
+                    throw new ConflictException("Email zaten kayÄ±tlÄ±.");
+                }
+
+                user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = newEmail,
+                    PasswordHash = _passwordHasher.Hash(newPassword),
+                    Role = UserRole.Doctor,
+                };
+
+                await _users.AddAsync(user, ct);
+                doctor.UserId = user.Id;
+                await _doctors.SaveChangesAsync(ct);
+                await _users.SaveChangesAsync(ct);
+                await _uow.CommitAsync(ct);
+                return;
+            }
+
+            // Update existing user email/password as requested
+            if (newEmail is not null)
+            {
+                var normalized = newEmail.Trim().ToUpperInvariant();
+                var existing = await _users.FindByEmailAsync(normalized, ct);
+                if (existing is not null && existing.Id != user.Id)
+                {
+                    throw new ConflictException("Email baÅŸka bir kullanÄ±cÄ± tarafÄ±ndan kullanÄ±lÄ±yor.");
+                }
+                user.Email = newEmail;
+            }
+            if (newPassword is not null)
+            {
+                user.PasswordHash = _passwordHasher.Hash(newPassword);
+            }
+
+            await _users.SaveChangesAsync(ct);
+            await _uow.CommitAsync(ct);
+        }
+        catch
+        {
+            await _uow.RollbackAsync(ct);
+            throw;
+        }
     }
 }
