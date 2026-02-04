@@ -15,11 +15,13 @@ public sealed class AppointmentRepository : IAppointmentRepository
 {
     private readonly AppDbContext _db;
     private readonly string _connectionString;
+    private readonly ITenantContext _tenant;
 
-    public AppointmentRepository(AppDbContext db, IConfiguration configuration)
+    public AppointmentRepository(AppDbContext db, IConfiguration configuration, ITenantContext tenant)
     {
         _db = db;
         _connectionString = configuration.GetConnectionString("DefaultConnection")!;
+        _tenant = tenant;
     }
 
     public async Task<Appointment> CreateWithLockAsync(
@@ -42,14 +44,14 @@ public sealed class AppointmentRepository : IAppointmentRepository
             throw new InvalidOperationException("UnitOfWork transaction is required for appointment creation.");
         }
 
-        // Lock doctor row so concurrent bookings serialize per doctor.
-        var doctorExists = await connection.ExecuteScalarAsync<int?>(
+                // Lock doctor row so concurrent bookings serialize per doctor and tenant.
+                var doctorExists = await connection.ExecuteScalarAsync<int?>(
             new CommandDefinition(
                 @"SELECT 1
-                  FROM Doctors d WITH (UPDLOCK, HOLDLOCK)
-                  INNER JOIN Departments dep ON dep.Id = d.DepartmentId
-                  WHERE d.Id = @DoctorId AND d.IsActive = 1 AND dep.IsDeleted = 0;",
-                new { DoctorId = doctorId },
+                                    FROM Doctors d WITH (UPDLOCK, HOLDLOCK)
+                                    INNER JOIN Departments dep ON dep.Id = d.DepartmentId
+                                    WHERE d.Id = @DoctorId AND d.IsActive = 1 AND dep.IsDeleted = 0 AND d.TenantId = @TenantId AND dep.TenantId = @TenantId;",
+                                new { DoctorId = doctorId, TenantId = _tenant.TenantId },
                                 transaction: tx,
                 cancellationToken: ct));
 
@@ -59,11 +61,11 @@ public sealed class AppointmentRepository : IAppointmentRepository
         }
 
         // Prevent overlapping appointments for doctor (Pending/Approved).
-        var doctorConflict = await connection.ExecuteScalarAsync<int?>(
+                var doctorConflict = await connection.ExecuteScalarAsync<int?>(
             new CommandDefinition(
                 @"SELECT TOP(1) 1
                   FROM Appointments WITH (UPDLOCK, HOLDLOCK)
-                  WHERE DoctorId = @DoctorId
+                                    WHERE DoctorId = @DoctorId AND TenantId = @TenantId
                     AND Status IN (@Pending, @Approved)
                     AND @StartAtUtc < EndAt
                     AND @EndAtUtc > StartAt;",
@@ -74,6 +76,7 @@ public sealed class AppointmentRepository : IAppointmentRepository
                     EndAtUtc = endAtUtc,
                     Pending = (int)AppointmentStatus.Pending,
                     Approved = (int)AppointmentStatus.Approved,
+                                        TenantId = _tenant.TenantId,
                 },
                 transaction: tx,
                 cancellationToken: ct));
@@ -84,11 +87,11 @@ public sealed class AppointmentRepository : IAppointmentRepository
         }
 
         // Prevent same user from overlapping (Pending/Approved).
-        var userConflict = await connection.ExecuteScalarAsync<int?>(
+                var userConflict = await connection.ExecuteScalarAsync<int?>(
             new CommandDefinition(
                 @"SELECT TOP(1) 1
                   FROM Appointments WITH (UPDLOCK, HOLDLOCK)
-                  WHERE UserId = @UserId
+                                    WHERE UserId = @UserId AND TenantId = @TenantId
                     AND Status IN (@Pending, @Approved)
                     AND @StartAtUtc < EndAt
                     AND @EndAtUtc > StartAt;",
@@ -99,6 +102,7 @@ public sealed class AppointmentRepository : IAppointmentRepository
                     EndAtUtc = endAtUtc,
                     Pending = (int)AppointmentStatus.Pending,
                     Approved = (int)AppointmentStatus.Approved,
+                                        TenantId = _tenant.TenantId,
                 },
                 transaction: tx,
                 cancellationToken: ct));
@@ -112,8 +116,8 @@ public sealed class AppointmentRepository : IAppointmentRepository
 
         await connection.ExecuteAsync(
             new CommandDefinition(
-                                @"INSERT INTO Appointments (Id, UserId, DoctorId, StartAt, EndAt, Status, CreatedAtUtc, UpdatedAtUtc)
-                                    VALUES (@Id, @UserId, @DoctorId, @StartAtUtc, @EndAtUtc, @Status, @CreatedAtUtc, NULL);",
+                                @"INSERT INTO Appointments (Id, UserId, DoctorId, StartAt, EndAt, Status, CreatedAtUtc, UpdatedAtUtc, TenantId)
+                                    VALUES (@Id, @UserId, @DoctorId, @StartAtUtc, @EndAtUtc, @Status, @CreatedAtUtc, NULL, @TenantId);",
                 new
                 {
                     Id = appointmentId,
@@ -123,39 +127,46 @@ public sealed class AppointmentRepository : IAppointmentRepository
                     EndAtUtc = endAtUtc,
                     Status = (int)AppointmentStatus.Pending,
                     CreatedAtUtc = createdAtUtc,
+                    TenantId = _tenant.TenantId,
                 },
                 transaction: tx,
                 cancellationToken: ct));
 
                 await connection.ExecuteAsync(
                         new CommandDefinition(
-                                @"INSERT INTO AppointmentLogs (AppointmentId, Action, CreatedAtUtc)
-                                    VALUES (@AppointmentId, @Action, @CreatedAtUtc);",
+                                @"INSERT INTO AppointmentLogs (AppointmentId, Action, CreatedAtUtc, TenantId)
+                                    VALUES (@AppointmentId, @Action, @CreatedAtUtc, @TenantId);",
                                 new
                                 {
                                         AppointmentId = appointmentId,
                                         Action = "Created",
                                         CreatedAtUtc = createdAtUtc,
+                                        TenantId = _tenant.TenantId,
                                 },
                                 transaction: tx,
                                 cancellationToken: ct));
 
                 await connection.ExecuteAsync(
                         new CommandDefinition(
-                                @"INSERT INTO Notifications (AppointmentId, UserId, Message, CreatedAtUtc, IsSent)
-                                    VALUES (@AppointmentId, @UserId, @Message, @CreatedAtUtc, 0);",
+                                @"INSERT INTO Notifications (AppointmentId, UserId, Message, CreatedAtUtc, IsSent, TenantId)
+                                    VALUES (@AppointmentId, @UserId, @Message, @CreatedAtUtc, 0, @TenantId);",
                                 new
                                 {
                                         AppointmentId = appointmentId,
                                         UserId = userId,
                                         Message = "Randevunuz oluşturuldu.",
                                         CreatedAtUtc = createdAtUtc,
+                                        TenantId = _tenant.TenantId,
                                 },
                                 transaction: tx,
                                 cancellationToken: ct));
 
-        // Return via EF tracking for consistency.
-        var appt = await _db.Appointments.AsNoTracking().SingleAsync(x => x.Id == appointmentId, ct);
+        // Return via EF tracking for consistency, tolerate transient visibility.
+        var appt = await _db.Appointments.AsNoTracking().SingleOrDefaultAsync(x => x.Id == appointmentId, ct);
+        if (appt is null)
+        {
+            throw new InvalidOperationException("Appointment not found after creation.");
+        }
         return appt;
     }
 

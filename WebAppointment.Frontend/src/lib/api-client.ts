@@ -15,6 +15,19 @@ export async function apiJson<T>(path: string, init?: RequestInit): Promise<T> {
       const errorData = JSON.parse(text);
       
       // Backend'den gelen hata formatlarını kontrol et
+      // Model validation (ProblemDetails) errors sözlüğü
+      if (errorData.errors && typeof errorData.errors === "object") {
+        const firstMessages: string[] = [];
+        for (const key of Object.keys(errorData.errors)) {
+          const arr = errorData.errors[key];
+          if (Array.isArray(arr) && arr.length > 0) {
+            firstMessages.push(String(arr[0]));
+          }
+        }
+        if (firstMessages.length > 0) {
+          throw new Error(firstMessages[0]);
+        }
+      }
       if (errorData.detail) {
         // ProblemDetails formatı
         throw new Error(errorData.detail);

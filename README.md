@@ -242,25 +242,59 @@ Bu proje MIT lisansı ile sunulmaktadır. Ayrıntılar için `LICENSE` dosyasın
 
 ## Screenshots
 
-Aşağıda sistemin kilit ekranlarından bazı örnekler yer alır:
+Sistemin güncel ekran görüntüleri ve kısa açıklamaları aşağıdadır:
 
-![Giriş Ekranı](WebAppointment.Screenshots/Giris_Ekrani.PNG)
+### Giriş Ekranı
+![Giriş Ekranı](WebAppointment.Screenshots/Giris_Ekrani.jfif)
+_Kullanıcıların e-posta/şifre ile oturum açtığı ekran. Başarılı giriş sonrası rolüne göre yönlendirme yapılır._
 
-![Hasta Kayıt Ekranı](WebAppointment.Screenshots/Hasta_Kayit_Ekrani.PNG)
+### Hasta Kayıt Ekranı
+![Hasta Kayıt Ekranı](WebAppointment.Screenshots/Hasta_Kayit_Ekrani.jfif)
+_Yeni hasta kaydı için kimlik bilgileri ve iletişim bilgileri girilir; doğrulamalar anlık olarak uygulanır._
 
-![Hasta Randevu Portal ekranı](WebAppointment.Screenshots/Hasta_Randevu_Portal_ekrani.PNG)
+### Ana Dashboard Ekranı
+![Ana Dashboard Ekranı](WebAppointment.Screenshots/Ana_Dashboard_Ekrani.jfif)
+_Rol bazlı özet kartları ve hızlı erişimler. Son randevular, bekleyen onaylar ve kısa yollar görüntülenir._
 
-![Dashboard ekranı](WebAppointment.Screenshots/Dashboard_Ekrani.PNG)
+### Asistan Ekranı
+![Asistan Ekranı](WebAppointment.Screenshots/Asistan_Ekrani.png)
+_AI asistan ile doğal dilde etkileşim kurarak randevu arama/oluşturma akışına destek sağlar._
 
-![Doktor Paneli ekranı](WebAppointment.Screenshots/Doktor_Paneli_Ekrani.PNG)
+### Hasta – Yeni Randevu Ekranı
+![Hasta Yeni Randevu Ekranı](WebAppointment.Screenshots/Hasta_Yeni_Randevu_Ekrani.png)
+_Hasta, hastane → bölüm → doktor → tarih/saat adımlarında seçim yaparak randevu oluşturur. Çakışmalar ve kurallar kontrol edilir._
 
-![Doktor Takvim ekranı](WebAppointment.Screenshots/Doktor_Takvim_ekrani.PNG)
+### Doktor – Randevularım
+![Doktor Randevularım Ekranı](WebAppointment.Screenshots/Doktor_Randevularim_Ekrani.png)
+_Doktorun kendisine atanmış randevuları listeler. Randevu **Onayla** ve **Tamamla** işlemleri buradan yapılır._
 
-![Hastane Bölüm ekleme ekranı](WebAppointment.Screenshots/Hastane_Bolum_ekleme_ekrani.PNG)
+### Doktor – Takvim
+![Doktor Takvim Ekranı](WebAppointment.Screenshots/Doktor_Takvim_Ekrani.png)
+_Günlük/haftalık zaman dilimleri ve uygun slotlar gösterilir; yoğunluk planlaması yapılır._
 
-![Hastane Doktor ekleme ekranı](WebAppointment.Screenshots/Hastane_Doktor_ekleme_ekrani.PNG)
+### Hastane Yönetimi – Genel
+![Hastane Yönetim Ekranı](WebAppointment.Screenshots/Hastane_Yonetim_Ekrani.jfif)
+_Hastane yöneticisi için üst seviye kontrol paneli; bölümler, doktorlar ve randevulara hızlı erişim._
 
-![Admin Hastane Yönetim ekranı](WebAppointment.Screenshots/Admin_Hastane_Yonetim_Ekrani.PNG)
+### Hastane – Bölümler
+![Hastane Bölümler Ekranı](WebAppointment.Screenshots/Hastane_Bolumler_Ekrani.png)
+_Bölüm CRUD işlemleri: ekleme, düzenleme, silme ve listeleme. Tenant kısıtları otomatik uygulanır._
+
+### Hastane – Doktorlar
+![Hastane Doktorlar Ekranı](WebAppointment.Screenshots/Hastane_Doktorlar_Ekrani.png)
+_Doktor yönetimi: atama, profil düzenleme ve bölüm/çalışma takvimi ilişkileri._
+
+### Hastane – Hastalar
+![Hastane Hastalar Ekranı](WebAppointment.Screenshots/Hastane_Hastalar_Ekrani.png)
+_Hastane kapsamındaki hastaların listesi ve temel demografik/iletişim bilgileri._
+
+### Hastane – Randevular
+![Hastane Randevular Ekranı](WebAppointment.Screenshots/Hastane_Randevular_Ekrani.png)
+_Hastane genelindeki randevuların takibi; filtreleme ve durum yönetimi._
+
+### Admin – Yönetim
+![Admin Yönetim Ekranı](WebAppointment.Screenshots/Admin_Yonetim_Ekrani.png)
+_Sistem geneli yönetim ve raporlara erişim. Tenant, kullanıcı ve güvenlik politikaları üzerinde tam yetki._
 
 ---
 

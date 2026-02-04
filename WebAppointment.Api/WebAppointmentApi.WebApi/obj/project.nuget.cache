@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "XkL3mash2qM=",
+  "dgSpecHash": "o2wF2yI1/ko=",
   "success": true,
-  "projectFilePath": "C:\\Users\\-\\Desktop\\WebAppointment\\WebAppointment.Api\\WebAppointmentApi.WebApi\\WebAppointmentApi.WebApi.csproj",
+  "projectFilePath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.WebApi\\WebAppointmentApi.WebApi.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\-\\.nuget\\packages\\automapper\\12.0.1\\automapper.12.0.1.nupkg.sha512",
     "C:\\Users\\-\\.nuget\\packages\\automapper.extensions.microsoft.dependencyinjection\\12.0.1\\automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",

@@ -4,7 +4,7 @@ import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 import { Spinner } from "@/components/ui/spinner";
 
-type Variant = "primary" | "secondary" | "danger" | "outline";
+type Variant = "primary" | "secondary" | "danger" | "outline" | "ghost";
 type Size = "sm" | "md" | "lg";
 
 export function Button({
@@ -34,6 +34,8 @@ export function Button({
         ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md hover:shadow-lg hover:from-red-600 hover:to-red-700 active:scale-95 focus-visible:shadow-lg"
         : variant === "outline"
         ? "border-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 active:scale-95 focus-visible:shadow-lg"
+        : variant === "ghost"
+        ? "bg-transparent text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 active:scale-95 focus-visible:shadow-lg"
         : "border border-slate-300 bg-white/90 text-slate-900 shadow-sm backdrop-blur hover:bg-white dark:border-slate-600 dark:bg-slate-800/90 dark:text-slate-100 dark:hover:bg-slate-700 active:scale-95 focus-visible:shadow-lg";
 
   return (

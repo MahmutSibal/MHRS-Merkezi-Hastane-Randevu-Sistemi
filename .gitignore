@@ -1,0 +1,3 @@
+# Ignore Node/Next.js artifacts
+node_modules/
+.next/

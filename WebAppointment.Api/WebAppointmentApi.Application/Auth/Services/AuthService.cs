@@ -58,7 +58,7 @@ public sealed class AuthService : IAuthService
         var hashFormat = hash.Contains('.') ? "pbkdf2" : "unknown";
         var hashPrefix = hash.Length <= 25 ? hash : hash.Substring(0, 25);
 
-        var ok = _passwordHasher.Verify(request.Password, user.PasswordHash);
+        var ok = _passwordHasher.Verify(request.Password, hash);
         if (!ok)
         {
             _logger.LogInformation(

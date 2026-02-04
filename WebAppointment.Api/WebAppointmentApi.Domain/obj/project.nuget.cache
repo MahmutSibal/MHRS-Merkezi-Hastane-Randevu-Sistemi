@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "4h9akAq6P7w=",
+  "dgSpecHash": "bzz+6YemQQI=",
   "success": true,
-  "projectFilePath": "C:\\Users\\-\\Desktop\\WebAppointment\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj",
+  "projectFilePath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\-\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\-\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\6.0.0\\microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import { ToastProvider } from "@/components/session/ToastProvider";
 import { LoadingProvider } from "@/components/session/LoadingProvider";
+import { AssistantWidget } from "@/components/assistant/AssistantWidgetClean";
 import "./globals.css";
 
 const inter = Inter({
@@ -33,6 +34,8 @@ export default function RootLayout({
         <LoadingProvider>
           <ToastProvider>
             {children}
+            {/* Küresel Asistan: tüm sayfalarda görünür */}
+            <AssistantWidget />
           </ToastProvider>
         </LoadingProvider>
       </body>

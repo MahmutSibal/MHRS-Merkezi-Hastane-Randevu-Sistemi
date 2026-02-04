@@ -496,11 +496,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\-\\Desktop\\WebAppointment\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj",
+      "projectUniqueName": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj",
       "projectName": "WebAppointmentApi.Application",
-      "projectPath": "C:\\Users\\-\\Desktop\\WebAppointment\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj",
+      "projectPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj",
       "packagesPath": "C:\\Users\\-\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\-\\Desktop\\WebAppointment\\WebAppointment.Api\\WebAppointmentApi.Application\\obj\\",
+      "outputPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -521,8 +521,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\-\\Desktop\\WebAppointment\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj": {
-              "projectPath": "C:\\Users\\-\\Desktop\\WebAppointment\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj"
+            "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj": {
+              "projectPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj"
             }
           }
         }

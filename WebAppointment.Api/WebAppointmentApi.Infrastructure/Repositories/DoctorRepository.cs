@@ -31,7 +31,7 @@ public sealed class DoctorRepository : IDoctorRepository
     public async Task<IReadOnlyList<Doctor>> ListAsync(CancellationToken ct)
     {
         return await _db.Doctors.AsNoTracking()
-            .Include(x => x.Department)!.ThenInclude(d => d.Hospital)
+            .Include(x => x.Department).ThenInclude(d => d!.Hospital)
             .OrderBy(x => x.Name)
             .ToListAsync(ct);
     }

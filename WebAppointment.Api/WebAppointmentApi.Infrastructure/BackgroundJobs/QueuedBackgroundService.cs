@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using WebAppointmentApi.Application.Common.Abstractions;
 
 namespace WebAppointmentApi.Infrastructure.BackgroundJobs;
