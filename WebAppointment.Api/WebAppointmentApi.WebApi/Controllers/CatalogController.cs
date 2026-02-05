@@ -6,6 +6,7 @@ using WebAppointmentApi.Application.Doctors.Abstractions;
 using WebAppointmentApi.Application.Doctors.Dtos;
 using WebAppointmentApi.Application.Hospitals.Abstractions;
 using WebAppointmentApi.Application.Hospitals.Dtos;
+using WebAppointmentApi.Domain.Enums;
 
 namespace WebAppointmentApi.WebApi.Controllers;
 
@@ -48,6 +49,33 @@ public sealed class CatalogController : ControllerBase
             .Where(x => departmentId is null || x.DepartmentId == departmentId)
             .Select(x => x with { UserId = null })
             .ToList();
+    }
+
+    [HttpGet("doctors/{id:int}")]
+    public async Task<ActionResult<DoctorPublicDetailDto>> DoctorDetail([FromRoute] int id, CancellationToken ct)
+    {
+        var repo = HttpContext.RequestServices.GetService<WebAppointmentApi.Application.Common.Abstractions.IDoctorRepository>();
+        if (repo is null)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, "Doctor repository not available.");
+        }
+
+        var doctor = await repo.FindByIdAsync(id, ct);
+        if (doctor is null || !doctor.IsActive)
+        {
+            return NotFound();
+        }
+
+        var isApproved = doctor.ProfileStatus == DoctorProfileStatus.Approved;
+        return Ok(new DoctorPublicDetailDto(
+            Id: doctor.Id,
+            Name: doctor.Name,
+            Title: doctor.Title,
+            DepartmentId: doctor.DepartmentId,
+            DepartmentName: doctor.Department?.Name ?? string.Empty,
+            ProfileStatus: doctor.ProfileStatus.ToString(),
+            GraduationUniversity: isApproved ? doctor.GraduationUniversity : null,
+            ExperienceSummary: isApproved ? doctor.ExperienceSummary : null));
     }
 
     [HttpGet("hospitals")]

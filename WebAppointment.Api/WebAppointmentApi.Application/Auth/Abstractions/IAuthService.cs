@@ -9,6 +9,8 @@ public interface IAuthService
     Task<LoginResponse> RefreshAsync(RefreshTokenRequest request, CancellationToken ct);
     Task LogoutAsync(LogoutRequest request, CancellationToken ct);
 
+    Task<LoginResponse> UpdateMyCredentialsAsync(Guid userId, UpdateMyCredentialsRequest request, CancellationToken ct);
+
     /// <summary>
     /// Registers a new patient user and returns tokens (login-like response).
     /// </summary>

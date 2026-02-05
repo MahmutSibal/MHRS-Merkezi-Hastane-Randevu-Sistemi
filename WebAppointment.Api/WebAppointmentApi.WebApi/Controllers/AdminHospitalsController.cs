@@ -28,6 +28,29 @@ public sealed class AdminHospitalsController : ControllerBase
     [HttpPost("{id:int}/assign-subadmin")]
     public Task<Guid> AssignSubAdmin([FromRoute] int id, [FromBody] AssignSubAdminRequest request, CancellationToken ct)
         => _hospitals.AssignSubAdminAsync(id, request.Email, request.Password, ct);
-}
 
-public sealed record AssignSubAdminRequest(string Email, string Password);
+    [HttpGet("{id:int}/subadmins")]
+    public Task<IReadOnlyList<SubAdminDto>> ListSubAdmins([FromRoute] int id, CancellationToken ct)
+        => _hospitals.ListSubAdminsAsync(id, ct);
+
+    [HttpPatch("{id:int}/subadmins/{subAdminUserId:guid}/credentials")]
+    public async Task<IActionResult> UpdateSubAdminCredentials(
+        [FromRoute] int id,
+        [FromRoute] Guid subAdminUserId,
+        [FromBody] UpdateSubAdminCredentialsRequest request,
+        CancellationToken ct)
+    {
+        await _hospitals.UpdateSubAdminCredentialsAsync(id, subAdminUserId, request, ct);
+        return NoContent();
+    }
+
+    [HttpDelete("{id:int}/subadmins/{subAdminUserId:guid}")]
+    public async Task<IActionResult> DeleteSubAdmin(
+        [FromRoute] int id,
+        [FromRoute] Guid subAdminUserId,
+        CancellationToken ct)
+    {
+        await _hospitals.DeleteSubAdminAsync(id, subAdminUserId, ct);
+        return NoContent();
+    }
+}

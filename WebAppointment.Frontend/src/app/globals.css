@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/*
+  Theme strategy:
+  - We control dark mode via `html.dark` class (manual selection supported).
+  - Tailwind's `dark:` variant is overridden to follow the same class.
+*/
+@custom-variant dark (&:where(html.dark, html.dark *));
+
 :root {
   /* Light theme per spec */
   --background: #F8FAFC; /* slate-50 */
@@ -26,18 +33,21 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f1f5f9;
-    --muted: #94a3b8;
-    --muted-bg: rgba(15, 23, 42, 0.6);
-    --card: rgba(15, 23, 42, 0.4);
-    --border: rgba(148, 163, 184, 0.2);
-    --ring: rgba(147, 197, 253, 0.45);
-    --shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
-  }
+html.dark {
+  color-scheme: dark;
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --muted: #94a3b8;
+  --muted-bg: rgba(15, 23, 42, 0.6);
+  --card: rgba(15, 23, 42, 0.4);
+  --border: rgba(148, 163, 184, 0.2);
+  --ring: rgba(147, 197, 253, 0.45);
+  --shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+html:not(.dark) {
+  color-scheme: light;
 }
 
 html {

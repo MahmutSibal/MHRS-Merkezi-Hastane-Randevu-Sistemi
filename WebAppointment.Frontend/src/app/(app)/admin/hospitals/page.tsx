@@ -10,16 +10,23 @@ import { apiJson } from "@/lib/api-client";
 // Harita için Google yerine OpenStreetMap embed kullanıyoruz; API anahtarı gerektirmez.
 
 type HospitalDto = { id: number; name: string; address?: string | null; latitude?: number | null; longitude?: number | null; type: "Public" | "Private" };
+type SubAdminDto = { id: string; email: string };
 
 export default function AdminHospitalsPage() {
   const toast = useToast();
   const [hospitals, setHospitals] = useState<HospitalDto[]>([]);
+  const [subAdmins, setSubAdmins] = useState<SubAdminDto[]>([]);
+  const [subAdminsLoading, setSubAdminsLoading] = useState(false);
+  const [editEmailById, setEditEmailById] = useState<Record<string, string>>({});
+  const [editPasswordById, setEditPasswordById] = useState<Record<string, string>>({});
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [latitude, setLatitude] = useState<string>("");
   const [longitude, setLongitude] = useState<string>("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [type, setType] = useState<"Public" | "Private">("Public");
 
@@ -35,7 +42,67 @@ export default function AdminHospitalsPage() {
     }
   }
 
+  async function loadSubAdmins(hospitalId: number) {
+    setSubAdminsLoading(true);
+    try {
+      const list = await apiJson<SubAdminDto[]>(`/backend/admin/hospitals/${hospitalId}/subadmins`);
+      setSubAdmins(list);
+
+      const emailMap: Record<string, string> = {};
+      const passwordMap: Record<string, string> = {};
+      for (const s of list) {
+        emailMap[s.id] = s.email;
+        passwordMap[s.id] = "";
+      }
+      setEditEmailById(emailMap);
+      setEditPasswordById(passwordMap);
+    } catch (e) {
+      setSubAdmins([]);
+      toast.error(e instanceof Error ? e.message : "Alt adminler yüklenemedi.");
+    } finally {
+      setSubAdminsLoading(false);
+    }
+  }
+
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (!selectedId) {
+      setSubAdmins([]);
+      setEditEmailById({});
+      setEditPasswordById({});
+      return;
+    }
+    loadSubAdmins(selectedId);
+  }, [selectedId]);
+
+  // Real-time validation (Doctor sayfasıyla uyumlu)
+  useEffect(() => {
+    const e = email.trim();
+    const p = password;
+
+    if (!e && !p)
+    {
+      setEmailError(null);
+      setPasswordError(null);
+      return;
+    }
+
+    const hasTurkish = e.includes("ı") || e.includes("İ");
+    const basicEmailOk = /.+@.+\..+/.test(e) && !hasTurkish;
+    setEmailError(basicEmailOk ? null : "Geçerli bir e-posta adresi girin (Türkçe karakter yok).");
+
+    if (p)
+    {
+      if (p.length < 8) setPasswordError("Şifre en az 8 karakter olmalıdır.");
+      else if (/^\d+$/.test(p)) setPasswordError("Şifre sadece rakamlardan oluşamaz.");
+      else setPasswordError(null);
+    }
+    else
+    {
+      setPasswordError(null);
+    }
+  }, [email, password]);
 
   // Otomatik geocode (OpenStreetMap Nominatim): isim + şehir/adres yazıldığında enlem/boylam doldur ve haritayı yakınlaştır
   useEffect(() => {
@@ -82,10 +149,49 @@ export default function AdminHospitalsPage() {
       });
       toast.success("Alt admin atandı");
       setEmail(""); setPassword("");
+      await loadSubAdmins(selectedId);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Atama başarısız.");
     }
   }
+
+  async function updateSubAdminCredentials(subAdminUserId: string) {
+    if (!selectedId) return;
+    try {
+      const newEmail = (editEmailById[subAdminUserId] ?? "").trim();
+      const newPassword = editPasswordById[subAdminUserId] ?? "";
+
+      await apiJson<void>(`/backend/admin/hospitals/${selectedId}/subadmins/${subAdminUserId}/credentials`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          email: newEmail ? newEmail : null,
+          password: newPassword ? newPassword : null,
+        }),
+      });
+
+      toast.success("Alt admin güncellendi");
+      await loadSubAdmins(selectedId);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Güncelleme başarısız.");
+    }
+  }
+
+  async function deleteSubAdmin(subAdminUserId: string) {
+    if (!selectedId) return;
+    try {
+      await apiJson<void>(`/backend/admin/hospitals/${selectedId}/subadmins/${subAdminUserId}`, {
+        method: "DELETE",
+      });
+      toast.success("Alt admin silindi");
+      setSubAdmins((prev) => prev.filter((x) => x.id !== subAdminUserId));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Silme başarısız.");
+    }
+  }
+
+  const canAssignSubAdmin = useMemo(() => {
+    return !!selectedId && email.trim().length > 0 && password.length > 0 && !emailError && !passwordError;
+  }, [selectedId, email, password, emailError, passwordError]);
 
   return (
     <div className="grid gap-6">
@@ -103,8 +209,8 @@ export default function AdminHospitalsPage() {
                 <option value="Private">Özel Hastane</option>
               </select>
             </div>
-            <Input value={latitude} onChange={(e) => setLatitude(e.target.value)} placeholder="Enlem (lat)" />
-            <Input value={longitude} onChange={(e) => setLongitude(e.target.value)} placeholder="Boylam (lng)" />
+            <Input value={latitude} readOnly placeholder="Enlem (lat)" />
+            <Input value={longitude} readOnly placeholder="Boylam (lng)" />
             <Button onClick={create}>Hastane Oluştur</Button>
           </div>
 
@@ -134,10 +240,49 @@ export default function AdminHospitalsPage() {
                 <option key={h.id} value={h.id}>{h.name}</option>
               ))}
             </select>
-            <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Alt admin e-posta" />
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Şifre" />
+            <div>
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Alt admin e-posta" aria-invalid={!!emailError} />
+              {emailError && <p className="mt-1 text-xs text-red-600">{emailError}</p>}
+            </div>
+            <div>
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Şifre" aria-invalid={!!passwordError} />
+              {passwordError && <p className="mt-1 text-xs text-red-600">{passwordError}</p>}
+            </div>
           </div>
-          <Button onClick={assignSubAdmin} disabled={!selectedId || !email || !password}>Alt Admin Ata</Button>
+          <Button onClick={assignSubAdmin} disabled={!canAssignSubAdmin}>Alt Admin Ata</Button>
+
+          {selectedId ? (
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-slate-700 dark:text-slate-300">Alt Adminler</div>
+              {subAdminsLoading ? (
+                <p className="text-sm text-slate-600 dark:text-slate-400">Yükleniyor...</p>
+              ) : subAdmins.length === 0 ? (
+                <p className="text-sm text-slate-600 dark:text-slate-400">Alt admin yok.</p>
+              ) : (
+                <ul className="grid gap-2">
+                  {subAdmins.map((s) => (
+                    <li key={s.id} className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                      <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto_auto]">
+                        <Input
+                          value={editEmailById[s.id] ?? ""}
+                          onChange={(e) => setEditEmailById((prev) => ({ ...prev, [s.id]: e.target.value }))}
+                          placeholder="E-posta"
+                        />
+                        <Input
+                          type="password"
+                          value={editPasswordById[s.id] ?? ""}
+                          onChange={(e) => setEditPasswordById((prev) => ({ ...prev, [s.id]: e.target.value }))}
+                          placeholder="Yeni şifre (opsiyonel)"
+                        />
+                        <Button onClick={() => updateSubAdminCredentials(s.id)}>Kaydet</Button>
+                        <Button variant="danger" onClick={() => deleteSubAdmin(s.id)}>Sil</Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : null}
         </div>
       </Card>
 
@@ -146,7 +291,16 @@ export default function AdminHospitalsPage() {
           <p className="text-sm text-slate-600 dark:text-slate-400">Toplam {hospitals.length} hastane</p>
           <ul className="grid gap-2">
             {hospitals.map((h) => (
-              <li key={h.id} className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+              <li
+                key={h.id}
+                className={`rounded-lg border border-slate-200 p-3 dark:border-slate-700 ${selectedId === h.id ? "bg-slate-50 dark:bg-slate-900/20" : ""}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelectedId(h.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") setSelectedId(h.id);
+                }}
+              >
                 <div className="font-medium">{h.name}</div>
                 {h.address ? <div className="text-xs text-slate-500">{h.address}</div> : null}
                 {(h.latitude ?? null) && (h.longitude ?? null) ? <div className="text-xs text-slate-500">({h.latitude}, {h.longitude}) • {(h.type === "Public" ? "Devlet" : "Özel")}</div> : <div className="text-xs text-slate-500">{(h.type === "Public" ? "Devlet" : "Özel")}</div>}

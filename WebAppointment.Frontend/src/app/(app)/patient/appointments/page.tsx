@@ -16,6 +16,8 @@ type AppointmentDto = {
   departmentName: string;
   appointmentDateUtc: string;
   status: string;
+  dependentId?: number | null;
+  dependentFullName?: string | null;
 };
 
 export default function PatientAppointmentsPage() {
@@ -43,9 +45,13 @@ export default function PatientAppointmentsPage() {
 
   async function cancel(id: string) {
     if (!confirm("Randevu iptal edilsin mi?") ) return;
+    const reason = prompt("İptal gerekçesi (opsiyonel):") ?? "";
     setError(null);
     try {
-      await apiJson<void>(`/backend/appointments/${id}/cancel`, { method: "PUT" });
+      await apiJson<void>(`/backend/appointments/${id}/cancel`, {
+        method: "PUT",
+        body: JSON.stringify({ reason: reason.trim() ? reason.trim() : null }),
+      });
       toast.success("Randevu başarıyla iptal edildi");
       await load();
     } catch (e) {
@@ -64,7 +70,10 @@ export default function PatientAppointmentsPage() {
       <div className="grid gap-3">
         {items.map((a) => {
           const status = (a.status || "").toLowerCase();
-          const canCancel = status.includes("pending") || status.includes("approved");
+          const startMs = new Date(a.appointmentDateUtc).getTime();
+          const diffMs = startMs - Date.now();
+          const isUpcomingEnough = diffMs > 2 * 60 * 60 * 1000;
+          const canCancel = (status.includes("pending") || status.includes("approved")) && isUpcomingEnough;
           return (
             <Card key={a.id}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -74,6 +83,9 @@ export default function PatientAppointmentsPage() {
                     <StatusBadge status={a.status} />
                   </div>
                   <div className="mt-1 text-sm text-zinc-600 dark:text-slate-400">{new Date(a.appointmentDateUtc).toLocaleString("tr-TR")}</div>
+                  <div className="mt-1 text-xs text-zinc-500 dark:text-slate-400">
+                    Hasta: {a.dependentFullName ? a.dependentFullName : "Kendim"}
+                  </div>
                 </div>
                 <Button variant="danger" onClick={() => cancel(a.id)} disabled={!canCancel}>
                   İptal

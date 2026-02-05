@@ -8,4 +8,8 @@ public interface IHospitalService
     Task<IReadOnlyList<HospitalDto>> ListNearestAsync(double latitude, double longitude, int? take, CancellationToken ct);
     Task<HospitalDto> CreateAsync(CreateHospitalRequest request, CancellationToken ct);
     Task<Guid> AssignSubAdminAsync(int hospitalId, string email, string password, CancellationToken ct);
+
+    Task<IReadOnlyList<SubAdminDto>> ListSubAdminsAsync(int hospitalId, CancellationToken ct);
+    Task UpdateSubAdminCredentialsAsync(int hospitalId, Guid subAdminUserId, UpdateSubAdminCredentialsRequest request, CancellationToken ct);
+    Task DeleteSubAdminAsync(int hospitalId, Guid subAdminUserId, CancellationToken ct);
 }

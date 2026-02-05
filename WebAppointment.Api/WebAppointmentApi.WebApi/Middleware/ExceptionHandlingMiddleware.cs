@@ -1,7 +1,5 @@
 using System.Net;
-using System.Diagnostics;
 using FluentValidation;
-using Microsoft.AspNetCore.Mvc;
 using WebAppointmentApi.Application.Common.Exceptions;
 
 namespace WebAppointmentApi.WebApi.Middleware;
@@ -9,12 +7,10 @@ namespace WebAppointmentApi.WebApi.Middleware;
 public sealed class ExceptionHandlingMiddleware : IMiddleware
 {
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
-    private readonly IWebHostEnvironment _env;
 
-    public ExceptionHandlingMiddleware(ILogger<ExceptionHandlingMiddleware> logger, IWebHostEnvironment env)
+    public ExceptionHandlingMiddleware(ILogger<ExceptionHandlingMiddleware> logger)
     {
         _logger = logger;
-        _env = env;
     }
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
@@ -34,11 +30,12 @@ public sealed class ExceptionHandlingMiddleware : IMiddleware
                 ForbiddenException => (int)HttpStatusCode.Forbidden,
                 NotFoundException => (int)HttpStatusCode.NotFound,
                 ConflictException => (int)HttpStatusCode.Conflict,
+                TooManyRequestsException => StatusCodes.Status429TooManyRequests,
                 _ => (int)HttpStatusCode.InternalServerError
             };
 
             context.Response.StatusCode = status;
-            context.Response.ContentType = "application/problem+json";
+            context.Response.ContentType = "text/plain; charset=utf-8";
 
             // Son kullanıcı mesajlarını daima kullanıcı dostu ve kod/numara içermeyen şekilde ver.
             string userMessage;
@@ -50,37 +47,30 @@ public sealed class ExceptionHandlingMiddleware : IMiddleware
             }
             else if (ex is UnauthorizedException)
             {
-                userMessage = "Oturum açmanız gerekiyor.";
+                userMessage = string.IsNullOrWhiteSpace(ex.Message) ? "Oturum açmanız gerekiyor." : ex.Message;
             }
             else if (ex is ForbiddenException)
             {
-                userMessage = "Bu işlemi yapma izniniz yok.";
+                userMessage = string.IsNullOrWhiteSpace(ex.Message) ? "Bu işlemi yapma izniniz yok." : ex.Message;
             }
             else if (ex is NotFoundException)
             {
-                userMessage = "Aradığınız kayıt bulunamadı.";
+                userMessage = string.IsNullOrWhiteSpace(ex.Message) ? "Aradığınız kayıt bulunamadı." : ex.Message;
             }
             else if (ex is ConflictException)
             {
-                userMessage = "İstek mevcut durumla çakışıyor.";
+                userMessage = string.IsNullOrWhiteSpace(ex.Message) ? "İstek mevcut durumla çakışıyor." : ex.Message;
+            }
+            else if (ex is TooManyRequestsException)
+            {
+                userMessage = string.IsNullOrWhiteSpace(ex.Message) ? "Çok fazla istek. Lütfen daha sonra tekrar deneyin." : ex.Message;
             }
             else
             {
                 userMessage = "Beklenmeyen bir hata oluştu.";
             }
 
-            var details = new ProblemDetails
-            {
-                // Body'de status kodunu göstermemek için null bırak (HTTP status header yine set edilecek)
-                Status = null,
-                Title = "İstek işlenemedi",
-                Detail = userMessage,
-                Instance = context.Request.Path,
-            };
-
-            details.Extensions["traceId"] = Activity.Current?.Id ?? context.TraceIdentifier;
-
-            await context.Response.WriteAsJsonAsync(details);
+            await context.Response.WriteAsync(userMessage);
         }
     }
 }

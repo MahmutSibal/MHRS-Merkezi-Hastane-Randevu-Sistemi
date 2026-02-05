@@ -7,5 +7,7 @@ public sealed record AppointmentDto(
     string DoctorName,
     string DepartmentName,
     DateTimeOffset AppointmentDateUtc,
-    string Status
+    string Status,
+    int? DependentId,
+    string? DependentFullName
 );

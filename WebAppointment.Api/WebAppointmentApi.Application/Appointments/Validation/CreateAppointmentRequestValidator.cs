@@ -9,6 +9,10 @@ public sealed class CreateAppointmentRequestValidator : AbstractValidator<Create
     {
         RuleFor(x => x.DoctorId).GreaterThan(0);
 
+        RuleFor(x => x.DependentId)
+            .Must(x => x is null || x.Value > 0)
+            .WithMessage("DependentId geçersiz.");
+
         RuleFor(x => x.AppointmentDate)
             .NotEmpty()
             .Must(BeInFuture)
@@ -16,9 +20,7 @@ public sealed class CreateAppointmentRequestValidator : AbstractValidator<Create
             .Must(BeWeekday)
             .WithMessage("Hafta sonu randevu alınamaz")
             .Must(HaveValidMinutes)
-            .WithMessage("Dakika değeri 00 veya 30 olmalıdır")
-            .Must(BeInWorkingHours)
-            .WithMessage("Randevu mesai saatleri içinde olmalıdır (09:00-17:00)");
+            .WithMessage("Dakika değeri 00 veya 30 olmalıdır");
     }
 
     private static bool BeInFuture(DateTimeOffset date)
@@ -32,13 +34,4 @@ public sealed class CreateAppointmentRequestValidator : AbstractValidator<Create
 
     private static bool HaveValidMinutes(DateTimeOffset date)
         => date.Minute is 0 or 30;
-
-    private static bool BeInWorkingHours(DateTimeOffset date)
-    {
-        // Use the provided offset as "local" clock for working hours.
-        var time = date.TimeOfDay;
-        var start = new TimeSpan(9, 0, 0);
-        var lastStart = new TimeSpan(16, 30, 0);
-        return time >= start && time <= lastStart;
-    }
 }

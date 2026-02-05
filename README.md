@@ -32,7 +32,9 @@ Modern, ölçeklenebilir ve güvenli bir hastane randevu yönetim platformu. Ço
 
 - **Roller:** Patient, Doctor, HospitalAdmin, Admin
 - **Randevu Yönetimi:** Alma, listeleme, iptal (kurallı), doktor onayı/tamamlama
+- **Veli / Çocuk (Dependent):** Hasta hesabına bağlı çocuk kaydı ekleme ve çocuk adına randevu oluşturma
 - **Katalog:** Hastaneler (konum bazlı), bölümler, doktorlar
+- **Doktor Profil Onayı:** Doktor mezuniyet (üniversite) + deneyim bilgisi girer; Hastane Yöneticisi onaylar; hasta sadece onaylı bilgiyi görür
 - **Raporlar:** En popüler doktorlar (Chart.js görselleştirme)
 - **AI Asistan:** Gemini destekli konuşarak randevu alma
 - **Haritalar:** Google Maps ile yakın hastaneler/işaretçiler
@@ -98,18 +100,24 @@ npm run dev
   - Liste: `GET /api/appointments/my`
   - İptal: `PUT /api/appointments/{id}/cancel`
   - Kurallar: geçmiş/başlamaya 15 dk kala iptal edilemez; 30 dk sabit süre; çakışma önleme
+  - Çocuk için randevu: `dependentId` alanı ile (opsiyonel)
 - **Doktor Akışı**
   - Liste: `GET /api/doctor/appointments/my`
   - Onay: `PUT /api/doctor/appointments/{id}/approve`
   - Tamamla: `PUT /api/doctor/appointments/{id}/complete`
   - Takvim slotları: `GET /api/doctor/calendar/daily-slots?date=YYYY-MM-DD`
+  - Müsaitlik: `GET /api/doctor/availability/me`, `PUT /api/doctor/availability/me`
+  - İzin (Time off): `POST /api/doctor/time-offs/me`, `GET /api/doctor/time-offs/me?fromUtc=...&toUtc=...`
+  - Uzmanlık bilgisi: `GET /api/doctor/profile/me`, `PUT /api/doctor/profile/me` (gönderince onay bekler)
 - **Katalog**
   - Hastaneler: `GET /api/catalog/hospitals` (opsiyonel lat/lng/take)
   - Bölümler: `GET /api/catalog/departments?hospitalId={id}`
   - Doktorlar: `GET /api/catalog/doctors?departmentId={id}`
+  - Doktor detayı: `GET /api/catalog/doctors/{id}` (mezuniyet/deneyim sadece onaylıysa gelir)
 - **Hastane Yöneticisi**
   - Bölümler: CRUD `api/hospitaladmin/departments`
   - Doktorlar: CRUD `api/hospitaladmin/doctors`
+  - Doktor profil onayı: `GET /api/hospitaladmin/doctor-profiles/pending`, `POST /api/hospitaladmin/doctor-profiles/{doctorId}/approve`
 - **Admin**
   - Tam kapsam CRUD controller’ları (Doktor yönetimi artık HospitalAdmin panelindedir)
   - Raporlar: `GET /api/admin/reports/top-doctors?days=30&take=10`
@@ -136,8 +144,10 @@ npm run dev
     - Yeni randevu: [WebAppointment.Frontend/src/app/(app)/patient/appointments/new/page.tsx](WebAppointment.Frontend/src/app/(app)/patient/appointments/new/page.tsx)
   - Doktor: [WebAppointment.Frontend/src/app/(app)/doctor](WebAppointment.Frontend/src/app/(app)/doctor)
     - Randevular: [WebAppointment.Frontend/src/app/(app)/doctor/appointments/page.tsx](WebAppointment.Frontend/src/app/(app)/doctor/appointments/page.tsx)
+    - Uzmanlık bilgileri: [WebAppointment.Frontend/src/app/(app)/doctor/profile/page.tsx](WebAppointment.Frontend/src/app/(app)/doctor/profile/page.tsx)
   - Hastane Yöneticisi: [WebAppointment.Frontend/src/app/(app)/hospital](WebAppointment.Frontend/src/app/(app)/hospital)
     - Bölümler: [WebAppointment.Frontend/src/app/(app)/hospital/departments/page.tsx](WebAppointment.Frontend/src/app/(app)/hospital/departments/page.tsx)
+    - Doktor onayları: [WebAppointment.Frontend/src/app/(app)/hospital/doctor-profiles/page.tsx](WebAppointment.Frontend/src/app/(app)/hospital/doctor-profiles/page.tsx)
   - Admin: [WebAppointment.Frontend/src/app/(app)/admin](WebAppointment.Frontend/src/app/(app)/admin)
     - Raporlar: [WebAppointment.Frontend/src/app/(app)/admin/reports/page.tsx](WebAppointment.Frontend/src/app/(app)/admin/reports/page.tsx)
     - Not: Admin doktor yönetimi kaldırılmıştır; doktor ekleme/güncelleme sadece HospitalAdmin tarafındadır.
@@ -241,10 +251,15 @@ Backend `appsettings.json` çok-kiracılık örneği:
 
 - **Hasta Kaydı & Giriş**
   1) `/register` üzerinden kayıt ol veya `/login` ile giriş yap
-  2) `/patient/appointments/new` alanından hastane → bölüm → doktor → tarih/saat seçip randevu oluştur
+  2) `/patient/appointments/new` alanında "Randevu Kimin İçin?" bölümünden (opsiyonel) çocuk ekle / seç
+  3) Hastane → bölüm → doktor → tarih/saat seçip randevu oluştur (doktor detay kartında onaylı uzmanlık bilgisi varsa görünür)
 - **Doktor Onayı**
   1) Doktor olarak giriş yap
   2) `/doctor/appointments` ekranından bekleyen randevuyu **Onayla** ardından **Tamamla**
+- **Doktor Uzmanlık Bilgisi Onayı**
+  1) Doktor olarak giriş yap → `/doctor/profile` ekranından mezuniyet ve deneyim girip **Onaya Gönder**
+  2) Hastane yöneticisi (HospitalAdmin) olarak giriş yap → `/hospital/doctor-profiles` ekranından **Onayla**
+  3) Hasta olarak `/patient/appointments/new` ekranında doktor detayında onaylı bilgiler görünür
 - **Raporlar (Admin)**
   1) Admin olarak giriş yap
   2) `/admin/reports` ekranından filtreleri kullanarak en popüler doktorları gör
@@ -370,6 +385,8 @@ _Sistem geneli yönetim ve raporlara erişim. Tenant, kullanıcı ve güvenlik p
 - ✅ AI Asistan (Oturum): Oturum değişince/çıkışta sohbet geçmişi sıfırlanır; farklı admin hesapları arasında kalıcı olmaz.
 - ✅ Kullanıcı Dostu Hatalar: Teknik detaylar gizlenir; anlaşılır mesajlar gösterilir.
 - ✅ Durum Yönetimi: Auth ve chat state izolasyonu; sızıntılar önlendi.
+- ✅ Veli/Çocuk: Hasta hesabına bağlı çocuk (dependent) ekleme ve çocuk adına randevu oluşturma akışı eklendi.
+- ✅ Doktor Profil Onayı: Doktor mezuniyet/deneyim bilgisi gönderir; HospitalAdmin onaylar; hasta sadece onaylı bilgiyi görür.
 
 ---
 

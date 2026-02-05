@@ -18,6 +18,8 @@ public sealed class AuthService : IAuthService
     private readonly IPatientRepository _patients;
     private readonly IPasswordHasher _passwordHasher;
     private readonly ITokenService _tokens;
+    private readonly ILoginSecurityService _loginSecurity;
+    private readonly IClientInfoProvider _clientInfo;
     private readonly IDateTimeProvider _clock;
     private readonly IUnitOfWork _uow;
     private readonly ILogger<AuthService> _logger;
@@ -28,6 +30,8 @@ public sealed class AuthService : IAuthService
         IPatientRepository patients,
         IPasswordHasher passwordHasher,
         ITokenService tokens,
+        ILoginSecurityService loginSecurity,
+        IClientInfoProvider clientInfo,
         IDateTimeProvider clock,
         IUnitOfWork uow,
         ILogger<AuthService> logger,
@@ -37,6 +41,8 @@ public sealed class AuthService : IAuthService
         _patients = patients;
         _passwordHasher = passwordHasher;
         _tokens = tokens;
+        _loginSecurity = loginSecurity;
+        _clientInfo = clientInfo;
         _clock = clock;
         _uow = uow;
         _logger = logger;
@@ -47,10 +53,13 @@ public sealed class AuthService : IAuthService
     {
         var normalizedEmail = request.Email.Trim().ToUpperInvariant();
 
+        await _loginSecurity.EnsureNotLockedAsync(normalizedEmail, ct);
+
         var user = await _users.FindByEmailAsync(normalizedEmail, ct);
         if (user is null)
         {
             _logger.LogInformation("Login failed: user not found. Email={Email}", normalizedEmail);
+            await _loginSecurity.RegisterFailureAsync(normalizedEmail, _clientInfo.IpAddress, ct);
             throw new UnauthorizedException("Invalid credentials.");
         }
 
@@ -69,6 +78,7 @@ public sealed class AuthService : IAuthService
                 hashFormat,
                 hashPrefix);
 
+            await _loginSecurity.RegisterFailureAsync(normalizedEmail, _clientInfo.IpAddress, ct);
             throw new UnauthorizedException("Invalid credentials.");
         }
 
@@ -77,6 +87,8 @@ public sealed class AuthService : IAuthService
             user.Email,
             user.Id,
             user.Role.ToString());
+
+        await _loginSecurity.RegisterSuccessAsync(normalizedEmail, ct);
 
         return await IssueTokensAsync(user, ct);
     }
@@ -89,7 +101,7 @@ public sealed class AuthService : IAuthService
         var emailExists = await _users.FindByEmailAsync(normalizedEmail, ct);
         if (emailExists is not null)
         {
-            throw new ConflictException("Email zaten kay�tl�.");
+            throw new ConflictException("Email zaten kayıtlı.");
         }
 
         var tc = request.TcKimlikNo.Trim();
@@ -207,6 +219,45 @@ public sealed class AuthService : IAuthService
             stored.RevokedAtUtc = _clock.UtcNow;
             await _users.SaveChangesAsync(ct);
         }
+    }
+
+    public async Task<LoginResponse> UpdateMyCredentialsAsync(Guid userId, UpdateMyCredentialsRequest request, CancellationToken ct)
+    {
+        var user = await _users.FindByIdAsync(userId, ct);
+        if (user is null)
+        {
+            throw new UnauthorizedException("Unauthorized");
+        }
+
+        var ok = _passwordHasher.Verify(request.CurrentPassword, user.PasswordHash ?? string.Empty);
+        if (!ok)
+        {
+            throw new UnauthorizedException("Mevcut şifre yanlış.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.NewEmail))
+        {
+            var newEmail = request.NewEmail.Trim();
+            var normalizedEmail = newEmail.ToUpperInvariant();
+
+            var existing = await _users.FindByEmailAsync(normalizedEmail, ct);
+            if (existing is not null && existing.Id != user.Id)
+            {
+                throw new ConflictException("Email zaten kayıtlı.");
+            }
+
+            user.Email = newEmail;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            user.PasswordHash = _passwordHasher.Hash(request.NewPassword);
+        }
+
+        await _users.SaveChangesAsync(ct);
+
+        // Issue new tokens so the caller immediately sees updated email claim.
+        return await IssueTokensAsync(user, ct);
     }
 
     private async Task<LoginResponse> IssueTokensAsync(User user, CancellationToken ct)

@@ -28,8 +28,17 @@ namespace WebAppointmentApi.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("CancellationReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CancelledAtUtc")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("DependentId")
+                        .HasColumnType("int");
 
                     b.Property<int>("DoctorId")
                         .HasColumnType("int");
@@ -53,6 +62,8 @@ namespace WebAppointmentApi.Infrastructure.Data.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DependentId");
 
                     b.HasIndex("DoctorId");
 
@@ -180,6 +191,43 @@ namespace WebAppointmentApi.Infrastructure.Data.Migrations
                     b.ToTable("Departments");
                 });
 
+            modelBuilder.Entity("WebAppointmentApi.Domain.Entities.Dependent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("GuardianUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TcKimlikNo")
+                        .IsRequired()
+                        .HasMaxLength(11)
+                        .HasColumnType("nvarchar(11)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GuardianUserId");
+
+                    b.HasIndex("TenantId", "GuardianUserId", "TcKimlikNo")
+                        .IsUnique();
+
+                    b.ToTable("Dependents");
+                });
+
             modelBuilder.Entity("WebAppointmentApi.Domain.Entities.Doctor", b =>
                 {
                     b.Property<int>("Id")
@@ -194,6 +242,14 @@ namespace WebAppointmentApi.Infrastructure.Data.Migrations
                     b.Property<int?>("EfficiencyScore")
                         .HasColumnType("int");
 
+                    b.Property<string>("ExperienceSummary")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("GraduationUniversity")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -201,6 +257,20 @@ namespace WebAppointmentApi.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset?>("ProfileApprovedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ProfileApprovedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ProfileStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTimeOffset?>("ProfileSubmittedAtUtc")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<int>("TenantId")
                         .HasColumnType("int");
@@ -223,6 +293,96 @@ namespace WebAppointmentApi.Infrastructure.Data.Migrations
                     b.HasIndex("TenantId", "DepartmentId", "IsActive");
 
                     b.ToTable("Doctors");
+                });
+
+            modelBuilder.Entity("WebAppointmentApi.Domain.Entities.DoctorAvailability", b =>
+                {
+                    b.Property<int>("DoctorId")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly?>("LunchEnd")
+                        .HasColumnType("time");
+
+                    b.Property<TimeOnly?>("LunchStart")
+                        .HasColumnType("time");
+
+                    b.Property<int>("SlotMinutes")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(30);
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly>("WorkEnd")
+                        .HasColumnType("time");
+
+                    b.Property<TimeOnly>("WorkStart")
+                        .HasColumnType("time");
+
+                    b.HasKey("DoctorId");
+
+                    b.ToTable("DoctorAvailabilities");
+                });
+
+            modelBuilder.Entity("WebAppointmentApi.Domain.Entities.DoctorTimeOff", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("DoctorId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("EndAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTimeOffset>("StartAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DoctorId");
+
+                    b.HasIndex("TenantId", "DoctorId", "StartAtUtc");
+
+                    b.ToTable("DoctorTimeOffs");
+                });
+
+            modelBuilder.Entity("WebAppointmentApi.Domain.Entities.Holiday", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Date")
+                        .IsUnique();
+
+                    b.ToTable("Holidays");
                 });
 
             modelBuilder.Entity("WebAppointmentApi.Domain.Entities.Hospital", b =>
@@ -266,6 +426,48 @@ namespace WebAppointmentApi.Infrastructure.Data.Migrations
                     b.HasIndex("TenantId", "Type");
 
                     b.ToTable("Hospitals");
+                });
+
+            modelBuilder.Entity("WebAppointmentApi.Domain.Entities.LoginLockout", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("FirstFailedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("LastFailedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("LastIpAddress")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTimeOffset?>("LockedUntilUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("NormalizedEmail")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "LockedUntilUtc");
+
+                    b.HasIndex("TenantId", "NormalizedEmail")
+                        .IsUnique();
+
+                    b.ToTable("LoginLockouts");
                 });
 
             modelBuilder.Entity("WebAppointmentApi.Domain.Entities.Notification", b =>
@@ -498,6 +700,11 @@ namespace WebAppointmentApi.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("WebAppointmentApi.Domain.Entities.Appointment", b =>
                 {
+                    b.HasOne("WebAppointmentApi.Domain.Entities.Dependent", "Dependent")
+                        .WithMany()
+                        .HasForeignKey("DependentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("WebAppointmentApi.Domain.Entities.Doctor", "Doctor")
                         .WithMany("Appointments")
                         .HasForeignKey("DoctorId")
@@ -509,6 +716,8 @@ namespace WebAppointmentApi.Infrastructure.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Dependent");
 
                     b.Navigation("Doctor");
 
@@ -524,6 +733,17 @@ namespace WebAppointmentApi.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Hospital");
+                });
+
+            modelBuilder.Entity("WebAppointmentApi.Domain.Entities.Dependent", b =>
+                {
+                    b.HasOne("WebAppointmentApi.Domain.Entities.User", "GuardianUser")
+                        .WithMany()
+                        .HasForeignKey("GuardianUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("GuardianUser");
                 });
 
             modelBuilder.Entity("WebAppointmentApi.Domain.Entities.Doctor", b =>
@@ -542,6 +762,28 @@ namespace WebAppointmentApi.Infrastructure.Data.Migrations
                     b.Navigation("Department");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("WebAppointmentApi.Domain.Entities.DoctorAvailability", b =>
+                {
+                    b.HasOne("WebAppointmentApi.Domain.Entities.Doctor", "Doctor")
+                        .WithMany()
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Doctor");
+                });
+
+            modelBuilder.Entity("WebAppointmentApi.Domain.Entities.DoctorTimeOff", b =>
+                {
+                    b.HasOne("WebAppointmentApi.Domain.Entities.Doctor", "Doctor")
+                        .WithMany()
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Doctor");
                 });
 
             modelBuilder.Entity("WebAppointmentApi.Domain.Entities.Patient", b =>

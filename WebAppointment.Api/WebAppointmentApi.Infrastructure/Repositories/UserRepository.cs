@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppointmentApi.Application.Common.Abstractions;
 using WebAppointmentApi.Domain.Entities;
+using WebAppointmentApi.Domain.Enums;
 using WebAppointmentApi.Infrastructure.Data;
 
 namespace WebAppointmentApi.Infrastructure.Repositories;
@@ -53,6 +54,21 @@ public sealed class UserRepository : IUserRepository
     public Task AddRefreshTokenAsync(RefreshToken token, CancellationToken ct)
     {
         _db.RefreshTokens.Add(token);
+        return Task.CompletedTask;
+    }
+
+    public async Task<IReadOnlyList<User>> ListHospitalAdminsByHospitalIdAsync(int hospitalId, CancellationToken ct)
+    {
+        return await _db.Users
+            .AsNoTracking()
+            .Where(x => x.HospitalId == hospitalId && x.Role == UserRole.HospitalAdmin)
+            .OrderBy(x => x.Email)
+            .ToListAsync(ct);
+    }
+
+    public Task DeleteAsync(User user, CancellationToken ct)
+    {
+        _db.Users.Remove(user);
         return Task.CompletedTask;
     }
 

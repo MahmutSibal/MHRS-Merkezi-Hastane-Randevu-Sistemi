@@ -10,6 +10,9 @@ public sealed class Appointment : IMultiTenant
     public Guid UserId { get; set; }
     public User? User { get; set; }
 
+    public int? DependentId { get; set; }
+    public Dependent? Dependent { get; set; }
+
     public int DoctorId { get; set; }
     public Doctor? Doctor { get; set; }
 
@@ -17,6 +20,9 @@ public sealed class Appointment : IMultiTenant
     public DateTimeOffset EndAt { get; set; }
 
     public AppointmentStatus Status { get; set; }
+
+    public DateTimeOffset? CancelledAtUtc { get; set; }
+    public string? CancellationReason { get; set; }
 
     public DateTimeOffset CreatedAtUtc { get; set; }
     public DateTimeOffset? UpdatedAtUtc { get; set; }

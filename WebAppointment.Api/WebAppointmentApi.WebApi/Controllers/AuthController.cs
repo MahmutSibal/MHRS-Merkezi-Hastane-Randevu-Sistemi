@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using WebAppointmentApi.Application.Auth.Abstractions;
 using WebAppointmentApi.Application.Auth.Dtos;
+using WebAppointmentApi.Application.Common.Abstractions;
 using WebAppointmentApi.Application.Patients.Dtos;
 
 namespace WebAppointmentApi.WebApi.Controllers;
@@ -11,10 +13,12 @@ namespace WebAppointmentApi.WebApi.Controllers;
 public sealed class AuthController : ControllerBase
 {
     private readonly IAuthService _auth;
+    private readonly IUserContext _user;
 
-    public AuthController(IAuthService auth)
+    public AuthController(IAuthService auth, IUserContext user)
     {
         _auth = auth;
+        _user = user;
     }
 
     [HttpPost("register")]
@@ -25,6 +29,7 @@ public sealed class AuthController : ControllerBase
 
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     public Task<LoginResponse> Login([FromBody] LoginRequest request, CancellationToken ct)
         => _auth.LoginAsync(request, ct);
 
@@ -40,4 +45,9 @@ public sealed class AuthController : ControllerBase
         await _auth.LogoutAsync(request, ct);
         return NoContent();
     }
+
+    [HttpPatch("me/credentials")]
+    [Authorize]
+    public Task<LoginResponse> UpdateMyCredentials([FromBody] UpdateMyCredentialsRequest request, CancellationToken ct)
+        => _auth.UpdateMyCredentialsAsync(_user.UserId, request, ct);
 }

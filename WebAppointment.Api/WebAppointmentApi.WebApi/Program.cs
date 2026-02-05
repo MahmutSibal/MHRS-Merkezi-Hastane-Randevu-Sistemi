@@ -1,5 +1,6 @@
 using System.Text;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
@@ -31,6 +32,25 @@ builder.Services.AddControllers()
         // Enum'ları string olarak parse/serialize et (ör. "Public" / "Private")
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+
+// Tüm 400 (model binding / FluentValidation) hatalarını sadece { message } formatında dön.
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var first = context.ModelState
+            .SelectMany(kvp => kvp.Value?.Errors?.Select(e => e.ErrorMessage) ?? Enumerable.Empty<string>())
+            .FirstOrDefault(m => !string.IsNullOrWhiteSpace(m));
+
+        var msg = first ?? "Geçersiz giriş. Lütfen bilgileri kontrol edin.";
+        return new ContentResult
+        {
+            StatusCode = StatusCodes.Status400BadRequest,
+            ContentType = "text/plain; charset=utf-8",
+            Content = msg
+        };
+    };
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -57,6 +77,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext, UserContext>();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
+builder.Services.AddScoped<IClientInfoProvider, HttpContextClientInfoProvider>();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -100,6 +121,11 @@ builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHand
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.ContentType = "text/plain; charset=utf-8";
+        await context.HttpContext.Response.WriteAsync("Çok fazla istek. Lütfen daha sonra tekrar deneyin.", token);
+    };
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
     {
         var key = context.User?.Identity?.IsAuthenticated == true
@@ -111,6 +137,21 @@ builder.Services.AddRateLimiter(options =>
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            });
+    });
+
+    options.AddPolicy("login", context =>
+    {
+        var key = context.Connection.RemoteIpAddress?.ToString() ?? "anon";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: key,
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
                 Window = TimeSpan.FromMinutes(1),
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                 QueueLimit = 0

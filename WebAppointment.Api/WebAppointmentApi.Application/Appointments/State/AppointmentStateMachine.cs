@@ -109,13 +109,13 @@ public sealed class AppointmentStateMachine : IAppointmentStateMachine
     {
         if (appointment.StartAt <= nowUtc)
         {
-            reason = "Past appointments cannot be cancelled.";
+            reason = "Geçmiş randevular iptal edilemez.";
             return false;
         }
 
-        if ((appointment.StartAt - nowUtc).TotalMinutes <= 15)
+        if ((appointment.StartAt - nowUtc) <= TimeSpan.FromHours(2))
         {
-            reason = "Appointment cannot be cancelled within 15 minutes of start time.";
+            reason = "Randevu başlangıcına 2 saat kala iptal edilemez.";
             return false;
         }
 

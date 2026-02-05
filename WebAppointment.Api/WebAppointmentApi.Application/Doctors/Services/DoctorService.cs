@@ -87,7 +87,7 @@ public sealed class DoctorService : IDoctorService
             var existing = await _users.FindByEmailAsync(normalizedEmail, ct);
             if (existing is not null)
             {
-                throw new ConflictException("Email zaten kay�tl�.");
+                throw new ConflictException("Email zaten kayıtlı.");
             }
 
             await _uow.BeginAsync(ct);

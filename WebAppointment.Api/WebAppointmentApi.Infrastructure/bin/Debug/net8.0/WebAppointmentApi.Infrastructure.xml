@@ -106,5 +106,53 @@
         <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddDoctorTitle.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:WebAppointmentApi.Infrastructure.Data.Migrations.AddAppointmentCancelReason">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddAppointmentCancelReason.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddAppointmentCancelReason.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddAppointmentCancelReason.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:WebAppointmentApi.Infrastructure.Data.Migrations.AddDoctorAvailabilityTables">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddDoctorAvailabilityTables.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddDoctorAvailabilityTables.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddDoctorAvailabilityTables.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:WebAppointmentApi.Infrastructure.Data.Migrations.AddDependents">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddDependents.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddDependents.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddDependents.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:WebAppointmentApi.Infrastructure.Data.Migrations.AddDoctorProfileApproval">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddDoctorProfileApproval.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddDoctorProfileApproval.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Data.Migrations.AddDoctorProfileApproval.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
     </members>
 </doc>

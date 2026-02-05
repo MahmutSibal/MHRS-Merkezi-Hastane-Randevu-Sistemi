@@ -28,8 +28,12 @@ public sealed class AppointmentRepository : IAppointmentRepository
         Guid appointmentId,
         Guid userId,
         int doctorId,
+        int? dependentId,
         DateTimeOffset startAtUtc,
         DateTimeOffset endAtUtc,
+        DateTimeOffset dayStartUtc,
+        DateTimeOffset dayEndUtc,
+        DateTimeOffset nowUtc,
         CancellationToken ct)
     {
         var connection = _db.Database.GetDbConnection();
@@ -44,20 +48,75 @@ public sealed class AppointmentRepository : IAppointmentRepository
             throw new InvalidOperationException("UnitOfWork transaction is required for appointment creation.");
         }
 
-                // Lock doctor row so concurrent bookings serialize per doctor and tenant.
-                var doctorExists = await connection.ExecuteScalarAsync<int?>(
+        // Lock doctor row so concurrent bookings serialize per doctor and tenant.
+        // Also return DepartmentId to support per-department daily booking rules.
+        var doctorDepartmentId = await connection.ExecuteScalarAsync<int?>(
             new CommandDefinition(
-                @"SELECT 1
-                                    FROM Doctors d WITH (UPDLOCK, HOLDLOCK)
-                                    INNER JOIN Departments dep ON dep.Id = d.DepartmentId
-                                    WHERE d.Id = @DoctorId AND d.IsActive = 1 AND dep.IsDeleted = 0 AND d.TenantId = @TenantId AND dep.TenantId = @TenantId;",
-                                new { DoctorId = doctorId, TenantId = _tenant.TenantId },
-                                transaction: tx,
+                @"SELECT d.DepartmentId
+                  FROM Doctors d WITH (UPDLOCK, HOLDLOCK)
+                  INNER JOIN Departments dep ON dep.Id = d.DepartmentId
+                  WHERE d.Id = @DoctorId AND d.IsActive = 1 AND dep.IsDeleted = 0 AND d.TenantId = @TenantId AND dep.TenantId = @TenantId;",
+                new { DoctorId = doctorId, TenantId = _tenant.TenantId },
+                transaction: tx,
                 cancellationToken: ct));
 
-        if (doctorExists is null)
+        if (doctorDepartmentId is null)
         {
             throw new InvalidOperationException("Doctor not found.");
+        }
+
+        // Kural 1: İptal sonrası 1 gün boyunca yeni randevu alınamaz.
+        var cooldownSinceUtc = nowUtc.AddDays(-1);
+        var recentCancel = await connection.ExecuteScalarAsync<int?>(
+            new CommandDefinition(
+                @"SELECT TOP(1) 1
+                  FROM Appointments WITH (UPDLOCK, HOLDLOCK)
+                  WHERE UserId = @UserId AND TenantId = @TenantId
+                    AND Status = @Cancelled
+                    AND UpdatedAtUtc IS NOT NULL
+                    AND UpdatedAtUtc > @CooldownSinceUtc;",
+                new
+                {
+                    UserId = userId,
+                    Cancelled = (int)AppointmentStatus.Cancelled,
+                    CooldownSinceUtc = cooldownSinceUtc,
+                    TenantId = _tenant.TenantId,
+                },
+                transaction: tx,
+                cancellationToken: ct));
+
+        if (recentCancel is not null)
+        {
+            throw new InvalidOperationException("Randevu iptalinden sonra 1 gün boyunca yeni randevu alamazsınız.");
+        }
+
+        // Kural 2: Kullanıcı aynı gün aynı branş (department) için birden fazla randevu alamaz.
+        var sameDepartmentSameDayExists = await connection.ExecuteScalarAsync<int?>(
+            new CommandDefinition(
+                @"SELECT TOP(1) 1
+                  FROM Appointments WITH (UPDLOCK, HOLDLOCK)
+                  INNER JOIN Doctors d ON d.Id = Appointments.DoctorId AND d.TenantId = @TenantId
+                  WHERE UserId = @UserId AND TenantId = @TenantId
+                    AND StartAt >= @DayStartUtc AND StartAt < @DayEndUtc
+                    AND d.DepartmentId = @DepartmentId
+                    AND Status IN (@Pending, @Approved, @Completed);",
+                new
+                {
+                    UserId = userId,
+                    DayStartUtc = dayStartUtc,
+                    DayEndUtc = dayEndUtc,
+                    DepartmentId = doctorDepartmentId.Value,
+                    Pending = (int)AppointmentStatus.Pending,
+                    Approved = (int)AppointmentStatus.Approved,
+                    Completed = (int)AppointmentStatus.Completed,
+                    TenantId = _tenant.TenantId,
+                },
+                transaction: tx,
+                cancellationToken: ct));
+
+        if (sameDepartmentSameDayExists is not null)
+        {
+            throw new InvalidOperationException("Aynı gün aynı branş için birden fazla randevu alamazsınız.");
         }
 
         // Prevent overlapping appointments for doctor (Pending/Approved).
@@ -112,17 +171,18 @@ public sealed class AppointmentRepository : IAppointmentRepository
             throw new InvalidOperationException("User already has an appointment for that time slot.");
         }
 
-        var createdAtUtc = DateTimeOffset.UtcNow;
+        var createdAtUtc = nowUtc;
 
         await connection.ExecuteAsync(
             new CommandDefinition(
-                                @"INSERT INTO Appointments (Id, UserId, DoctorId, StartAt, EndAt, Status, CreatedAtUtc, UpdatedAtUtc, TenantId)
-                                    VALUES (@Id, @UserId, @DoctorId, @StartAtUtc, @EndAtUtc, @Status, @CreatedAtUtc, NULL, @TenantId);",
+                                @"INSERT INTO Appointments (Id, UserId, DoctorId, DependentId, StartAt, EndAt, Status, CreatedAtUtc, UpdatedAtUtc, TenantId)
+                                    VALUES (@Id, @UserId, @DoctorId, @DependentId, @StartAtUtc, @EndAtUtc, @Status, @CreatedAtUtc, NULL, @TenantId);",
                 new
                 {
                     Id = appointmentId,
                     UserId = userId,
                                         DoctorId = doctorId,
+                                        DependentId = dependentId,
                     StartAtUtc = startAtUtc,
                     EndAtUtc = endAtUtc,
                     Status = (int)AppointmentStatus.Pending,
@@ -226,6 +286,8 @@ public sealed class AppointmentRepository : IAppointmentRepository
                 DepartmentName = x.Doctor != null && x.Doctor.Department != null ? x.Doctor.Department.Name : string.Empty,
                 AppointmentDateUtc = x.StartAt,
                 x.Status,
+                x.DependentId,
+                DependentFullName = x.Dependent != null ? x.Dependent.FullName : null,
             })
             .ToListAsync(ct);
 
@@ -236,7 +298,9 @@ public sealed class AppointmentRepository : IAppointmentRepository
             DoctorName: x.DoctorName,
             DepartmentName: x.DepartmentName,
             AppointmentDateUtc: x.AppointmentDateUtc,
-            Status: x.Status.ToString()
+            Status: x.Status.ToString(),
+            DependentId: x.DependentId,
+            DependentFullName: x.DependentFullName
         )).ToList();
     }
 

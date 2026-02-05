@@ -49,10 +49,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
 
           <div className="flex flex-col items-end gap-1 min-w-0 sm:flex-row sm:items-center sm:gap-3">
-            <div className="truncate text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+            <Link href="/profile" className="truncate text-xs sm:text-sm text-slate-600 hover:underline dark:text-slate-400">
               {isLoading ? "Yükleniyor…" : session?.email}
-              {role && <span className="ml-1 text-slate-500 dark:text-slate-500">({role})</span>}
-            </div>
+            </Link>
             <NotificationCenter />
             <Button variant="secondary" onClick={logout} size="sm">
               Çıkış
@@ -66,12 +65,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav className="space-y-1">
             <NavLink href="/app" label="Kontrol Paneli" icon={CalendarIcon} />
 
+            <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-700">
+              <h3 className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Hesap</h3>
+              <div className="mt-2 space-y-1">
+                <NavLink href="/profile" label="Profil" />
+              </div>
+            </div>
+
             {role === "Admin" ? (
               <>
                 <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-700">
                   <h3 className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Yönetim</h3>
                   <div className="mt-2 space-y-1">
                     <NavLink href="/admin/hospitals" label="Hastaneler" icon={DepartmentIcon} />
+                    <NavLink href="/admin/audit-logs" label="Audit Log" />
                   </div>
                 </div>
               </>
@@ -84,6 +91,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <div className="mt-2 space-y-1">
                     <NavLink href="/hospital/departments" label="Bölümler" icon={DepartmentIcon} />
                     <NavLink href="/hospital/doctors" label="Doktorlar" icon={DoctorIcon} />
+                    <NavLink href="/hospital/doctor-profiles" label="Doktor Onayları" icon={DoctorIcon} />
                     <NavLink href="/hospital/patients" label="Hastalar" icon={PatientIcon} />
                     <NavLink href="/hospital/appointments" label="Randevular" icon={AppointmentIcon} />
                     <NavLink href="/hospital/reports" label="Raporlar" icon={ReportIcon} />
@@ -100,6 +108,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <h3 className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Doktor</h3>
                   <div className="mt-2 space-y-1">
                     <NavLink href="/doctor" label="Profil" icon={DoctorIcon} />
+                    <NavLink href="/doctor/profile" label="Uzmanlık Bilgileri" icon={DoctorIcon} />
                     <NavLink href="/doctor/appointments" label="Randevularım" icon={AppointmentIcon} />
                     <NavLink href="/doctor/calendar" label="Takvim" icon={CalendarIcon} />
                   </div>

@@ -1,4 +1,5 @@
 using WebAppointmentApi.Domain.Common;
+using WebAppointmentApi.Domain.Enums;
 
 namespace WebAppointmentApi.Domain.Entities;
 
@@ -15,6 +16,13 @@ public sealed class Doctor : IMultiTenant
     public Department? Department { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    public string? GraduationUniversity { get; set; }
+    public string? ExperienceSummary { get; set; }
+    public DoctorProfileStatus ProfileStatus { get; set; } = DoctorProfileStatus.Draft;
+    public DateTimeOffset? ProfileSubmittedAtUtc { get; set; }
+    public DateTimeOffset? ProfileApprovedAtUtc { get; set; }
+    public Guid? ProfileApprovedByUserId { get; set; }
 
     public int TenantId { get; set; }
 

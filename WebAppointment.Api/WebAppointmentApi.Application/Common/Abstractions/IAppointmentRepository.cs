@@ -9,8 +9,12 @@ public interface IAppointmentRepository
         Guid appointmentId,
         Guid userId,
         int doctorId,
+        int? dependentId,
         DateTimeOffset startAtUtc,
         DateTimeOffset endAtUtc,
+        DateTimeOffset dayStartUtc,
+        DateTimeOffset dayEndUtc,
+        DateTimeOffset nowUtc,
         CancellationToken ct);
 
     Task<IReadOnlyList<Appointment>> ListByUserIdAsync(Guid userId, CancellationToken ct);

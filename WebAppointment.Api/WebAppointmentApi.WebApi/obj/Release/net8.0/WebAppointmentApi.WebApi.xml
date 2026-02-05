@@ -62,14 +62,14 @@
             Returns appointments for the currently authenticated patient.
             </summary>
         </member>
-        <member name="M:WebAppointmentApi.WebApi.Controllers.AppointmentsController.Cancel(System.Guid,System.Threading.CancellationToken)">
+        <member name="M:WebAppointmentApi.WebApi.Controllers.AppointmentsController.Cancel(System.Guid,WebAppointmentApi.Application.Appointments.Dtos.CancelAppointmentRequest,System.Threading.CancellationToken)">
             <summary>
             Cancels an appointment owned by the currently authenticated patient.
             </summary>
             <remarks>
             Business rules (enforced server-side):
             - Past appointments cannot be cancelled.
-            - Appointment cannot be cancelled within 15 minutes of the start time.
+            - Appointment cannot be cancelled within 2 hours of the start time.
             </remarks>
         </member>
         <member name="M:WebAppointmentApi.WebApi.Controllers.DevController.ResetAdmin(Microsoft.AspNetCore.Hosting.IWebHostEnvironment,WebAppointmentApi.Infrastructure.Data.AppDbContext,WebAppointmentApi.Application.Common.Abstractions.IPasswordHasher,System.Threading.CancellationToken)">

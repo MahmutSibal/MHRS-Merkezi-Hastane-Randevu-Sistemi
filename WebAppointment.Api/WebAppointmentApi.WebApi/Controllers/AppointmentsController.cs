@@ -56,13 +56,13 @@ public sealed class AppointmentsController : ControllerBase
     /// <remarks>
     /// Business rules (enforced server-side):
     /// - Past appointments cannot be cancelled.
-    /// - Appointment cannot be cancelled within 15 minutes of the start time.
+    /// - Appointment cannot be cancelled within 2 hours of the start time.
     /// </remarks>
     [HttpPut("{id:guid}/cancel")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Cancel([FromRoute] Guid id, CancellationToken ct)
+    public async Task<IActionResult> Cancel([FromRoute] Guid id, [FromBody] CancelAppointmentRequest? request, CancellationToken ct)
     {
-        await _appointments.CancelAsync(_user.UserId, id, ct);
+        await _appointments.CancelAsync(_user.UserId, id, request ?? new CancelAppointmentRequest(null), ct);
         return NoContent();
     }
 }

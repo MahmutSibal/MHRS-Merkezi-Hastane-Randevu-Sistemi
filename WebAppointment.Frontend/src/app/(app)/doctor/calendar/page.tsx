@@ -75,24 +75,8 @@ export default function DoctorCalendarPage() {
       {!error && items.length > 0 && (
         <>
           <Card>
-            <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 dark:bg-blue-950 dark:border-blue-800">
-              <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
-                Çalışma Saatleri: 09:00 - 17:00
-              </p>
-              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                Sadece bu saatler arasında randevu açılabilir.
-              </p>
-            </div>
-          </Card>
-          <Card>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {items
-                .filter((s) => {
-                  const startDate = new Date(s.startAtUtc);
-                  const startHour = startDate.getHours();
-                  // Sadece 09:00 - 17:00 arası slotları göster
-                  return startHour >= 9 && startHour < 17;
-                })
                 .map((s) => {
                   const startDate = new Date(s.startAtUtc);
                   const endDate = new Date(s.endAtUtc);

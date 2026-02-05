@@ -78,14 +78,14 @@ public sealed class HospitalService : IHospitalService
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
-            throw new ConflictException("Email and Password are required.");
+            throw new ConflictException("Email ve şifre zorunludur.");
         }
 
         var normalizedEmail = email.Trim().ToUpperInvariant();
         var existing = await _users.FindByEmailAsync(normalizedEmail, ct);
         if (existing is not null)
         {
-            throw new ConflictException("Email already in use.");
+            throw new ConflictException("Email zaten kayıtlı.");
         }
 
         var user = new User
@@ -101,6 +101,78 @@ public sealed class HospitalService : IHospitalService
         await _users.SaveChangesAsync(ct);
 
         return user.Id;
+    }
+
+    public async Task<IReadOnlyList<SubAdminDto>> ListSubAdminsAsync(int hospitalId, CancellationToken ct)
+    {
+        var hospital = await _hospitals.FindByIdAsync(hospitalId, ct);
+        if (hospital is null)
+        {
+            throw new NotFoundException("Hospital not found.");
+        }
+
+        var users = await _users.ListHospitalAdminsByHospitalIdAsync(hospitalId, ct);
+        return users.Select(x => new SubAdminDto(x.Id, x.Email)).ToList();
+    }
+
+    public async Task UpdateSubAdminCredentialsAsync(int hospitalId, Guid subAdminUserId, UpdateSubAdminCredentialsRequest request, CancellationToken ct)
+    {
+        var hospital = await _hospitals.FindByIdAsync(hospitalId, ct);
+        if (hospital is null)
+        {
+            throw new NotFoundException("Hospital not found.");
+        }
+
+        var user = await _users.FindByIdAsync(subAdminUserId, ct);
+        if (user is null || user.Role != UserRole.HospitalAdmin || user.HospitalId != hospitalId)
+        {
+            throw new NotFoundException("Alt admin bulunamadı.");
+        }
+
+        var hasEmail = !string.IsNullOrWhiteSpace(request.Email);
+        var hasPassword = !string.IsNullOrWhiteSpace(request.Password);
+        if (!hasEmail && !hasPassword)
+        {
+            throw new ConflictException("Email veya şifre zorunludur.");
+        }
+
+        if (hasEmail)
+        {
+            var newEmail = request.Email!.Trim();
+            var normalizedEmail = newEmail.ToUpperInvariant();
+            var existing = await _users.FindByEmailAsync(normalizedEmail, ct);
+            if (existing is not null && existing.Id != user.Id)
+            {
+                throw new ConflictException("Email zaten kayıtlı.");
+            }
+
+            user.Email = newEmail;
+        }
+
+        if (hasPassword)
+        {
+            user.PasswordHash = _passwordHasher.Hash(request.Password!);
+        }
+
+        await _users.SaveChangesAsync(ct);
+    }
+
+    public async Task DeleteSubAdminAsync(int hospitalId, Guid subAdminUserId, CancellationToken ct)
+    {
+        var hospital = await _hospitals.FindByIdAsync(hospitalId, ct);
+        if (hospital is null)
+        {
+            throw new NotFoundException("Hospital not found.");
+        }
+
+        var user = await _users.FindByIdAsync(subAdminUserId, ct);
+        if (user is null || user.Role != UserRole.HospitalAdmin || user.HospitalId != hospitalId)
+        {
+            throw new NotFoundException("Alt admin bulunamadı.");
+        }
+
+        await _users.DeleteAsync(user, ct);
+        await _users.SaveChangesAsync(ct);
     }
 
     private static double Haversine(double lat1, double lon1, double lat2, double lon2)

@@ -3,6 +3,8 @@ import { Inter, Geist_Mono } from "next/font/google";
 import { ToastProvider } from "@/components/session/ToastProvider";
 import { LoadingProvider } from "@/components/session/LoadingProvider";
 import { AssistantWidget } from "@/components/assistant/AssistantWidgetClean";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { ThemeInitScript } from "@/components/theme/ThemeInitScript";
 import "./globals.css";
 
 const inter = Inter({
@@ -29,15 +31,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="tr">
+    <html lang="tr" suppressHydrationWarning>
       <body className={`${inter.variable} ${geistMono.variable} antialiased`}>
-        <LoadingProvider>
-          <ToastProvider>
-            {children}
-            {/* Küresel Asistan: tüm sayfalarda görünür */}
-            <AssistantWidget />
-          </ToastProvider>
-        </LoadingProvider>
+        <ThemeInitScript />
+        <ThemeProvider>
+          <LoadingProvider>
+            <ToastProvider>
+              {children}
+              {/* Küresel Asistan: tüm sayfalarda görünür */}
+              <AssistantWidget />
+            </ToastProvider>
+          </LoadingProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

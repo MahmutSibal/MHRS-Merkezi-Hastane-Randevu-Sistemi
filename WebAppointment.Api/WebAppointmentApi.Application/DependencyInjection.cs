@@ -16,6 +16,12 @@ using WebAppointmentApi.Application.Patients.Abstractions;
 using WebAppointmentApi.Application.Patients.Services;
 using WebAppointmentApi.Application.Reports.Abstractions;
 using WebAppointmentApi.Application.Reports.Services;
+using WebAppointmentApi.Application.Audit.Abstractions;
+using WebAppointmentApi.Application.Audit.Services;
+using WebAppointmentApi.Application.Dependents.Abstractions;
+using WebAppointmentApi.Application.Dependents.Services;
+using WebAppointmentApi.Application.Waitlist.Abstractions;
+using WebAppointmentApi.Application.Waitlist.Services;
 
 namespace WebAppointmentApi.Application;
 
@@ -27,6 +33,7 @@ public static class DependencyInjection
         services.AddAutoMapper(typeof(DependencyInjection).Assembly);
 
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ILoginSecurityService, LoginSecurityService>();
         services.AddScoped<IAppointmentService, AppointmentService>();
         services.AddScoped<IDoctorAppointmentService, DoctorAppointmentService>();
         services.AddScoped<IDoctorCalendarService, DoctorCalendarService>();
@@ -37,6 +44,9 @@ public static class DependencyInjection
         services.AddScoped<IPatientService, PatientService>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<IWaitlistService, WaitlistService>();
+        services.AddScoped<IDependentService, DependentService>();
 
         return services;
     }
