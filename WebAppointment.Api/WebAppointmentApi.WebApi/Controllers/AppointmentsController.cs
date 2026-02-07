@@ -50,6 +50,11 @@ public sealed class AppointmentsController : ControllerBase
     public Task<IReadOnlyList<AppointmentDto>> My(CancellationToken ct)
         => _appointments.GetMyAsync(_user.UserId, ct);
 
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(AppointmentDto), StatusCodes.Status200OK)]
+    public Task<AppointmentDto> GetById([FromRoute] Guid id, CancellationToken ct)
+        => _appointments.GetMyByIdAsync(_user.UserId, id, ct);
+
     /// <summary>
     /// Cancels an appointment owned by the currently authenticated patient.
     /// </summary>

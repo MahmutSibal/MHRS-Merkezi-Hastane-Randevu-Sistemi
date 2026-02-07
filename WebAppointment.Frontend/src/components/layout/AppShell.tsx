@@ -121,7 +121,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-700">
                   <h3 className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Hasta</h3>
                   <div className="mt-2 space-y-1">
-                    <NavLink href="/patient" label="Profil" icon={PatientIcon} />
                     <NavLink href="/patient/appointments" label="Randevularım" icon={AppointmentIcon} />
                     <NavLink href="/patient/appointments/new" label="Yeni Randevu" icon={AppointmentIcon} />
                   </div>

@@ -105,6 +105,11 @@ public sealed class AppointmentService : IAppointmentService
         var localStart = TimeOnly.FromDateTime(request.AppointmentDate.DateTime);
         var localEnd = localStart.AddMinutes(30);
 
+        if (localDate.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+        {
+            throw new ConflictException("Hafta sonu randevu alınamaz.");
+        }
+
         if (localStart.Minute % 30 != 0)
         {
             throw new ConflictException("Appointment start time must be aligned to 30-minute slots.");
@@ -195,6 +200,43 @@ public sealed class AppointmentService : IAppointmentService
     public async Task<IReadOnlyList<AppointmentDto>> GetMyAsync(Guid userId, CancellationToken ct)
     {
         return await _appointments.ListMyDtosAsync(userId, ct);
+    }
+
+    public async Task<AppointmentDto> GetMyByIdAsync(Guid userId, Guid appointmentId, CancellationToken ct)
+    {
+        var appt = await _appointments.FindByIdAsync(appointmentId, ct);
+        if (appt is null)
+        {
+            throw new NotFoundException("Appointment not found.");
+        }
+
+        if (appt.UserId != userId)
+        {
+            throw new ForbiddenException("Forbidden.");
+        }
+
+        var doctor = await _doctors.FindByIdAsync(appt.DoctorId, ct);
+        if (doctor is null)
+        {
+            throw new NotFoundException("Doctor not found.");
+        }
+
+        Dependent? dependent = null;
+        if (appt.DependentId is not null)
+        {
+            dependent = await _dependents.FindByIdAsync(appt.DependentId.Value, ct);
+        }
+
+        return new AppointmentDto(
+            Id: appt.Id,
+            UserId: appt.UserId,
+            DoctorId: appt.DoctorId,
+            DoctorName: doctor.Name,
+            DepartmentName: doctor.Department?.Name ?? string.Empty,
+            AppointmentDateUtc: appt.StartAt.ToUniversalTime(),
+            Status: appt.Status.ToString(),
+            DependentId: dependent?.Id,
+            DependentFullName: dependent?.FullName);
     }
 
     public async Task<IReadOnlyList<AdminAppointmentDto>> GetAdminAllAsync(CancellationToken ct)

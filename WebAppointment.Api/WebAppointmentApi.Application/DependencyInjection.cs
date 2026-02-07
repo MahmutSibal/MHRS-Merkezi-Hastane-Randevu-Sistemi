@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<IAppointmentService, AppointmentService>();
         services.AddScoped<IDoctorAppointmentService, DoctorAppointmentService>();
         services.AddScoped<IDoctorCalendarService, DoctorCalendarService>();
+        services.AddScoped<IPublicDoctorCalendarService, PublicDoctorCalendarService>();
         services.AddSingleton<IAppointmentStateMachine, AppointmentStateMachine>();
         services.AddScoped<IDepartmentService, DepartmentService>();
         services.AddScoped<IDoctorService, DoctorService>();

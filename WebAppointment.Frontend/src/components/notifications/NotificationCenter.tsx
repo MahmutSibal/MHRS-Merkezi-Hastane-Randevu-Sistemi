@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiJson } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,6 +16,7 @@ type NotificationDto = {
 };
 
 export function NotificationCenter() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [items, setItems] = useState<NotificationDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -78,7 +80,15 @@ export function NotificationCenter() {
                 <p className="text-xs text-slate-500">Yeni bildirim bulunmuyor.</p>
               ) : null}
               {items.map((item) => (
-                <div key={item.id} className="rounded-xl border border-slate-200 p-3 text-xs dark:border-slate-700">
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    router.push(`/patient/appointments/${encodeURIComponent(item.appointmentId)}`);
+                  }}
+                  className="w-full rounded-xl border border-slate-200 p-3 text-left text-xs transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium text-slate-700 dark:text-slate-200">
                       {item.message}
@@ -88,7 +98,7 @@ export function NotificationCenter() {
                   <div className="mt-1 text-[11px] text-slate-500">
                     {new Date(item.createdAtUtc).toLocaleString("tr-TR")}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </Card>

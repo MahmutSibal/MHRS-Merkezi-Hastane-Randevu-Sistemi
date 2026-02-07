@@ -20,6 +20,9 @@ public sealed class PatientRepository : IPatientRepository
     public Task<Patient?> FindByIdAsync(int id, CancellationToken ct)
         => _db.Patients.Include(x => x.User).SingleOrDefaultAsync(x => x.Id == id, ct);
 
+    public Task<Patient?> FindByUserIdAsync(Guid userId, CancellationToken ct)
+        => _db.Patients.SingleOrDefaultAsync(x => x.UserId == userId, ct);
+
     public async Task<IReadOnlyList<Patient>> ListAsync(CancellationToken ct)
         => await _db.Patients.AsNoTracking().Include(x => x.User).OrderBy(x => x.Id).ToListAsync(ct);
 

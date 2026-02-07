@@ -199,6 +199,9 @@ namespace WebAppointmentApi.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateOnly>("BirthDate")
+                        .HasColumnType("date");
+
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("datetimeoffset");
 
@@ -209,6 +212,9 @@ namespace WebAppointmentApi.Infrastructure.Data.Migrations
 
                     b.Property<Guid>("GuardianUserId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Relation")
+                        .HasColumnType("int");
 
                     b.Property<string>("TcKimlikNo")
                         .IsRequired()

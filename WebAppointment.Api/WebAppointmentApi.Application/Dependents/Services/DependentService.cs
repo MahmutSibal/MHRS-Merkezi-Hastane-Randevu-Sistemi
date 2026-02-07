@@ -3,24 +3,36 @@ using WebAppointmentApi.Application.Common.Exceptions;
 using WebAppointmentApi.Application.Dependents.Abstractions;
 using WebAppointmentApi.Application.Dependents.Dtos;
 using WebAppointmentApi.Domain.Entities;
+using WebAppointmentApi.Domain.Enums;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace WebAppointmentApi.Application.Dependents.Services;
 
 public sealed class DependentService : IDependentService
 {
+    private static readonly Regex FullNameRegex = new(
+        @"^[\p{L}]+(?:[ '\-][\p{L}]+)+$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    private static readonly CultureInfo TrCulture = CultureInfo.GetCultureInfo("tr-TR");
+
     private readonly IDependentRepository _dependents;
     private readonly IUserRepository _users;
+    private readonly IPatientRepository _patients;
     private readonly IDateTimeProvider _clock;
     private readonly ITenantContext _tenant;
 
     public DependentService(
         IDependentRepository dependents,
         IUserRepository users,
+        IPatientRepository patients,
         IDateTimeProvider clock,
         ITenantContext tenant)
     {
         _dependents = dependents;
         _users = users;
+        _patients = patients;
         _clock = clock;
         _tenant = tenant;
     }
@@ -41,7 +53,7 @@ public sealed class DependentService : IDependentService
         var list = await _dependents.ListByGuardianUserIdAsync(userId, ct);
         return list
             .OrderBy(x => x.FullName)
-            .Select(x => new DependentDto(x.Id, x.FullName, x.TcKimlikNo))
+            .Select(x => new DependentDto(x.Id, x.FullName, x.TcKimlikNo, x.BirthDate, x.Relation))
             .ToList();
     }
 
@@ -61,14 +73,43 @@ public sealed class DependentService : IDependentService
         var fullName = (request.FullName ?? string.Empty).Trim();
         var tckn = (request.TcKimlikNo ?? string.Empty).Trim();
 
-        if (string.IsNullOrWhiteSpace(fullName) || fullName.Length < 3)
+        if (!IsValidFullName(fullName))
         {
-            throw new ConflictException("Çocuk adı soyadı zorunludur.");
+            throw new ConflictException("Yakın adı soyadı geçersiz. En az 2 kelime ve sadece harf içermelidir.");
         }
 
         if (!IsValidTckn(tckn))
         {
             throw new ConflictException("Geçersiz TCKN.");
+        }
+
+        // Guardian hasta bilgisi (TCKN ve soyad kontrolü için)
+        var patient = await _patients.FindByUserIdAsync(userId, ct);
+        if (patient is null)
+        {
+            throw new ConflictException("Hasta profili bulunamadı.");
+        }
+
+        if (string.Equals(patient.TcKimlikNo, tckn, StringComparison.Ordinal))
+        {
+            throw new ConflictException("Kendi TCKN'nizi yakın olarak ekleyemezsiniz.");
+        }
+
+        var dependentSurname = ExtractSurname(fullName);
+        var patientSurname = (patient.LastName ?? string.Empty).Trim();
+        if (!SurnamesMatch(patientSurname, dependentSurname))
+        {
+            throw new ConflictException("Yakın soyadı, hasta soyadı ile aynı olmalıdır.");
+        }
+
+        // Doğum tarihi zorunlu ve gelecekte olamaz.
+        if (request.BirthDate == default)
+        {
+            throw new ConflictException("Doğum tarihi zorunludur.");
+        }
+        if (request.BirthDate > DateOnly.FromDateTime(DateTime.UtcNow))
+        {
+            throw new ConflictException("Doğum tarihi gelecekte olamaz.");
         }
 
         var existing = await _dependents.ListByGuardianUserIdAsync(userId, ct);
@@ -82,6 +123,8 @@ public sealed class DependentService : IDependentService
             GuardianUserId = userId,
             FullName = fullName,
             TcKimlikNo = tckn,
+            BirthDate = request.BirthDate,
+            Relation = request.Relation,
             CreatedAtUtc = _clock.UtcNow,
             TenantId = _tenant.TenantId,
         };
@@ -89,7 +132,7 @@ public sealed class DependentService : IDependentService
         await _dependents.AddAsync(entity, ct);
         await _dependents.SaveChangesAsync(ct);
 
-        return new DependentDto(entity.Id, entity.FullName, entity.TcKimlikNo);
+        return new DependentDto(entity.Id, entity.FullName, entity.TcKimlikNo, entity.BirthDate, entity.Relation);
     }
 
     public async Task DeleteAsync(Guid userId, int dependentId, CancellationToken ct)
@@ -133,5 +176,31 @@ public sealed class DependentService : IDependentService
         var sumFirst10 = digits.Take(10).Sum();
         var digit11 = sumFirst10 % 10;
         return digits[10] == digit11;
+    }
+
+    private static bool IsValidFullName(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        var trimmed = value.Trim();
+        if (trimmed.Length < 3) return false;
+        // En az iki kelime: regex bunu garanti eder.
+        return FullNameRegex.IsMatch(trimmed);
+    }
+
+    private static string ExtractSurname(string fullName)
+    {
+        var parts = (fullName ?? string.Empty)
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        return parts.Length == 0 ? string.Empty : parts[^1];
+    }
+
+    private static bool SurnamesMatch(string patientSurname, string dependentSurname)
+    {
+        if (string.IsNullOrWhiteSpace(patientSurname) || string.IsNullOrWhiteSpace(dependentSurname)) return false;
+
+        var a = patientSurname.Trim().ToUpper(TrCulture);
+        var b = dependentSurname.Trim().ToUpper(TrCulture);
+        return string.Equals(a, b, StringComparison.Ordinal);
     }
 }

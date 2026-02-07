@@ -94,12 +94,12 @@ public sealed class AppointmentRepository : IAppointmentRepository
         var sameDepartmentSameDayExists = await connection.ExecuteScalarAsync<int?>(
             new CommandDefinition(
                 @"SELECT TOP(1) 1
-                  FROM Appointments WITH (UPDLOCK, HOLDLOCK)
-                  INNER JOIN Doctors d ON d.Id = Appointments.DoctorId AND d.TenantId = @TenantId
-                  WHERE UserId = @UserId AND TenantId = @TenantId
-                    AND StartAt >= @DayStartUtc AND StartAt < @DayEndUtc
+                                    FROM Appointments a WITH (UPDLOCK, HOLDLOCK)
+                                    INNER JOIN Doctors d ON d.Id = a.DoctorId AND d.TenantId = @TenantId
+                                    WHERE a.UserId = @UserId AND a.TenantId = @TenantId
+                                        AND a.StartAt >= @DayStartUtc AND a.StartAt < @DayEndUtc
                     AND d.DepartmentId = @DepartmentId
-                    AND Status IN (@Pending, @Approved, @Completed);",
+                                        AND a.Status IN (@Pending, @Approved, @Completed);",
                 new
                 {
                     UserId = userId,

@@ -1,11 +1,16 @@
 using FluentValidation;
 using System.Linq;
+using System.Text.RegularExpressions;
 using WebAppointmentApi.Application.Patients.Dtos;
 
 namespace WebAppointmentApi.Application.Patients.Validation;
 
 public sealed class CreatePatientRequestValidator : AbstractValidator<CreatePatientRequest>
 {
+    private static readonly Regex NameRegex = new(
+        @"^[\p{L}]+(?:[ '\-][\p{L}]+)*$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
     public CreatePatientRequestValidator()
     {
         RuleFor(x => x.Email)
@@ -18,9 +23,23 @@ public sealed class CreatePatientRequestValidator : AbstractValidator<CreatePati
             .MinimumLength(6)
             .MaximumLength(200);
 
-        RuleFor(x => x.FirstName).NotEmpty().MaximumLength(100);
-        RuleFor(x => x.LastName).NotEmpty().MaximumLength(100);
-        RuleFor(x => x.Phone).NotEmpty().MaximumLength(30);
+        RuleFor(x => x.FirstName)
+            .NotEmpty()
+            .MaximumLength(100)
+            .Must(BeValidName)
+            .WithMessage("Ad geçersiz.");
+
+        RuleFor(x => x.LastName)
+            .NotEmpty()
+            .MaximumLength(100)
+            .Must(BeValidName)
+            .WithMessage("Soyad geçersiz.");
+
+        RuleFor(x => x.Phone)
+            .NotEmpty()
+            .MaximumLength(30)
+            .Must(BeValidPhone)
+            .WithMessage("Telefon numarası geçersiz.");
 
         RuleFor(x => x.TcKimlikNo)
             .NotEmpty()
@@ -50,5 +69,27 @@ public sealed class CreatePatientRequestValidator : AbstractValidator<CreatePati
         var digit11 = sumFirst10 % 10;
 
         return digits[10] == digit11;
+    }
+
+    private static bool BeValidName(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        var trimmed = value.Trim();
+        if (trimmed.Length < 2) return false;
+        return NameRegex.IsMatch(trimmed);
+    }
+
+    private static bool BeValidPhone(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        var digits = new string(value.Where(char.IsDigit).ToArray());
+
+        // TR kullanımında sık görülen formatlar:
+        // - 10 hane (5551234567)
+        // - 11 hane (05551234567)
+        if (digits.Length is 10) return true;
+        if (digits.Length is 11) return true;
+
+        return false;
     }
 }

@@ -14,6 +14,12 @@ type Intent = "none" | "register" | "appointment";
 type DepartmentDto = { id: number; name: string };
 type DoctorDto = { id: number; name: string; departmentId: number; departmentName: string };
 type HospitalDto = { id: number; name: string };
+type DoctorDailySlotPublicDto = {
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  isAvailable: boolean;
+  unavailableReason?: string | null;
+};
 type Step =
   | "start"
   | "complete"
@@ -44,6 +50,7 @@ export function AssistantWidget({ className }: { className?: string }) {
   const [hospitalId, setHospitalId] = useState<number>(0);
   const [date, setDate] = useState<string>("");
   const [time, setTime] = useState<string>("09:00");
+  const [dailySlots, setDailySlots] = useState<DoctorDailySlotPublicDto[]>([]);
 
   const selectedDepartment = useMemo(() => departments.find(d => d.id === departmentId) ?? null, [departments, departmentId]);
   const selectedDoctor = useMemo(() => doctors.find(d => d.id === doctorId) ?? null, [doctors, doctorId]);
@@ -70,41 +77,57 @@ export function AssistantWidget({ className }: { className?: string }) {
   function addAssistant(text: string) { setMessages(m => [...m, { id: uid(), role: "assistant", text }]); }
   function addUser(text: string) { setMessages(m => [...m, { id: uid(), role: "user", text }]); }
 
+  function availableTimesText(slots: DoctorDailySlotPublicDto[]) {
+    const times = slots.filter(s => s.isAvailable).map(s => s.startTime);
+    if (times.length === 0) return "";
+    return times.map(t => `- ${t}`).join("\n");
+  }
+
+  async function loadDoctorDailySlots(doctorId: number, ymd: string) {
+    const data = await apiJson<DoctorDailySlotPublicDto[]>(
+      `/backend/catalog/doctors/${doctorId}/daily-slots?date=${encodeURIComponent(ymd)}`
+    );
+    setDailySlots(data);
+    return data;
+  }
+
   async function onSend() {
     const content = input.trim();
     if (!content || busy) return;
     setBusy(true);
     setInput("");
     addUser(content);
+
+    try {
     // Kayıt akışı
     if (intent === "register") {
       if (step === "regFirstName") {
         if (!content) addAssistant("Lütfen adınızı girin.");
         else { setFirstName(content); addAssistant("Teşekkürler. Soyadınızı girin."); setStep("regLastName"); }
-        setBusy(false); return;
+        return;
       }
       if (step === "regLastName") {
         if (!content) addAssistant("Lütfen soyadınızı girin.");
         else { setLastName(content); addAssistant("TC Kimlik Numaranızı girin (11 haneli). "); setStep("regTC"); }
-        setBusy(false); return;
+        return;
       }
       if (step === "regTC") {
         const ok = /^\d{11}$/.test(content);
         if (!ok) addAssistant("Lütfen 11 haneli TC Kimlik No girin.");
         else { setTcKimlikNo(content); addAssistant("Telefon numaranızı girin (örn. 5551234567). "); setStep("regPhone"); }
-        setBusy(false); return;
+        return;
       }
       if (step === "regPhone") {
         const ok = /^\d{10,11}$/.test(content);
         if (!ok) addAssistant("Lütfen geçerli bir telefon numarası girin.");
         else { setPhone(content); addAssistant("E-posta adresinizi girin."); setStep("regEmail"); }
-        setBusy(false); return;
+        return;
       }
       if (step === "regEmail") {
         const ok = /.+@.+\..+/.test(content);
         if (!ok) addAssistant("Geçerli bir e-posta adresi girin.");
         else { setEmail(content); addAssistant("Şifrenizi girin (en az 6 karakter)."); setStep("regPassword"); }
-        setBusy(false); return;
+        return;
       }
       if (step === "regPassword") {
         if (content.length < 6) addAssistant("Lütfen en az 6 karakterli bir şifre girin.");
@@ -114,7 +137,7 @@ export function AssistantWidget({ className }: { className?: string }) {
           addAssistant(`${summary}\nKayıt işlemini onaylıyorsanız 'onayliyorum' yazın.`);
           setStep("regConfirm");
         }
-        setBusy(false); return;
+        return;
       }
       if (step === "regConfirm") {
         if (content.toLowerCase() !== "onayliyorum") addAssistant("Onaylamak için 'onayliyorum' yazın veya bilgileri değiştirin.");
@@ -131,10 +154,10 @@ export function AssistantWidget({ className }: { className?: string }) {
             addAssistant(msg);
           }
         }
-        setBusy(false); return;
+        return;
       }
       // Intent seçildi ama adım yoksa başlangıç
-      addAssistant("Lütfen adınızı yazın."); setStep("regFirstName"); setBusy(false); return;
+      addAssistant("Lütfen adınızı yazın."); setStep("regFirstName"); return;
     }
 
     // Randevu akışı
@@ -143,83 +166,154 @@ export function AssistantWidget({ className }: { className?: string }) {
         const ok = /.+@.+\..+/.test(content);
         if (!ok) addAssistant("Geçerli bir e-posta adresi girin.");
         else { setEmail(content); addAssistant("Teşekkürler. Şifrenizi girin."); setStep("password"); }
-        setBusy(false); return;
+        return;
       }
       if (step === "password") {
         setPassword(content);
         addAssistant(`E-posta: ${email}. Giriş yapmamı onaylıyorsanız 'onayliyorum' yazın.`);
-        setStep("confirmLogin"); setBusy(false); return;
+        setStep("confirmLogin"); return;
       }
       if (step === "confirmLogin") {
         if (content.toLowerCase() !== "onayliyorum") addAssistant("Girişe devam etmek için lütfen 'onayliyorum' yazın.");
         else {
-          const res = await fetch("/api/session/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
-          if (!res.ok) { addAssistant("Giriş başarısız. Lütfen e-postayı tekrar yazın."); setStep("email"); }
-          else {
-            const hosps = await apiJson<HospitalDto[]>("/backend/catalog/hospitals");
-            setHospitals(hosps);
-            const list = hosps.map(h => `- ${h.name}`).join("\n");
-            addAssistant(`Giriş başarılı. Mevcut hastaneler:\n${list}\nHangi hastaneyi istersiniz?`);
-            setStep("hospital");
+          try {
+            const res = await fetch("/api/session/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
+            if (!res.ok) {
+              addAssistant("Giriş başarısız. Lütfen e-postayı tekrar yazın.");
+              setStep("email");
+            } else {
+              const hosps = await apiJson<HospitalDto[]>("/backend/catalog/hospitals");
+              setHospitals(hosps);
+              const list = hosps.map(h => `- ${h.name}`).join("\n");
+              addAssistant(`Giriş başarılı. Mevcut hastaneler:\n${list}\nHangi hastaneyi istersiniz?`);
+              setStep("hospital");
+            }
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : "Giriş/hastane listesi alınamadı.";
+            addAssistant(`Hata: ${msg}`);
+            addAssistant("Lütfen tekrar e-postanızı yazın.");
+            setStep("email");
           }
         }
-        setBusy(false); return;
+        return;
       }
       if (step === "hospital") {
         const match = hospitals.find(h => h.name.toLowerCase() === content.toLowerCase());
         if (!match) addAssistant("Listelediğim hastane adlarından birini aynen yazın.");
         else {
           setHospitalId(match.id);
-          const deps = await apiJson<DepartmentDto[]>(`/backend/catalog/departments?hospitalId=${match.id}`);
-          setDepartments(deps);
-          if (deps.length === 0) addAssistant("Bu hastanede bölüm bulunamadı. Başka bir hastane seçiniz.");
-          else {
-            const list = deps.map(d => `- ${d.name}`).join("\n");
-            addAssistant(`Seçilen hastane: ${match.name}. Mevcut bölümler:\n${list}\nHangi bölümü istersiniz?`);
-            setStep("department");
+          try {
+            const deps = await apiJson<DepartmentDto[]>(`/backend/catalog/departments?hospitalId=${match.id}`);
+            setDepartments(deps);
+            if (deps.length === 0) addAssistant("Bu hastanede bölüm bulunamadı. Başka bir hastane seçiniz.");
+            else {
+              const list = deps.map(d => `- ${d.name}`).join("\n");
+              addAssistant(`Seçilen hastane: ${match.name}. Mevcut bölümler:\n${list}\nHangi bölümü istersiniz?`);
+              setStep("department");
+            }
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : "Bölümler getirilemedi.";
+            addAssistant(`Hata: ${msg}`);
+            addAssistant("Lütfen tekrar hastane seçin.");
+            setStep("hospital");
           }
         }
-        setBusy(false); return;
+        return;
       }
       if (step === "department") {
         const match = departments.find(d => d.name.toLowerCase() === content.toLowerCase());
         if (!match) addAssistant("Listelediğim bölüm adlarından birini aynen yazın.");
         else {
           setDepartmentId(match.id);
-          const docs = await apiJson<DoctorDto[]>(`/backend/catalog/doctors?departmentId=${match.id}`);
-          setDoctors(docs);
-          if (docs.length === 0) addAssistant("Bu bölümde doktor bulunamadı. Başka bir bölüm seçiniz.");
-          else {
-            const list = docs.map(d => `- ${d.name}`).join("\n");
-            addAssistant(`Seçilen bölüm: ${match.name}. Uygun doktorlar:\n${list}\nHangi doktoru istersiniz?`);
-            setStep("doctor");
+          try {
+            const docs = await apiJson<DoctorDto[]>(`/backend/catalog/doctors?departmentId=${match.id}`);
+            setDoctors(docs);
+            if (docs.length === 0) addAssistant("Bu bölümde doktor bulunamadı. Başka bir bölüm seçiniz.");
+            else {
+              const list = docs.map(d => `- ${d.name}`).join("\n");
+              addAssistant(`Seçilen bölüm: ${match.name}. Uygun doktorlar:\n${list}\nHangi doktoru istersiniz?`);
+              setStep("doctor");
+            }
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : "Doktorlar getirilemedi.";
+            addAssistant(`Hata: ${msg}`);
+            addAssistant("Lütfen tekrar bölüm seçin.");
+            setStep("department");
           }
         }
-        setBusy(false); return;
+        return;
       }
       if (step === "doctor") {
         const match = doctors.find(d => d.name.toLowerCase() === content.toLowerCase());
         if (!match) addAssistant("Lütfen listeden bir doktor adını olduğu gibi yazın.");
-        else { setDoctorId(match.id); addAssistant(`Doktor: ${match.name}. Tarih 'yyyy-aa-gg' formatında yazın (ör. 2026-02-10).`); setStep("date"); }
-        setBusy(false); return;
+        else {
+          setDoctorId(match.id);
+          setDailySlots([]);
+          setDate("");
+          setTime("09:00");
+          addAssistant(`Doktor: ${match.name}. Tarih 'yyyy-aa-gg' formatında yazın (ör. 2026-02-10).`);
+          setStep("date");
+        }
+        return;
       }
       if (step === "date") {
         const ok = /^\d{4}-\d{2}-\d{2}$/.test(content);
-        if (!ok) addAssistant("Lütfen 'yyyy-aa-gg' formatında tarih yazın (ör. 2026-02-10).");
-        else { setDate(content); addAssistant("Teşekkürler. Saat için 'SS:dd' (ör. 09:00) yazın."); setStep("time"); }
-        setBusy(false); return;
+        if (!ok) {
+          addAssistant("Lütfen 'yyyy-aa-gg' formatında tarih yazın (ör. 2026-02-10).");
+          return;
+        }
+
+        const day = new Date(`${content}T00:00:00`).getDay();
+        if (day === 0 || day === 6) {
+          addAssistant("Hafta sonu randevu alınamaz. Lütfen hafta içi bir tarih yazın.");
+          return;
+        }
+
+        setDate(content);
+        try {
+          const slots = await loadDoctorDailySlots(doctorId, content);
+          const availableText = availableTimesText(slots);
+          if (!availableText) {
+            addAssistant("Bu tarih için uygun randevu saati bulunmuyor. Lütfen başka bir tarih yazın.");
+            setStep("date");
+            return;
+          }
+          addAssistant(`Bu tarih için uygun saatler:\n${availableText}\nLütfen saat seçin (HH:mm).`);
+          setStep("time");
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Uygun saatler getirilemedi.";
+          addAssistant(`Hata: ${msg}`);
+          addAssistant("Lütfen başka bir tarih deneyin.");
+          setStep("date");
+        }
+        return;
       }
       if (step === "time") {
         const ok = /^\d{2}:\d{2}$/.test(content);
-        if (!ok) addAssistant("Lütfen 'SS:dd' formatında saat yazın (ör. 09:00).");
-        else {
-          setTime(content);
-          const selectedHospital = hospitals.find(h => h.id === hospitalId) ?? null;
-          const summary = `E-posta: ${email}\nHastane: ${selectedHospital?.name}\nBölüm: ${selectedDepartment?.name}\nDoktor: ${selectedDoctor?.name}\nTarih: ${date}\nSaat: ${content}`;
-          addAssistant(`${summary}\nOnaylıyorsanız 'onayliyorum' yazın.`);
-          setStep("finalConfirm");
+        if (!ok) {
+          addAssistant("Lütfen 'HH:mm' formatında saat yazın (ör. 09:00).");
+          return;
         }
-        setBusy(false); return;
+
+        const normalized = content;
+        const isAvailable = dailySlots.some(s => s.startTime === normalized && s.isAvailable);
+        if (!isAvailable) {
+          const availableText = availableTimesText(dailySlots);
+          if (availableText) {
+            addAssistant(`Bu saat uygun değil. Lütfen listeden bir saat seçin:\n${availableText}`);
+          } else {
+            addAssistant("Bu tarih için uygun saat bulunmuyor. Lütfen başka bir tarih yazın.");
+            setStep("date");
+          }
+          return;
+        }
+
+        setTime(normalized);
+        const selectedHospital = hospitals.find(h => h.id === hospitalId) ?? null;
+        const summary = `E-posta: ${email}\nHastane: ${selectedHospital?.name}\nBölüm: ${selectedDepartment?.name}\nDoktor: ${selectedDoctor?.name}\nTarih: ${date}\nSaat: ${normalized}`;
+        addAssistant(`${summary}\nOnaylıyorsanız 'onayliyorum' yazın.`);
+        setStep("finalConfirm");
+        return;
       }
       if (step === "finalConfirm") {
         if (content.toLowerCase() !== "onayliyorum") addAssistant("Onaylamak için 'onayliyorum' yazın veya bilgileri değiştirin.");
@@ -233,17 +327,39 @@ export function AssistantWidget({ className }: { className?: string }) {
           } catch (e) {
             const msg = e instanceof Error ? e.message : "Randevu oluşturma başarısız.";
             addAssistant(`Hata: ${msg}`);
+
+            // Hata sonrası kilitlenmeyi önlemek için kullanıcıyı tekrar seçime yönlendir.
+            // Slotlar değişmiş olabilir: tekrar yükleyip saat seçimini tekrar iste.
+            try {
+              const slots = await loadDoctorDailySlots(doctorId, date);
+              const availableText = availableTimesText(slots);
+              if (availableText) {
+                addAssistant(`Lütfen başka bir saat seçin:\n${availableText}`);
+                setStep("time");
+              } else {
+                addAssistant("Bu tarih için uygun saat kalmamış. Lütfen başka bir tarih yazın.");
+                setStep("date");
+              }
+            } catch {
+              addAssistant("Lütfen saat seçimini tekrar yapın (HH:mm)." );
+              setStep("time");
+            }
           }
         }
-        setBusy(false); return;
+        return;
       }
       // Intent seçildi ama adım yoksa başlangıç
-      addAssistant("Lütfen e-postanızı yazın."); setStep("email"); setBusy(false); return;
+      addAssistant("Lütfen e-postanızı yazın."); setStep("email"); return;
     }
 
     // Henüz intent seçilmemişse basit yönlendirme
     addAssistant("Lütfen önce bir işlem seçin: Hasta Kaydı veya Randevu Alma.");
-    setBusy(false);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Beklenmeyen bir hata oluştu.";
+      addAssistant(`Hata: ${msg}`);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (

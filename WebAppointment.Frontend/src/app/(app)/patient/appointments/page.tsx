@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -87,9 +88,14 @@ export default function PatientAppointmentsPage() {
                     Hasta: {a.dependentFullName ? a.dependentFullName : "Kendim"}
                   </div>
                 </div>
-                <Button variant="danger" onClick={() => cancel(a.id)} disabled={!canCancel}>
-                  İptal
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Link href={`/patient/appointments/${encodeURIComponent(a.id)}`}>
+                    <Button variant="secondary">Detay</Button>
+                  </Link>
+                  <Button variant="danger" onClick={() => cancel(a.id)} disabled={!canCancel}>
+                    İptal
+                  </Button>
+                </div>
               </div>
             </Card>
           );

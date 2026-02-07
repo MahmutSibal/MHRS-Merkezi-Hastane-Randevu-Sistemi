@@ -5,14 +5,20 @@ import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TimePicker } from "@/components/ui/time-picker";
 import { useToast } from "@/components/session/ToastProvider";
 import { apiJson } from "@/lib/api-client";
 
 type HospitalDto = { id: number; name: string; address?: string | null; latitude?: number | null; longitude?: number | null };
 type DepartmentDto = { id: number; name: string };
 type DoctorDto = { id: number; name: string; departmentId: number; departmentName: string; isActive: boolean; userId: string | null };
-type DependentDto = { id: number; fullName: string; tcKimlikNo: string };
+type DependentDto = { id: number; fullName: string; tcKimlikNo: string; birthDate: string; relation: string };
+
+type DoctorDailySlotPublicDto = {
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  isAvailable: boolean;
+  unavailableReason?: string | null;
+};
 
 type DoctorPublicDetailDto = {
   id: number;
@@ -43,19 +49,18 @@ export default function NewAppointmentPage() {
   const [departmentId, setDepartmentId] = useState<number>(0);
   const [doctorId, setDoctorId] = useState<number>(0);
   const [date, setDate] = useState<string>("");
-  const [time, setTime] = useState<string>("09:00");
+  const [time, setTime] = useState<string>("");
   const [dependentId, setDependentId] = useState<number>(0);
 
   const [doctorDetail, setDoctorDetail] = useState<DoctorPublicDetailDto | null>(null);
   const [isDoctorDetailLoading, setIsDoctorDetailLoading] = useState(false);
 
-  const [newChildName, setNewChildName] = useState<string>("");
-  const [newChildTckn, setNewChildTckn] = useState<string>("");
-
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAddingChild, setIsAddingChild] = useState(false);
+
+  const [slots, setSlots] = useState<DoctorDailySlotPublicDto[]>([]);
+  const [isSlotsLoading, setIsSlotsLoading] = useState(false);
 
   async function loadDependents() {
     try {
@@ -155,12 +160,52 @@ export default function NewAppointmentPage() {
     };
   }, [doctorId]);
 
+  useEffect(() => {
+    let isStale = false;
+    (async () => {
+      if (!doctorId || !date) {
+        setSlots([]);
+        setTime("");
+        return;
+      }
+
+      setIsSlotsLoading(true);
+      setError(null);
+      try {
+        const data = await apiJson<DoctorDailySlotPublicDto[]>(`/backend/catalog/doctors/${doctorId}/daily-slots?date=${encodeURIComponent(date)}`);
+        if (isStale) return;
+        setSlots(data);
+
+        const firstAvailable = data.find((x) => x.isAvailable)?.startTime ?? "";
+        setTime((prev) => {
+          if (prev && data.some((x) => x.startTime === prev && x.isAvailable)) return prev;
+          return firstAvailable;
+        });
+      } catch (e) {
+        if (isStale) return;
+        setSlots([]);
+        setTime("");
+        const msg = e instanceof Error ? e.message : "Uygun saatler getirilemedi.";
+        setError(msg);
+      } finally {
+        if (!isStale) setIsSlotsLoading(false);
+      }
+    })();
+    return () => {
+      isStale = true;
+    };
+  }, [doctorId, date]);
+
   const selectedDoctor = useMemo(() => doctors.find((d) => d.id === doctorId) ?? null, [doctors, doctorId]);
 
   async function submit() {
     setIsSubmitting(true);
     setError(null);
     try {
+      if (!date || !time) {
+        throw new Error("Lütfen tarih ve saat seçin.");
+      }
+
       const appointmentDate = withTurkeyOffset(date, time);
       await apiJson("/backend/appointments", {
         method: "POST",
@@ -174,28 +219,6 @@ export default function NewAppointmentPage() {
       toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
-    }
-  }
-
-  async function addChild() {
-    setIsAddingChild(true);
-    setError(null);
-    try {
-      const created = await apiJson<DependentDto>("/backend/patient/dependents/me", {
-        method: "POST",
-        body: JSON.stringify({ fullName: newChildName, tcKimlikNo: newChildTckn }),
-      });
-      toast.success("Çocuk eklendi");
-      setNewChildName("");
-      setNewChildTckn("");
-      await loadDependents();
-      setDependentId(created.id);
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : "Çocuk ekleme başarısız.";
-      setError(errorMsg);
-      toast.error(errorMsg);
-    } finally {
-      setIsAddingChild(false);
     }
   }
 
@@ -230,37 +253,7 @@ export default function NewAppointmentPage() {
                   </option>
                 ))}
               </select>
-              <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Çocuk eklemek için aşağıdaki alanları kullanın.</p>
-            </div>
-
-            <div className="grid gap-3">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Çocuk Ad Soyad</label>
-                <input
-                  value={newChildName}
-                  onChange={(e) => setNewChildName(e.target.value)}
-                  placeholder="Örn: Ayşe Yılmaz"
-                  className="w-full rounded-lg border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-900"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Çocuk TCKN</label>
-                <input
-                  value={newChildTckn}
-                  onChange={(e) => setNewChildTckn(e.target.value)}
-                  inputMode="numeric"
-                  placeholder="11 hane"
-                  className="w-full rounded-lg border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-900"
-                />
-              </div>
-
-              <Button
-                onClick={addChild}
-                isLoading={isAddingChild}
-                disabled={!newChildName.trim() || !newChildTckn.trim()}
-              >
-                Çocuğu Ekle
-              </Button>
+              <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Yakın ekleme ve yönetimi Profil sayfasından yapılır.</p>
             </div>
           </div>
 
@@ -356,7 +349,20 @@ export default function NewAppointmentPage() {
               <input
                 type="date"
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  if (next) {
+                    const day = new Date(`${next}T00:00:00`).getDay();
+                    if (day === 0 || day === 6) {
+                      toast.error("Hafta sonu randevu alınamaz.");
+                      setDate("");
+                      setSlots([]);
+                      setTime("");
+                      return;
+                    }
+                  }
+                  setDate(next);
+                }}
                 min={new Date().toISOString().split('T')[0]}
                 required
                 className="w-full rounded-lg border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-medium outline-none transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-900 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-60 hover:[&::-webkit-calendar-picker-indicator]:opacity-100"
@@ -365,12 +371,29 @@ export default function NewAppointmentPage() {
             <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">gg.aa.yyyy</p>
           </div>
 
-          <TimePicker
-            label="Saat"
-            value={time}
-            onChange={setTime}
-            hint="Dakika seçeneği 00 veya 30"
-          />
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Saat</label>
+            <select
+              className="w-full rounded-lg border-2 border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-900"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              disabled={!doctorId || !date || isSlotsLoading || slots.length === 0}
+            >
+              <option value="">Saat seçin…</option>
+              {slots.map((s) => (
+                <option key={s.startTime} value={s.startTime} disabled={!s.isAvailable}>
+                  {s.startTime}{s.isAvailable ? "" : ` (Uygun değil)`}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+              {isSlotsLoading
+                ? "Uygun saatler yükleniyor…"
+                : doctorId && date && slots.length === 0
+                  ? "Bu gün için uygun randevu saati bulunmuyor."
+                  : "Sadece uygun saatler seçilebilir."}
+            </p>
+          </div>
 
           <Button 
             onClick={submit} 

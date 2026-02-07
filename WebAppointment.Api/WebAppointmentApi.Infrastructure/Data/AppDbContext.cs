@@ -112,6 +112,8 @@ public sealed class AppDbContext : DbContext
         {
             b.HasKey(x => x.Id);
             b.Property(x => x.FullName).HasMaxLength(200).IsRequired();
+            b.Property(x => x.BirthDate).HasColumnType("date").IsRequired();
+            b.Property(x => x.Relation).IsRequired();
             b.Property(x => x.TcKimlikNo).HasMaxLength(11).IsRequired();
             b.Property(x => x.CreatedAtUtc).IsRequired();
 

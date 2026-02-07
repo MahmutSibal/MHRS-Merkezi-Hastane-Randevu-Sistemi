@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WebAppointmentApi.Application.Appointments.Abstractions;
+using WebAppointmentApi.Application.Appointments.Dtos;
 using WebAppointmentApi.Application.Departments.Abstractions;
 using WebAppointmentApi.Application.Departments.Dtos;
 using WebAppointmentApi.Application.Doctors.Abstractions;
@@ -18,12 +20,18 @@ public sealed class CatalogController : ControllerBase
     private readonly IDepartmentService _departments;
     private readonly IDoctorService _doctors;
     private readonly IHospitalService _hospitals;
+    private readonly IPublicDoctorCalendarService _publicCalendar;
 
-    public CatalogController(IDepartmentService departments, IDoctorService doctors, IHospitalService hospitals)
+    public CatalogController(
+        IDepartmentService departments,
+        IDoctorService doctors,
+        IHospitalService hospitals,
+        IPublicDoctorCalendarService publicCalendar)
     {
         _departments = departments;
         _doctors = doctors;
         _hospitals = hospitals;
+        _publicCalendar = publicCalendar;
     }
 
     [HttpGet("departments")]
@@ -76,6 +84,22 @@ public sealed class CatalogController : ControllerBase
             ProfileStatus: doctor.ProfileStatus.ToString(),
             GraduationUniversity: isApproved ? doctor.GraduationUniversity : null,
             ExperienceSummary: isApproved ? doctor.ExperienceSummary : null));
+    }
+
+    [HttpGet("doctors/{id:int}/daily-slots")]
+    [ProducesResponseType(typeof(IReadOnlyList<DoctorDailySlotPublicDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<DoctorDailySlotPublicDto>>> DoctorDailySlots(
+        [FromRoute] int id,
+        [FromQuery] string date,
+        CancellationToken ct)
+    {
+        if (!DateOnly.TryParse(date, out var day))
+        {
+            return BadRequest("Geçersiz tarih.");
+        }
+
+        var slots = await _publicCalendar.GetDoctorDailySlotsAsync(id, day, ct);
+        return Ok(slots);
     }
 
     [HttpGet("hospitals")]

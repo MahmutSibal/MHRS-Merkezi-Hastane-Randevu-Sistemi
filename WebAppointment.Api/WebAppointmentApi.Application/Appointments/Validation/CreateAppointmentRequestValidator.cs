@@ -18,7 +18,7 @@ public sealed class CreateAppointmentRequestValidator : AbstractValidator<Create
             .Must(BeInFuture)
             .WithMessage("Randevu tarihi geçmişte olamaz")
             .Must(BeWeekday)
-            .WithMessage("Hafta sonu randevu alınamaz")
+            .WithMessage("Hafta sonu randevu alınamaz.")
             .Must(HaveValidMinutes)
             .WithMessage("Dakika değeri 00 veya 30 olmalıdır");
     }
