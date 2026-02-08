@@ -204,7 +204,7 @@ public sealed class AppDbContext : DbContext
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            b.HasIndex(x => x.UserId).IsUnique().HasFilter("[UserId] IS NOT NULL");
+            b.HasIndex(x => x.UserId).IsUnique().HasFilter("\"UserId\" IS NOT NULL");
 
             b.HasOne(x => x.Department)
                 .WithMany(x => x.Doctors)

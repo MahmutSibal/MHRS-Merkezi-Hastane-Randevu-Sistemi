@@ -30,9 +30,8 @@ public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' could not be found.");
 
         var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>()
-            .UseSqlServer(connectionString, b =>
+            .UseNpgsql(connectionString, b =>
             {
-                // Ensure migrations live in the Infrastructure assembly
                 b.MigrationsAssembly(typeof(AppDbContext).Assembly.GetName().Name);
             });
 

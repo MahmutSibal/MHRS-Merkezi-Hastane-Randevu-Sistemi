@@ -52,10 +52,11 @@ public sealed class AppointmentRepository : IAppointmentRepository
         // Also return DepartmentId to support per-department daily booking rules.
         var doctorDepartmentId = await connection.ExecuteScalarAsync<int?>(
             new CommandDefinition(
-                @"SELECT d.DepartmentId
-                  FROM Doctors d WITH (UPDLOCK, HOLDLOCK)
-                  INNER JOIN Departments dep ON dep.Id = d.DepartmentId
-                  WHERE d.Id = @DoctorId AND d.IsActive = 1 AND dep.IsDeleted = 0 AND d.TenantId = @TenantId AND dep.TenantId = @TenantId;",
+                @"SELECT d.""DepartmentId""
+                  FROM ""Doctors"" d
+                  INNER JOIN ""Departments"" dep ON dep.""Id"" = d.""DepartmentId""
+                  WHERE d.""Id"" = @DoctorId AND d.""IsActive"" = true AND dep.""IsDeleted"" = false AND d.""TenantId"" = @TenantId AND dep.""TenantId"" = @TenantId
+                  FOR UPDATE;",
                 new { DoctorId = doctorId, TenantId = _tenant.TenantId },
                 transaction: tx,
                 cancellationToken: ct));
@@ -69,12 +70,14 @@ public sealed class AppointmentRepository : IAppointmentRepository
         var cooldownSinceUtc = nowUtc.AddDays(-1);
         var recentCancel = await connection.ExecuteScalarAsync<int?>(
             new CommandDefinition(
-                @"SELECT TOP(1) 1
-                  FROM Appointments WITH (UPDLOCK, HOLDLOCK)
-                  WHERE UserId = @UserId AND TenantId = @TenantId
-                    AND Status = @Cancelled
-                    AND UpdatedAtUtc IS NOT NULL
-                    AND UpdatedAtUtc > @CooldownSinceUtc;",
+                @"SELECT 1
+                  FROM ""Appointments""
+                  WHERE ""UserId"" = @UserId AND ""TenantId"" = @TenantId
+                    AND ""Status"" = @Cancelled
+                    AND ""UpdatedAtUtc"" IS NOT NULL
+                    AND ""UpdatedAtUtc"" > @CooldownSinceUtc
+                  LIMIT 1
+                  FOR UPDATE;",
                 new
                 {
                     UserId = userId,
@@ -93,13 +96,15 @@ public sealed class AppointmentRepository : IAppointmentRepository
         // Kural 2: Kullanıcı aynı gün aynı branş (department) için birden fazla randevu alamaz.
         var sameDepartmentSameDayExists = await connection.ExecuteScalarAsync<int?>(
             new CommandDefinition(
-                @"SELECT TOP(1) 1
-                                    FROM Appointments a WITH (UPDLOCK, HOLDLOCK)
-                                    INNER JOIN Doctors d ON d.Id = a.DoctorId AND d.TenantId = @TenantId
-                                    WHERE a.UserId = @UserId AND a.TenantId = @TenantId
-                                        AND a.StartAt >= @DayStartUtc AND a.StartAt < @DayEndUtc
-                    AND d.DepartmentId = @DepartmentId
-                                        AND a.Status IN (@Pending, @Approved, @Completed);",
+                @"SELECT 1
+                  FROM ""Appointments"" a
+                  INNER JOIN ""Doctors"" d ON d.""Id"" = a.""DoctorId"" AND d.""TenantId"" = @TenantId
+                  WHERE a.""UserId"" = @UserId AND a.""TenantId"" = @TenantId
+                    AND a.""StartAt"" >= @DayStartUtc AND a.""StartAt"" < @DayEndUtc
+                    AND d.""DepartmentId"" = @DepartmentId
+                    AND a.""Status"" IN (@Pending, @Approved, @Completed)
+                  LIMIT 1
+                  FOR UPDATE;",
                 new
                 {
                     UserId = userId,
@@ -122,12 +127,14 @@ public sealed class AppointmentRepository : IAppointmentRepository
         // Prevent overlapping appointments for doctor (Pending/Approved).
                 var doctorConflict = await connection.ExecuteScalarAsync<int?>(
             new CommandDefinition(
-                @"SELECT TOP(1) 1
-                  FROM Appointments WITH (UPDLOCK, HOLDLOCK)
-                                    WHERE DoctorId = @DoctorId AND TenantId = @TenantId
-                    AND Status IN (@Pending, @Approved)
-                    AND @StartAtUtc < EndAt
-                    AND @EndAtUtc > StartAt;",
+                @"SELECT 1
+                  FROM ""Appointments""
+                  WHERE ""DoctorId"" = @DoctorId AND ""TenantId"" = @TenantId
+                    AND ""Status"" IN (@Pending, @Approved)
+                    AND @StartAtUtc < ""EndAt""
+                    AND @EndAtUtc > ""StartAt""
+                  LIMIT 1
+                  FOR UPDATE;",
                 new
                 {
                     DoctorId = doctorId,
@@ -148,12 +155,14 @@ public sealed class AppointmentRepository : IAppointmentRepository
         // Prevent same user from overlapping (Pending/Approved).
                 var userConflict = await connection.ExecuteScalarAsync<int?>(
             new CommandDefinition(
-                @"SELECT TOP(1) 1
-                  FROM Appointments WITH (UPDLOCK, HOLDLOCK)
-                                    WHERE UserId = @UserId AND TenantId = @TenantId
-                    AND Status IN (@Pending, @Approved)
-                    AND @StartAtUtc < EndAt
-                    AND @EndAtUtc > StartAt;",
+                @"SELECT 1
+                  FROM ""Appointments""
+                  WHERE ""UserId"" = @UserId AND ""TenantId"" = @TenantId
+                    AND ""Status"" IN (@Pending, @Approved)
+                    AND @StartAtUtc < ""EndAt""
+                    AND @EndAtUtc > ""StartAt""
+                  LIMIT 1
+                  FOR UPDATE;",
                 new
                 {
                     UserId = userId,
@@ -175,7 +184,7 @@ public sealed class AppointmentRepository : IAppointmentRepository
 
         await connection.ExecuteAsync(
             new CommandDefinition(
-                                @"INSERT INTO Appointments (Id, UserId, DoctorId, DependentId, StartAt, EndAt, Status, CreatedAtUtc, UpdatedAtUtc, TenantId)
+                                @"INSERT INTO ""Appointments"" (""Id"", ""UserId"", ""DoctorId"", ""DependentId"", ""StartAt"", ""EndAt"", ""Status"", ""CreatedAtUtc"", ""UpdatedAtUtc"", ""TenantId"")
                                     VALUES (@Id, @UserId, @DoctorId, @DependentId, @StartAtUtc, @EndAtUtc, @Status, @CreatedAtUtc, NULL, @TenantId);",
                 new
                 {
@@ -194,7 +203,7 @@ public sealed class AppointmentRepository : IAppointmentRepository
 
                 await connection.ExecuteAsync(
                         new CommandDefinition(
-                                @"INSERT INTO AppointmentLogs (AppointmentId, Action, CreatedAtUtc, TenantId)
+                                @"INSERT INTO ""AppointmentLogs"" (""AppointmentId"", ""Action"", ""CreatedAtUtc"", ""TenantId"")
                                     VALUES (@AppointmentId, @Action, @CreatedAtUtc, @TenantId);",
                                 new
                                 {
@@ -208,8 +217,8 @@ public sealed class AppointmentRepository : IAppointmentRepository
 
                 await connection.ExecuteAsync(
                         new CommandDefinition(
-                                @"INSERT INTO Notifications (AppointmentId, UserId, Message, CreatedAtUtc, IsSent, TenantId)
-                                    VALUES (@AppointmentId, @UserId, @Message, @CreatedAtUtc, 0, @TenantId);",
+                                @"INSERT INTO ""Notifications"" (""AppointmentId"", ""UserId"", ""Message"", ""CreatedAtUtc"", ""IsSent"", ""TenantId"")
+                                    VALUES (@AppointmentId, @UserId, @Message, @CreatedAtUtc, false, @TenantId);",
                                 new
                                 {
                                         AppointmentId = appointmentId,
