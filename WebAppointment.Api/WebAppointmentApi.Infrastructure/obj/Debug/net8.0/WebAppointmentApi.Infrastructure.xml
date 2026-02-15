@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>WebAppointmentApi.Infrastructure</name>
+    </assembly>
+    <members>
+        <member name="T:WebAppointmentApi.Infrastructure.Data.AppDbContextFactory">
+            <summary>
+            Design-time DbContext factory so that EF CLI can run without needing the startup project.
+            Usage: from the Infrastructure folder, run: dotnet ef migrations add YourMigrationName and dotnet ef database update.
+            </summary>
+        </member>
+    </members>
+</doc>

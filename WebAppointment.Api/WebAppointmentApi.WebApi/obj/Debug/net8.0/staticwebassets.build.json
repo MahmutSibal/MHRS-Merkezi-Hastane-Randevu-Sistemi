@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "Hstk+aevS7fBTJpeWF6iYDu9z28fp13u5q69X+76D80=",
+  "Source": "WebAppointmentApi.WebApi",
+  "BasePath": "_content/WebAppointmentApi.WebApi",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

@@ -18,6 +18,22 @@ using WebAppointmentApi.WebApi.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (!string.IsNullOrEmpty(databaseUrl))
+{
+    var uri = new Uri(databaseUrl);
+    var userInfo = uri.UserInfo.Split(':');
+    var host = uri.Host;
+    var port = uri.Port > 0 ? uri.Port : 5432;
+    var database = uri.AbsolutePath.TrimStart('/');
+    var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+    var sslMode = query["sslmode"] ?? "Prefer";
+    var connStr = $"Host={host};Port={port};Database={database};Username={userInfo[0]};Password={userInfo.ElementAtOrDefault(1) ?? ""};SSL Mode={sslMode};Trust Server Certificate=true";
+    builder.Configuration["ConnectionStrings:DefaultConnection"] = connStr;
+}
+
+builder.WebHost.UseUrls("http://localhost:3000");
+
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
@@ -167,7 +183,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();
+    await db.Database.EnsureCreatedAsync();
     // Not: DB seed işlemi kaldırıldı. Veritabanı tamamen boş kalmalıdır.
     // await DbSeeder.SeedAsync(app.Services);
 }
