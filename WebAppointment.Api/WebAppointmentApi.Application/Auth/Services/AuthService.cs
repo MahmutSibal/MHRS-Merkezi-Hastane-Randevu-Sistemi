@@ -51,30 +51,68 @@ public sealed class AuthService : IAuthService
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request, CancellationToken ct)
     {
-        var normalizedEmail = request.Email.Trim().ToUpperInvariant();
+        // TC ile hasta girişi
+        if (!string.IsNullOrWhiteSpace(request.TcKimlikNo))
+        {
+            var tc = request.TcKimlikNo.Trim();
+            var patient = await _patients.FindByTcAsync(tc, ct);
+            if (patient is null)
+            {
+                _logger.LogInformation("Login failed: patient not found. TC={Tc}", tc);
+                throw new UnauthorizedException("Kimlik veya şifre hatalı.");
+            }
+
+            var user = await _users.FindByIdAsync(patient.UserId, ct);
+            if (user is null || user.Role != UserRole.Patient)
+            {
+                _logger.LogInformation("Login failed: user not found or role mismatch. TC={Tc}", tc);
+                throw new UnauthorizedException("Kimlik veya şifre hatalı.");
+            }
+
+            var hash = user.PasswordHash ?? string.Empty;
+            var okTc = _passwordHasher.Verify(request.Password, hash);
+            if (!okTc)
+            {
+                _logger.LogInformation(
+                    "Login failed: invalid password (TC login). UserId={UserId} Role={Role}",
+                    user.Id,
+                    user.Role.ToString());
+                throw new UnauthorizedException("Kimlik veya şifre hatalı.");
+            }
+
+            _logger.LogInformation(
+                "Login success (TC). UserId={UserId} Role={Role}",
+                user.Id,
+                user.Role.ToString());
+
+            return await IssueTokensAsync(user, ct);
+        }
+
+        // E-posta ile yönetim/doktor girişi
+        var normalizedEmail = (request.Email ?? string.Empty).Trim().ToUpperInvariant();
 
         await _loginSecurity.EnsureNotLockedAsync(normalizedEmail, ct);
 
-        var user = await _users.FindByEmailAsync(normalizedEmail, ct);
-        if (user is null)
+        var userByEmail = await _users.FindByEmailAsync(normalizedEmail, ct);
+        if (userByEmail is null)
         {
             _logger.LogInformation("Login failed: user not found. Email={Email}", normalizedEmail);
             await _loginSecurity.RegisterFailureAsync(normalizedEmail, _clientInfo.IpAddress, ct);
             throw new UnauthorizedException("Invalid credentials.");
         }
 
-        var hash = user.PasswordHash ?? string.Empty;
-        var hashFormat = hash.Contains('.') ? "pbkdf2" : "unknown";
-        var hashPrefix = hash.Length <= 25 ? hash : hash.Substring(0, 25);
+        var hashEmail = userByEmail.PasswordHash ?? string.Empty;
+        var hashFormat = hashEmail.Contains('.') ? "pbkdf2" : "unknown";
+        var hashPrefix = hashEmail.Length <= 25 ? hashEmail : hashEmail.Substring(0, 25);
 
-        var ok = _passwordHasher.Verify(request.Password, hash);
-        if (!ok)
+        var okEmail = _passwordHasher.Verify(request.Password, hashEmail);
+        if (!okEmail)
         {
             _logger.LogInformation(
                 "Login failed: invalid password. Email={Email} UserId={UserId} Role={Role} HashFormat={HashFormat} HashPrefix={HashPrefix}",
-                user.Email,
-                user.Id,
-                user.Role.ToString(),
+                userByEmail.Email,
+                userByEmail.Id,
+                userByEmail.Role.ToString(),
                 hashFormat,
                 hashPrefix);
 
@@ -84,24 +122,27 @@ public sealed class AuthService : IAuthService
 
         _logger.LogInformation(
             "Login success. Email={Email} UserId={UserId} Role={Role}",
-            user.Email,
-            user.Id,
-            user.Role.ToString());
+            userByEmail.Email,
+            userByEmail.Id,
+            userByEmail.Role.ToString());
 
         await _loginSecurity.RegisterSuccessAsync(normalizedEmail, ct);
 
-        return await IssueTokensAsync(user, ct);
+        return await IssueTokensAsync(userByEmail, ct);
     }
 
     public async Task<LoginResponse> RegisterAsync(CreatePatientRequest request, CancellationToken ct)
     {
         // FluentValidation validates formatting. Here we enforce business constraints.
-        var normalizedEmail = request.Email.Trim().ToUpperInvariant();
-
-        var emailExists = await _users.FindByEmailAsync(normalizedEmail, ct);
-        if (emailExists is not null)
+        var hasEmail = !string.IsNullOrWhiteSpace(request.Email);
+        if (hasEmail)
         {
-            throw new ConflictException("Email zaten kayıtlı.");
+            var normalizedEmail = request.Email!.Trim().ToUpperInvariant();
+            var emailExists = await _users.FindByEmailAsync(normalizedEmail, ct);
+            if (emailExists is not null)
+            {
+                throw new ConflictException("Email zaten kayıtlı.");
+            }
         }
 
         var tc = request.TcKimlikNo.Trim();
@@ -117,7 +158,7 @@ public sealed class AuthService : IAuthService
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Email = request.Email.Trim(),
+                Email = (request.Email ?? string.Empty).Trim(),
                 PasswordHash = _passwordHasher.Hash(request.Password),
                 Role = UserRole.Patient,
                 TenantId = _tenant.TenantId,

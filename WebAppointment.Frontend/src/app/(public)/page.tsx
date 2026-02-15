@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import Hero from "@/components/layout/Hero";
 
 export default function HomePage() {
@@ -13,17 +14,29 @@ export default function HomePage() {
           title="Hasta Portalı" 
           description="Kolay ve hızlı bir şekilde doktor randevusu oluşturun. Mevcut slotları görüntüleyin, randevularınızı yönetin."
           className="lg:hover:scale-105"
-        />
+        >
+          <Link href="/login/patient">
+            <Button size="md">Hasta Girişine Git</Button>
+          </Link>
+        </Card>
         <Card 
           title="Doktor Paneli" 
           description="Günlük çalışma slotlarınızı yönetin. Gelen randevuları onayla, işaretleme ve raporlama yapın."
           className="lg:hover:scale-105"
-        />
+        >
+          <Link href="/login/doctor">
+            <Button size="md" variant="outline">Doktor Girişine Git</Button>
+          </Link>
+        </Card>
         <Card 
           title="Yönetici Paneli" 
           description="Hastane bölümleri, doktor ve hasta kayıtlarını yönetin. Kapsamlı raporlar ve istatistikler görüntüleyin."
           className="lg:hover:scale-105"
-        />
+        >
+          <Link href="/login/admin">
+            <Button size="md" variant="secondary">Yönetim Girişine Git</Button>
+          </Link>
+        </Card>
       </section>
 
       <section className="grid gap-6 rounded-xl border border-slate-200 bg-white p-8 shadow-md dark:border-slate-700 dark:bg-slate-800">

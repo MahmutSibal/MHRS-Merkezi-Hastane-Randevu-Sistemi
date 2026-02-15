@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using WebAppointmentApi.Application.Common.Abstractions;
 using WebAppointmentApi.Domain.Entities;
+using WebAppointmentApi.Domain.Enums;
 
 namespace WebAppointmentApi.Infrastructure.Security;
 
@@ -31,9 +32,14 @@ public sealed class JwtTokenService : ITokenService
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new(JwtRegisteredClaimNames.Email, user.Email),
             new(ClaimTypes.Role, user.Role.ToString()),
         };
+
+        // Admin/Doktor için e-posta claim'i, hasta için eklenmez.
+        if (user.Role is not UserRole.Patient)
+        {
+            claims.Add(new Claim(JwtRegisteredClaimNames.Email, user.Email));
+        }
 
         // Multi-tenant: include tenant_id claim
         if (user.TenantId > 0)

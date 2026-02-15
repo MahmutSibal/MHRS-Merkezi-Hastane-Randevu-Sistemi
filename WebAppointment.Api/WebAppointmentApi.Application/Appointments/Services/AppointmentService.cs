@@ -97,6 +97,13 @@ public sealed class AppointmentService : IAppointmentService
             throw new ConflictException("Appointment start time must be in the future.");
         }
 
+        // En fazla 15 gün sonrasına randevu alınabilir.
+        var maxAllowedUtc = nowUtc.AddDays(15);
+        if (startAtUtc > maxAllowedUtc)
+        {
+            throw new ConflictException("En fazla 15 gün içinde randevu alınabilir.");
+        }
+
         // Fixed duration: 30 minutes
         var endAtUtc = startAtUtc.AddMinutes(30);
 

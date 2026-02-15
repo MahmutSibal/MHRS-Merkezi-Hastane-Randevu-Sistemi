@@ -10,7 +10,7 @@ import { apiJson } from "@/lib/api-client";
 import { SessionContext } from "@/components/session/SessionProvider";
 
 type Message = { id: string; role: "assistant" | "user"; text: string };
-type Intent = "none" | "register" | "appointment";
+type Intent = "none" | "register" | "appointment" | "diagnosis";
 type DepartmentDto = { id: number; name: string };
 type DoctorDto = { id: number; name: string; departmentId: number; departmentName: string };
 type HospitalDto = { id: number; name: string };
@@ -24,7 +24,8 @@ type Step =
   | "start"
   | "complete"
   | "regFirstName" | "regLastName" | "regTC" | "regPhone" | "regEmail" | "regPassword" | "regConfirm"
-  | "email" | "password" | "confirmLogin" | "hospital" | "department" | "doctor" | "date" | "time" | "finalConfirm";
+  | "email" | "password" | "confirmLogin" | "hospital" | "department" | "doctor" | "date" | "time" | "finalConfirm"
+  | "diagSymptoms" | "diagDuration" | "diagSeverity" | "diagFever" | "diagPain" | "diagChronic" | "diagMeds" | "diagPregnant" | "diagRun";
 
 function uid() { return Math.random().toString(36).slice(2); }
 
@@ -51,6 +52,16 @@ export function AssistantWidget({ className }: { className?: string }) {
   const [date, setDate] = useState<string>("");
   const [time, setTime] = useState<string>("09:00");
   const [dailySlots, setDailySlots] = useState<DoctorDailySlotPublicDto[]>([]);
+  const [answers, setAnswers] = useState<{
+    symptoms: string[];
+    duration?: string;
+    severity?: "Hafif" | "Orta" | "Şiddetli";
+    fever?: boolean;
+    painLocation?: string;
+    chronic?: string[];
+    meds?: string[];
+    pregnant?: boolean;
+  }>({ symptoms: [], chronic: [], meds: [] });
 
   const selectedDepartment = useMemo(() => departments.find(d => d.id === departmentId) ?? null, [departments, departmentId]);
   const selectedDoctor = useMemo(() => doctors.find(d => d.id === doctorId) ?? null, [doctors, doctorId]);
@@ -72,7 +83,46 @@ export function AssistantWidget({ className }: { className?: string }) {
     setMessages([]);
     setIntent("none");
     setStep("start");
+    setAnswers({ symptoms: [], chronic: [], meds: [] });
   }, [session?.userId]);
+
+  // Hızlı Tanı: 'Şimdi değerlendirme yapıyorum' sonrası otomatik çalıştır
+  useEffect(() => {
+    async function runDiagnosis() {
+      try {
+        const res = await fetch("/api/assistant/diagnosis", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ answers }) });
+        const text = await res.text();
+        if (!res.ok) throw new Error(text);
+        addAssistant(text);
+
+        // Bölüm adını metinden sezgisel olarak çıkarıp doktorları listelemeyi deneyelim
+        try {
+          const deptMatch = text.match(/en uygun bölüm\s+(.+?)\s+olarak/i);
+          const deptName = deptMatch?.[1]?.trim();
+          if (deptName) {
+            const deps = await apiJson<DepartmentDto[]>("/backend/catalog/departments");
+            const match = deps.find(d => d.name.toLowerCase() === deptName.toLowerCase());
+            if (match) {
+              const docs = await apiJson<DoctorDto[]>(`/backend/catalog/doctors?departmentId=${match.id}`);
+              if (docs.length) {
+                const list = docs.map(d => `- ${d.name}`).join("\n");
+                addAssistant(`Uygun doktorlar:\n${list}\nRandevu almak için 'Randevu Alma' tuşunu kullanın.`);
+              }
+            }
+          }
+        } catch {}
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Değerlendirme başarısız.";
+        addAssistant(`Hata: ${msg}`);
+      } finally {
+        setIntent("none");
+        setStep("start");
+      }
+    }
+    if (intent === "diagnosis" && step === "diagRun") {
+      void runDiagnosis();
+    }
+  }, [intent, step, answers]);
 
   function addAssistant(text: string) { setMessages(m => [...m, { id: uid(), role: "assistant", text }]); }
   function addUser(text: string) { setMessages(m => [...m, { id: uid(), role: "user", text }]); }
@@ -352,6 +402,70 @@ export function AssistantWidget({ className }: { className?: string }) {
       addAssistant("Lütfen e-postanızı yazın."); setStep("email"); return;
     }
 
+    // Hızlı Tanı akışı
+    if (intent === "diagnosis") {
+      if (step === "diagSymptoms") {
+        const list = content.split(",").map(x => x.trim()).filter(Boolean);
+        if (list.length === 0) { addAssistant("Belirtilerinizi virgülle yazar mısınız? Ör. baş ağrısı, ateş."); return; }
+        setAnswers(a => ({ ...a, symptoms: list }));
+        addAssistant("Belirtiler ne zamandır mevcut? Ör. 3 gündür, 2 haftadır.");
+        setStep("diagDuration");
+        return;
+      }
+      if (step === "diagDuration") {
+        setAnswers(a => ({ ...a, duration: content }));
+        addAssistant("Şiddetini seçin: 'Hafif', 'Orta' veya 'Şiddetli'.");
+        setStep("diagSeverity");
+        return;
+      }
+      if (step === "diagSeverity") {
+        const v = content.trim();
+        if (!["Hafif","Orta","Şiddetli"].includes(v)) { addAssistant("Lütfen 'Hafif', 'Orta' veya 'Şiddetli' yazın."); return; }
+        setAnswers(a => ({ ...a, severity: v as any }));
+        addAssistant("Ateş var mı? 'var' veya 'yok' yazın.");
+        setStep("diagFever");
+        return;
+      }
+      if (step === "diagFever") {
+        const v = content.toLowerCase();
+        if (!["var","yok"].includes(v)) { addAssistant("Lütfen 'var' veya 'yok' yazın."); return; }
+        setAnswers(a => ({ ...a, fever: v === "var" }));
+        addAssistant("Ağrı yeri (ör. göğüs, karın, baş, bel) yazın veya 'yok'.");
+        setStep("diagPain");
+        return;
+      }
+      if (step === "diagPain") {
+        setAnswers(a => ({ ...a, painLocation: content.toLowerCase() === "yok" ? undefined : content }));
+        addAssistant("Kronik hastalıklarınızı virgülle yazın veya 'yok'.");
+        setStep("diagChronic");
+        return;
+      }
+      if (step === "diagChronic") {
+        const list = content.toLowerCase() === "yok" ? [] : content.split(",").map(x => x.trim()).filter(Boolean);
+        setAnswers(a => ({ ...a, chronic: list }));
+        addAssistant("Kullandığınız ilaçları virgülle yazın veya 'yok'.");
+        setStep("diagMeds");
+        return;
+      }
+      if (step === "diagMeds") {
+        const list = content.toLowerCase() === "yok" ? [] : content.split(",").map(x => x.trim()).filter(Boolean);
+        setAnswers(a => ({ ...a, meds: list }));
+        addAssistant("Hamilelik durumu? 'evet' veya 'hayır'.");
+        setStep("diagPregnant");
+        return;
+      }
+      if (step === "diagPregnant") {
+        const v = content.toLowerCase();
+        if (!["evet","hayır"].includes(v)) { addAssistant("Lütfen 'evet' veya 'hayır' yazın."); return; }
+        setAnswers(a => ({ ...a, pregnant: v === "evet" }));
+        addAssistant("Teşekkürler. Şimdi değerlendirme yapıyorum...");
+        setStep("diagRun"); // Otomatik olarak useEffect ile çalışacak
+        return;
+      }
+      // Intent seçildi ama adım yoksa başlangıç
+      addAssistant("Belirtilerinizi virgülle yazın (ör. baş ağrısı, ateş)."); setStep("diagSymptoms"); return;
+    }
+
     // Henüz intent seçilmemişse basit yönlendirme
     addAssistant("Lütfen önce bir işlem seçin: Hasta Kaydı veya Randevu Alma.");
     } catch (e) {
@@ -413,6 +527,17 @@ export function AssistantWidget({ className }: { className?: string }) {
                 }}
               >
                 Randevu Alma
+              </Button>
+              <Button
+                variant={intent === "diagnosis" ? "primary" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setIntent("diagnosis");
+                  setStep("diagSymptoms");
+                  addAssistant("Hızlı Tanı seçildi. Belirtilerinizi virgülle yazın (ör. baş ağrısı, ateş).");
+                }}
+              >
+                Hızlı Tanı
               </Button>
             </div>
             <div className="mt-3 flex gap-2">

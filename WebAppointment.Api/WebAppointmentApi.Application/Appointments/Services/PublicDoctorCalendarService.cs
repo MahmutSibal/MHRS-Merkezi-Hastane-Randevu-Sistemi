@@ -40,6 +40,17 @@ public sealed class PublicDoctorCalendarService : IPublicDoctorCalendarService
             throw new NotFoundException("Doctor not found.");
         }
 
+        var tz = GetTurkeyTimeZone();
+
+        // Sadece bugünden itibaren ilk 15 gün gösterilsin.
+        var todayLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz).Date;
+        var minDate = DateOnly.FromDateTime(todayLocal);
+        var maxDate = DateOnly.FromDateTime(todayLocal.AddDays(15));
+        if (localDate < minDate || localDate > maxDate)
+        {
+            return Array.Empty<DoctorDailySlotPublicDto>();
+        }
+
         if (localDate.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
         {
             return Array.Empty<DoctorDailySlotPublicDto>();
@@ -57,7 +68,6 @@ public sealed class PublicDoctorCalendarService : IPublicDoctorCalendarService
         var lunchEnd = availability?.LunchEnd;
         var slotMinutes = availability?.SlotMinutes is > 0 and <= 180 ? availability!.SlotMinutes : DefaultSlotMinutes;
 
-        var tz = GetTurkeyTimeZone();
 
         var localDayStart = localDate.ToDateTime(workStart);
         var localDayEnd = localDate.ToDateTime(workEnd);

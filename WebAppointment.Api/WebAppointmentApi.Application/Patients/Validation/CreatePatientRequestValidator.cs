@@ -13,10 +13,12 @@ public sealed class CreatePatientRequestValidator : AbstractValidator<CreatePati
 
     public CreatePatientRequestValidator()
     {
-        RuleFor(x => x.Email)
-            .NotEmpty()
-            .EmailAddress()
-            .MaximumLength(320);
+        When(x => !string.IsNullOrWhiteSpace(x.Email), () =>
+        {
+            RuleFor(x => x.Email!)
+                .EmailAddress()
+                .MaximumLength(320);
+        });
 
         RuleFor(x => x.Password)
             .NotEmpty()

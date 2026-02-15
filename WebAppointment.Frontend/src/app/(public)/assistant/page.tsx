@@ -37,7 +37,7 @@ export default function AssistantPage() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<Step>("email");
-  const [email, setEmail] = useState("");
+  const [input, setInput] = useState<string>("");
   const [password, setPassword] = useState("");
   const [departments, setDepartments] = useState<DepartmentDto[]>([]);
   const [departmentId, setDepartmentId] = useState<number>(0);
@@ -224,7 +224,56 @@ export default function AssistantPage() {
       <PageHeader title="Asistan ile Randevu" subtitle="Giriş ve seçimleri sohbetle tamamlayın." />
       <Card>
         <div className="h-[60vh] overflow-y-auto space-y-3 pr-1">
-          {messages.map(m => (
+      <PageHeader title="Asistan" subtitle="Randevu sohbeti ve Hızlı Tanı." />
+      <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          {/* Hızlı Tanı butonu ve anketi */}
+          <Card className="mb-4 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold">Hızlı Tanı</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-300">Belirtilerinize göre bölüm önerisi alın.</p>
+              </div>
+              <Button onClick={() => setMessages(m => [...m, { id: uid(), role: "assistant", text: "Hızlı Tanı başlatıldı. Aşağıdaki anketi doldurun." }])}>Başlat</Button>
+            </div>
+          </Card>
+          {/* Quick Diagnosis form */}
+          {/* eslint-disable-next-line @typescript-eslint/no-var-requires */}
+          {require("./QuickDiagnosisClient").default && require("./QuickDiagnosisClient").default()}
+        </div>
+        <div>
+          <Card>
+            <div className="h-[60vh] overflow-y-auto space-y-3 pr-1">
+              {messages.map(m => (
+                <div
+                  key={m.id}
+                  className={
+                    m.role === "assistant"
+                      ? "text-slate-800 dark:text-slate-100"
+                      : "text-blue-700 dark:text-blue-300"
+                  }
+                >
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3 soft-shadow inline-block max-w-[80%] dark:border-slate-700 dark:bg-slate-800/90">
+                    <pre className="whitespace-pre-wrap text-sm leading-6">{m.text}</pre>
+                  </div>
+                </div>
+              ))}
+              <div ref={listEndRef} />
+            </div>
+            <div className="mt-4 flex gap-2">
+              <Input
+                placeholder={busy ? "Bekleyin..." : "Mesajınızı yazın"}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") onSend(); }}
+                disabled={busy}
+                className="flex-1"
+              />
+              <Button onClick={onSend} disabled={busy || !input.trim()}>Gönder</Button>
+            </div>
+          </Card>
+        </div>
+      </div>
             <div
               key={m.id}
               className={

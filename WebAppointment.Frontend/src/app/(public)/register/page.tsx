@@ -12,7 +12,6 @@ export default function RegisterPage() {
   const router = useRouter();
   const toast = useToast();
   const [form, setForm] = useState({
-    email: "",
     password: "",
     tcKimlikNo: "",
     firstName: "",
@@ -110,14 +109,6 @@ export default function RegisterPage() {
 
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Hesap Bilgileri</h3>
-            <Input 
-              label="E-posta Adresi" 
-              type="email" 
-              value={form.email} 
-              onChange={(e) => update("email", e.target.value)} 
-              placeholder="ornek@example.com"
-              required 
-            />
             <Input 
               label="Şifre" 
               type="password" 
