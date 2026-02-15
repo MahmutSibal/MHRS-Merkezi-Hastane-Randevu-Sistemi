@@ -1,3 +1,36 @@
+# OS
+Thumbs.db
+*.DS_Store
+
+# IDE
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# .NET build outputs
+**/bin/
+**/obj/
+*.pdb
+*.cache
+*.log
+
+# EF/Static assets
+**/staticwebassets*.json
+
+# Node/Next.js
+WebAppointment.Frontend/node_modules/
+WebAppointment.Frontend/.next/
+WebAppointment.Frontend/out/
+WebAppointment.Frontend/.turbo/
+
+# Env files
+WebAppointment.Frontend/.env*
+
+# Coverage
+coverage/
 # Ignore Node/Next.js artifacts
 node_modules/
 .next/
