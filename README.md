@@ -16,6 +16,7 @@ Modern, ölçeklenebilir ve güvenli bir hastane randevu yönetim platformu. Ço
 - [Hızlı Başlangıç](#hızlı-başlangıç)
 - [Backend – Ayrıntılar](#backend--ayrıntılar)
 - [Frontend – Ayrıntılar](#frontend--ayrıntılar)
+- [WhatsApp Bot](#whatsapp-bot)
 - [Ortam Değişkenleri](#ortam-değişkenleri)
 - [Hızlı Deneme Senaryoları](#hızlı-deneme-senaryoları)
 - [Güvenlik Notları](#güvenlik-notları)
@@ -39,6 +40,8 @@ Modern, ölçeklenebilir ve güvenli bir hastane randevu yönetim platformu. Ço
 - **AI Asistan:** Gemini destekli konuşarak randevu alma
 - **Haritalar:** Google Maps ile yakın hastaneler/işaretçiler
 - **Güvenlik:** JWT + Refresh, rol/policy, rate limiting, global hata yakalama
+- **Telefon Doğrulama:** 6 haneli kod ile kayıt onayı (90 sn geçerli)
+- **WhatsApp Köprüsü:** Kodu WhatsApp üzerinden ileten Node.js servis
 - **Dev Deneyimi:** Otomatik EF migrasyonları, Swagger, Serilog loglama
 
 ---
@@ -54,6 +57,8 @@ Modern, ölçeklenebilir ve güvenli bir hastane randevu yönetim platformu. Ço
   - App Router ile sayfalar: [WebAppointment.Frontend/src/app](WebAppointment.Frontend/src/app)
   - Proxy + session API’leri: [WebAppointment.Frontend/src/app/api](WebAppointment.Frontend/src/app/api)
   - Rol korumalı middleware: [WebAppointment.Frontend/middleware.ts](WebAppointment.Frontend/middleware.ts)
+- **WhatsApp Bot:** Node.js + WPPConnect
+  - Basit köprü API: [mhrs-whatsapp-bot/index.js](mhrs-whatsapp-bot/index.js)
 
 ---
 
@@ -72,9 +77,15 @@ dotnet run
 cd ..\..\WebAppointment.Frontend
 npm install
 npm run dev
+
+# 3) WhatsApp bot (yeni bir terminalde)
+cd ..\mhrs-whatsapp-bot
+npm install
+node index.js
 ```
 
 - Varsayılan adresler: Backend http://localhost:5233, Frontend http://localhost:3000
+- WhatsApp bot varsayılan portu: http://localhost:8080
 - Backend bağlantı dizinini ve JWT anahtarını ihtiyaçlarınıza göre özelleştirin (aşağıya bakınız).
 
 ## Backend – Ayrıntılar
@@ -95,6 +106,10 @@ npm run dev
   - Roller: Patient, Doctor, Admin, HospitalAdmin (bkz. [WebAppointment.Api/WebAppointmentApi.Domain/Enums/UserRole.cs](WebAppointment.Api/WebAppointmentApi.Domain/Enums/UserRole.cs))
   - Özel politika: "DoctorProfile" – doktorun ilişkili profili olmalı
   - Gelişmiş politika: `CanManageDepartment` (departman yönetimi tenant eşleşmesiyle kısıtlanır)
+- **Telefon Doğrulama (Hasta Kaydı)**
+  - Kod gönderme: `POST /api/auth/patient/register/request-code`
+  - Kodu onaylayıp kayıt: `POST /api/auth/patient/register/confirm`
+  - Kod süresi: 90 saniye, yanlış denemeler kayıt altına alınır
 - **Randevu Akışı (Hasta)**
   - Oluştur: `POST /api/appointments`
   - Liste: `GET /api/appointments/my`
@@ -245,6 +260,14 @@ Backend `appsettings.json` çok-kiracılık örneği:
 }
 ```
 
+WhatsApp köprü servisi (Web API) örneği:
+
+```
+"WhatsAppBridge": {
+  "BaseUrl": "http://localhost:8080"
+}
+```
+
 ---
 
 ## Hızlı Deneme Senaryoları
@@ -287,6 +310,20 @@ Backend `appsettings.json` çok-kiracılık örneği:
 - "Bağlantı sağlanamıyor": SQL Server servisinin çalıştığını ve `DefaultConnection` değerinin doğru olduğunu doğrulayın.
 - 401/403 hataları: Rol ve token geçerliliğini kontrol edin. Proxy route otomatik refresh dener.
 - Saat dilimi: Frontend, randevu gönderiminde Türkiye saati için `+03:00` ekler; backend tüm tarihleri UTC olarak saklar.
+- `Invalid object name 'PhoneVerificationCodes'`: Migration uygulanmamıştır. EF migration çalıştırın veya veritabanını sıfırlayın.
+- `Cannot insert duplicate key ... IX_Users_TenantId_Email`: Aynı tenant içinde boş e-posta ile kayıt denenmiştir. Yeni kayıtlarda benzersiz placeholder e-posta üretilir; eski yarım kayıtlar temizlenmelidir.
+- `Permission denied` Git uyarıları (tokens): [mhrs-whatsapp-bot/tokens](mhrs-whatsapp-bot/tokens) klasörünü git dışına alın (bkz. .gitignore).
+
+---
+
+## WhatsApp Bot
+
+- Amaç: Kayıt doğrulama kodunu WhatsApp üzerinden göndermek.
+- Çalışma portu: `8080`
+- Endpoint: `POST /send-message` (body: `{ phone, message }`)
+- Kod: [mhrs-whatsapp-bot/index.js](mhrs-whatsapp-bot/index.js)
+
+> Not: `mhrs-whatsapp-bot/tokens` klasörü WhatsApp oturum ve cache dosyalarıdır. Repoya eklenmemelidir.
 
 ---
 
