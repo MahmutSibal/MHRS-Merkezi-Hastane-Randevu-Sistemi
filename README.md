@@ -41,7 +41,9 @@ Modern, ölçeklenebilir ve güvenli bir hastane randevu yönetim platformu. Ço
 - **Haritalar:** Google Maps ile yakın hastaneler/işaretçiler
 - **Güvenlik:** JWT + Refresh, rol/policy, rate limiting, global hata yakalama
 - **Telefon Doğrulama:** 6 haneli kod ile kayıt onayı (90 sn geçerli)
-- **WhatsApp Köprüsü:** Kodu WhatsApp üzerinden ileten Node.js servis
+- **Şifremi Unuttum (Hasta):** Ad + Soyad + TC + Telefon ile doğrulama, yeni şifre WhatsApp üzerinden gönderilir
+- **Randevu WhatsApp Bildirimi:** Randevu alınca hastaneye, bölüme, doktora ve tarih-saat bilgisini içeren mesaj
+- **WhatsApp Köprüsü:** Kod, şifre ve randevu bildirimlerini ileten Node.js servis
 - **Dev Deneyimi:** Otomatik EF migrasyonları, Swagger, Serilog loglama
 
 ---
@@ -110,12 +112,17 @@ node index.js
   - Kod gönderme: `POST /api/auth/patient/register/request-code`
   - Kodu onaylayıp kayıt: `POST /api/auth/patient/register/confirm`
   - Kod süresi: 90 saniye, yanlış denemeler kayıt altına alınır
+- **Şifremi Unuttum (Hasta)**
+  - İstek: `POST /api/auth/patient/forgot-password`
+  - Girdi: Ad, soyad, TC Kimlik No, telefon
+  - Doğrulama başarılıysa yeni şifre üretilir ve WhatsApp ile gönderilir
 - **Randevu Akışı (Hasta)**
   - Oluştur: `POST /api/appointments`
   - Liste: `GET /api/appointments/my`
   - İptal: `PUT /api/appointments/{id}/cancel`
-  - Kurallar: geçmiş/başlamaya 15 dk kala iptal edilemez; 30 dk sabit süre; çakışma önleme
+  - Kurallar: geçmiş/başlamaya 2 saat kala iptal edilemez; 30 dk sabit süre; çakışma önleme
   - Çocuk için randevu: `dependentId` alanı ile (opsiyonel)
+  - Bildirim: Randevu oluşturulunca WhatsApp üzerinden detaylı mesaj gönderilir
 - **Doktor Akışı**
   - Liste: `GET /api/doctor/appointments/my`
   - Onay: `PUT /api/doctor/appointments/{id}/approve`
@@ -154,9 +161,11 @@ node index.js
   - JSON istemci: [WebAppointment.Frontend/src/lib/api-client.ts](WebAppointment.Frontend/src/lib/api-client.ts)
   - Backend proxy: [WebAppointment.Frontend/src/app/api/backend/[...path]/route.ts](WebAppointment.Frontend/src/app/api/backend/%5B...path%5D/route.ts)
   - Login/Register/Logout: [WebAppointment.Frontend/src/app/api/session](WebAppointment.Frontend/src/app/api/session)
+  - Şifre sıfırlama: [WebAppointment.Frontend/src/app/api/session/forgot-password/route.ts](WebAppointment.Frontend/src/app/api/session/forgot-password/route.ts)
 - **Ekranlar**
   - Hasta: [WebAppointment.Frontend/src/app/(app)/patient](WebAppointment.Frontend/src/app/(app)/patient)
     - Yeni randevu: [WebAppointment.Frontend/src/app/(app)/patient/appointments/new/page.tsx](WebAppointment.Frontend/src/app/(app)/patient/appointments/new/page.tsx)
+  - Şifremi Unuttum: [WebAppointment.Frontend/src/app/(public)/forgot-password/page.tsx](WebAppointment.Frontend/src/app/(public)/forgot-password/page.tsx)
   - Doktor: [WebAppointment.Frontend/src/app/(app)/doctor](WebAppointment.Frontend/src/app/(app)/doctor)
     - Randevular: [WebAppointment.Frontend/src/app/(app)/doctor/appointments/page.tsx](WebAppointment.Frontend/src/app/(app)/doctor/appointments/page.tsx)
     - Uzmanlık bilgileri: [WebAppointment.Frontend/src/app/(app)/doctor/profile/page.tsx](WebAppointment.Frontend/src/app/(app)/doctor/profile/page.tsx)
@@ -276,6 +285,11 @@ WhatsApp köprü servisi (Web API) örneği:
   1) `/register` üzerinden kayıt ol veya `/login` ile giriş yap
   2) `/patient/appointments/new` alanında "Randevu Kimin İçin?" bölümünden (opsiyonel) çocuk ekle / seç
   3) Hastane → bölüm → doktor → tarih/saat seçip randevu oluştur (doktor detay kartında onaylı uzmanlık bilgisi varsa görünür)
+  4) Randevu oluşturulunca WhatsApp üzerinden detaylı bilgilendirme gelir
+- **Şifremi Unuttum (Hasta)**
+  1) `/forgot-password` sayfasına git
+  2) Ad, soyad, TC ve telefon gir
+  3) Yeni şifre WhatsApp üzerinden gönderilir
 - **Doktor Onayı**
   1) Doktor olarak giriş yap
   2) `/doctor/appointments` ekranından bekleyen randevuyu **Onayla** ardından **Tamamla**
@@ -318,7 +332,7 @@ WhatsApp köprü servisi (Web API) örneği:
 
 ## WhatsApp Bot
 
-- Amaç: Kayıt doğrulama kodunu WhatsApp üzerinden göndermek.
+- Amaç: Kayıt doğrulama kodu, hasta şifre sıfırlama ve randevu bildirimlerini WhatsApp üzerinden göndermek.
 - Çalışma portu: `8080`
 - Endpoint: `POST /send-message` (body: `{ phone, message }`)
 - Kod: [mhrs-whatsapp-bot/index.js](mhrs-whatsapp-bot/index.js)
