@@ -31,6 +31,7 @@ public sealed class AuthService : IAuthService
     private readonly ITenantContext _tenant;
     private readonly IPhoneVerificationRepository _phoneVerifications;
     private readonly IPhoneVerificationSender _phoneSender;
+    private readonly IWhatsAppMessageSender _whatsappSender;
 
     public AuthService(
         IUserRepository users,
@@ -44,7 +45,8 @@ public sealed class AuthService : IAuthService
         ILogger<AuthService> logger,
         ITenantContext tenant,
         IPhoneVerificationRepository phoneVerifications,
-        IPhoneVerificationSender phoneSender)
+        IPhoneVerificationSender phoneSender,
+        IWhatsAppMessageSender whatsappSender)
     {
         _users = users;
         _patients = patients;
@@ -58,6 +60,7 @@ public sealed class AuthService : IAuthService
         _tenant = tenant;
         _phoneVerifications = phoneVerifications;
         _phoneSender = phoneSender;
+        _whatsappSender = whatsappSender;
     }
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request, CancellationToken ct)
@@ -245,6 +248,54 @@ public sealed class AuthService : IAuthService
         }
     }
 
+    public async Task ForgotPatientPasswordAsync(PatientForgotPasswordRequest request, CancellationToken ct)
+    {
+        var tc = request.TcKimlikNo.Trim();
+        var patient = await _patients.FindByTcAsync(tc, ct);
+        if (patient is null)
+        {
+            throw new NotFoundException("Hasta bulunamadi.");
+        }
+
+        if (!IsNameMatch(patient.FirstName, request.FirstName) || !IsNameMatch(patient.LastName, request.LastName))
+        {
+            throw new ValidationException("Bilgiler dogrulanamadi.");
+        }
+
+        if (!IsPhoneMatch(patient.Phone, request.Phone))
+        {
+            throw new ValidationException("Bilgiler dogrulanamadi.");
+        }
+
+        var user = await _users.FindByIdAsync(patient.UserId, ct);
+        if (user is null || user.Role != UserRole.Patient)
+        {
+            throw new NotFoundException("Hasta bulunamadi.");
+        }
+
+        var newPassword = GenerateStrongPassword();
+        var oldHash = user.PasswordHash;
+
+        user.PasswordHash = _passwordHasher.Hash(newPassword);
+        await _users.SaveChangesAsync(ct);
+
+        try
+        {
+            var message = string.Format(CultureInfo.InvariantCulture,
+                "MHRS yeni sifreniz: {0}. Guvenliginiz icin giris yaptiktan sonra sifrenizi degistirin.",
+                newPassword);
+
+            await _whatsappSender.SendMessageAsync(request.Phone, message, ct);
+        }
+        catch (Exception ex)
+        {
+            user.PasswordHash = oldHash;
+            await _users.SaveChangesAsync(ct);
+            _logger.LogError(ex, "Failed to send password reset message. UserId={UserId}", user.Id);
+            throw new ConflictException("Yeni sifre gonderilemedi. Lutfen tekrar deneyin.");
+        }
+    }
+
     private async Task<LoginResponse> RegisterCoreAsync(CreatePatientRequest request, CancellationToken ct)
     {
         // FluentValidation validates formatting. Here we enforce business constraints.
@@ -306,6 +357,54 @@ public sealed class AuthService : IAuthService
         }
 
         return digits;
+    }
+
+    private static bool IsPhoneMatch(string storedPhone, string inputPhone)
+        => string.Equals(NormalizePhone(storedPhone), NormalizePhone(inputPhone), StringComparison.Ordinal);
+
+    private static bool IsNameMatch(string storedName, string inputName)
+    {
+        var left = (storedName ?? string.Empty).Trim();
+        var right = (inputName ?? string.Empty).Trim();
+        var compare = CultureInfo.GetCultureInfo("tr-TR").CompareInfo;
+        return compare.Compare(left, right, CompareOptions.IgnoreCase) == 0;
+    }
+
+    private static string GenerateStrongPassword()
+    {
+        const int length = 8;
+        const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const string lower = "abcdefghijkmnopqrstuvwxyz";
+        const string digits = "0123456789";
+        const string symbols = "!@#$%^&*()-_=+[]{};:,.?";
+
+        var chars = new List<char>
+        {
+            GetRandomChar(upper),
+            GetRandomChar(lower),
+            GetRandomChar(digits),
+            GetRandomChar(symbols)
+        };
+
+        var all = upper + lower + digits + symbols;
+        while (chars.Count < length)
+        {
+            chars.Add(GetRandomChar(all));
+        }
+
+        for (var i = chars.Count - 1; i > 0; i--)
+        {
+            var swapIndex = RandomNumberGenerator.GetInt32(0, i + 1);
+            (chars[i], chars[swapIndex]) = (chars[swapIndex], chars[i]);
+        }
+
+        return new string(chars.ToArray());
+    }
+
+    private static char GetRandomChar(string source)
+    {
+        var index = RandomNumberGenerator.GetInt32(0, source.Length);
+        return source[index];
     }
 
     private static string GenerateCode()

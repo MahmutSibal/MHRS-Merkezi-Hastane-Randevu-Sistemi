@@ -82,6 +82,12 @@ export default function LoginPatientClient() {
             Giriş Yap
           </Button>
 
+          <div className="text-center text-sm">
+            <Link className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300" href="/forgot-password">
+              Sifremi Unuttum
+            </Link>
+          </div>
+
           <div className="relative my-5">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-300 dark:border-slate-700" />

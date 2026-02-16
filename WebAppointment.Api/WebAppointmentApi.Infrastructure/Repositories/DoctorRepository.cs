@@ -17,7 +17,7 @@ public sealed class DoctorRepository : IDoctorRepository
     public Task<Doctor?> FindByIdAsync(int doctorId, CancellationToken ct)
     {
         return _db.Doctors
-            .Include(x => x.Department)
+            .Include(x => x.Department).ThenInclude(d => d!.Hospital)
             .SingleOrDefaultAsync(x => x.Id == doctorId, ct);
     }
 

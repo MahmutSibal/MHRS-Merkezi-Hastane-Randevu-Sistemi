@@ -18,4 +18,6 @@ public interface IAuthService
 
     Task RequestPhoneVerificationCodeAsync(PhoneVerificationRequest request, CancellationToken ct);
     Task<LoginResponse> RegisterWithPhoneVerificationAsync(RegisterWithPhoneVerificationRequest request, CancellationToken ct);
+
+    Task ForgotPatientPasswordAsync(PatientForgotPasswordRequest request, CancellationToken ct);
 }

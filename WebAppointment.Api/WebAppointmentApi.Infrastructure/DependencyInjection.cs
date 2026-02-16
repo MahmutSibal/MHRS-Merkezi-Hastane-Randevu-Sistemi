@@ -53,6 +53,12 @@ public static class DependencyInjection
             client.BaseAddress = new Uri(options.BaseUrl);
         });
 
+        services.AddHttpClient<IWhatsAppMessageSender, WhatsAppMessageSender>((sp, client) =>
+        {
+            var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<WhatsAppBridgeOptions>>().Value;
+            client.BaseAddress = new Uri(options.BaseUrl);
+        });
+
         return services;
     }
 }

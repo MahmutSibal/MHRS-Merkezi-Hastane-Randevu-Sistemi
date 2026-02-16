@@ -60,4 +60,12 @@ public sealed class PatientAuthController : ControllerBase
         );
         return _auth.LoginAsync(mapped, ct);
     }
+
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForgotPassword([FromBody] PatientForgotPasswordRequest request, CancellationToken ct)
+    {
+        await _auth.ForgotPatientPasswordAsync(request, ct);
+        return NoContent();
+    }
 }

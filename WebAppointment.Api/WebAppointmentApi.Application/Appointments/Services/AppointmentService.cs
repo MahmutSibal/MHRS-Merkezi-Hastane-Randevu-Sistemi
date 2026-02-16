@@ -1,4 +1,5 @@
 using System.Data;
+using System.Globalization;
 using WebAppointmentApi.Application.Appointments.Abstractions;
 using WebAppointmentApi.Application.Appointments.Dtos;
 using WebAppointmentApi.Application.Appointments.State;
@@ -7,6 +8,7 @@ using WebAppointmentApi.Application.Common.Exceptions;
 using WebAppointmentApi.Application.Waitlist.Abstractions;
 using WebAppointmentApi.Domain.Entities;
 using WebAppointmentApi.Domain.Enums;
+using Microsoft.Extensions.Logging;
 
 namespace WebAppointmentApi.Application.Appointments.Services;
 
@@ -18,11 +20,14 @@ public sealed class AppointmentService : IAppointmentService
     private readonly IDoctorTimeOffRepository _timeOffs;
     private readonly IHolidayRepository _holidays;
     private readonly IDependentRepository _dependents;
+    private readonly IPatientRepository _patients;
     private readonly IUserRepository _users;
     private readonly IDateTimeProvider _clock;
     private readonly IAppointmentStateMachine _stateMachine;
     private readonly IUnitOfWork _uow;
     private readonly IWaitlistService _waitlist;
+    private readonly IWhatsAppMessageSender _whatsappSender;
+    private readonly ILogger<AppointmentService> _logger;
 
     public AppointmentService(
         IAppointmentRepository appointments,
@@ -31,11 +36,14 @@ public sealed class AppointmentService : IAppointmentService
         IDoctorTimeOffRepository timeOffs,
         IHolidayRepository holidays,
         IDependentRepository dependents,
+        IPatientRepository patients,
         IUserRepository users,
         IDateTimeProvider clock,
         IAppointmentStateMachine stateMachine,
         IUnitOfWork uow,
-        IWaitlistService waitlist)
+        IWaitlistService waitlist,
+        IWhatsAppMessageSender whatsappSender,
+        ILogger<AppointmentService> logger)
     {
         _appointments = appointments;
         _doctors = doctors;
@@ -43,11 +51,14 @@ public sealed class AppointmentService : IAppointmentService
         _timeOffs = timeOffs;
         _holidays = holidays;
         _dependents = dependents;
+        _patients = patients;
         _users = users;
         _clock = clock;
         _stateMachine = stateMachine;
         _uow = uow;
         _waitlist = waitlist;
+        _whatsappSender = whatsappSender;
+        _logger = logger;
     }
 
     public async Task<AppointmentDto> CreateAsync(Guid userId, CreateAppointmentRequest request, CancellationToken ct)
@@ -176,6 +187,8 @@ public sealed class AppointmentService : IAppointmentService
                 ct);
             await _uow.CommitAsync(ct);
 
+            await TrySendAppointmentWhatsAppAsync(userId, request, doctor, ct);
+
             return new AppointmentDto(
                 Id: created.Id,
                 UserId: created.UserId,
@@ -201,6 +214,38 @@ public sealed class AppointmentService : IAppointmentService
         {
             await _uow.RollbackAsync(ct);
             throw;
+        }
+    }
+
+    private async Task TrySendAppointmentWhatsAppAsync(Guid userId, CreateAppointmentRequest request, Doctor doctor, CancellationToken ct)
+    {
+        try
+        {
+            var patient = await _patients.FindByUserIdAsync(userId, ct);
+            if (patient is null || string.IsNullOrWhiteSpace(patient.Phone))
+            {
+                _logger.LogWarning("Appointment WhatsApp skipped: patient phone missing. UserId={UserId}", userId);
+                return;
+            }
+
+            var culture = CultureInfo.GetCultureInfo("tr-TR");
+            var localDate = request.AppointmentDate.ToString("dd MMMM yyyy HH:mm", culture);
+            var hospitalName = doctor.Department?.Hospital?.Name ?? string.Empty;
+            var departmentName = doctor.Department?.Name ?? string.Empty;
+            var doctorName = doctor.Name;
+
+            var message = string.Format(culture,
+                "Randevunuz olusturuldu. Hastane: {0}, Departman: {1}, Doktor: {2}, Tarih: {3}.",
+                hospitalName,
+                departmentName,
+                doctorName,
+                localDate);
+
+            await _whatsappSender.SendMessageAsync(patient.Phone, message, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send appointment WhatsApp message. UserId={UserId} DoctorId={DoctorId}", userId, doctor.Id);
         }
     }
 
