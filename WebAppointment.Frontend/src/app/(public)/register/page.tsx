@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -19,22 +19,79 @@ export default function RegisterPage() {
     phone: "",
   });
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isRequestingCode, setIsRequestingCode] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [expiresAt, setExpiresAt] = useState<number | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((p) => ({ ...p, [key]: value }));
   }
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  useEffect(() => {
+    if (!expiresAt) return;
+    const id = setInterval(() => {
+      const next = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+      setRemainingSeconds(next);
+      if (next === 0) {
+        clearInterval(id);
+      }
+    }, 500);
+
+    return () => clearInterval(id);
+  }, [expiresAt]);
+
+  function startCountdown() {
+    const next = Date.now() + 90 * 1000;
+    setExpiresAt(next);
+    setRemainingSeconds(90);
+  }
+
+  function formatCountdown(seconds: number) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  }
+
+  async function requestVerificationCode() {
+    setIsRequestingCode(true);
     setError(null);
-    setIsLoading(true);
+    try {
+      const res = await fetch("/api/session/register/request-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: form.phone }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Dogrulama kodu gonderilemedi.");
+      }
+
+      startCountdown();
+      setVerificationCode("");
+      setVerificationError(null);
+      toast.success("Dogrulama kodu gonderildi.");
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Dogrulama kodu gonderilemedi.";
+      setError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setIsRequestingCode(false);
+    }
+  }
+
+  async function verifyAndRegister() {
+    setVerificationError(null);
+    setIsVerifying(true);
 
     try {
       const res = await fetch("/api/session/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, code: verificationCode }),
       });
 
       if (!res.ok) {
@@ -42,19 +99,25 @@ export default function RegisterPage() {
         throw new Error(text || "Kayıt başarısız.");
       }
 
-      toast.success("Başarıyla kayıt oldunuz");
+      toast.success("Basariyla kayit oldunuz");
       router.replace("/patient");
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Kayıt başarısız.";
-      setError(errorMsg);
+      setVerificationError(errorMsg);
       toast.error(errorMsg);
     } finally {
-      setIsLoading(false);
+      setIsVerifying(false);
     }
   }
 
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await verifyAndRegister();
+  }
+
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
       <div className="rounded-xl border border-slate-200 bg-white/70 p-3 text-center text-xs font-medium text-slate-700 shadow-sm glass dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-200">
         MHRS — Kayıt işlemleriniz güvenle saklanır
       </div>
@@ -119,13 +182,60 @@ export default function RegisterPage() {
             />
           </div>
 
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Telefon Dogrulama</h3>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-sm text-slate-600 dark:text-slate-300">
+                  Kod 90 saniye gecerlidir.
+                </div>
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Sure: {formatCountdown(remainingSeconds)}
+                </div>
+              </div>
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={requestVerificationCode}
+                  disabled={isRequestingCode || !form.phone}
+                  isLoading={isRequestingCode}
+                  className="sm:w-52"
+                >
+                  Dogrulama Kodu Gonder
+                </Button>
+                <div className="flex-1">
+                  <Input
+                    label="6 haneli kod"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="123456"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                  />
+                </div>
+              </div>
+              {verificationError ? (
+                <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+                  {verificationError}
+                </div>
+              ) : null}
+            </div>
+          </div>
+
           {error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
               {error}
             </div>
           ) : null}
 
-          <Button type="submit" isLoading={isLoading} size="md" className="w-full">
+          <Button
+            type="submit"
+            isLoading={isVerifying}
+            size="md"
+            className="w-full"
+            disabled={verificationCode.length !== 6 || remainingSeconds === 0}
+          >
             Kaydı Tamamla
           </Button>
 
@@ -151,6 +261,7 @@ export default function RegisterPage() {
           </Panel>
         </div>
       </div>
-    </div>
+      </div>
+      </>
   );
 }

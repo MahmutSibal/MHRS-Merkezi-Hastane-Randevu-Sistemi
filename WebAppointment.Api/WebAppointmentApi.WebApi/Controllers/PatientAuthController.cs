@@ -34,6 +34,20 @@ public sealed class PatientAuthController : ControllerBase
         return _auth.RegisterAsync(mapped, ct);
     }
 
+    [HttpPost("register/request-code")]
+    [AllowAnonymous]
+    public async Task<IActionResult> RequestPhoneCode([FromBody] PhoneVerificationRequest request, CancellationToken ct)
+    {
+        await _auth.RequestPhoneVerificationCodeAsync(request, ct);
+        return NoContent();
+    }
+
+    [HttpPost("register/confirm")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    public Task<LoginResponse> RegisterConfirm([FromBody] RegisterWithPhoneVerificationRequest request, CancellationToken ct)
+        => _auth.RegisterWithPhoneVerificationAsync(request, ct);
+
     // Hasta giriş: TC + şifre
     [HttpPost("login")]
     [AllowAnonymous]

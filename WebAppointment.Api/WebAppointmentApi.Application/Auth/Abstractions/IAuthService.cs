@@ -15,4 +15,7 @@ public interface IAuthService
     /// Registers a new patient user and returns tokens (login-like response).
     /// </summary>
     Task<LoginResponse> RegisterAsync(CreatePatientRequest request, CancellationToken ct);
+
+    Task RequestPhoneVerificationCodeAsync(PhoneVerificationRequest request, CancellationToken ct);
+    Task<LoginResponse> RegisterWithPhoneVerificationAsync(RegisterWithPhoneVerificationRequest request, CancellationToken ct);
 }

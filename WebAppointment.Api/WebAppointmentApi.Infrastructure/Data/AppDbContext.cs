@@ -43,6 +43,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     public DbSet<LoginLockout> LoginLockouts => Set<LoginLockout>();
+    public DbSet<PhoneVerificationCode> PhoneVerificationCodes => Set<PhoneVerificationCode>();
 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<WaitlistEntry> Waitlist => Set<WaitlistEntry>();
@@ -55,6 +56,21 @@ public sealed class AppDbContext : DbContext
             b.Property(x => x.Name).HasMaxLength(200).IsRequired();
             b.Property(x => x.Domain).HasMaxLength(200);
             b.Property(x => x.IsActive).IsRequired();
+        });
+        modelBuilder.Entity<PhoneVerificationCode>(b =>
+        {
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Phone).HasMaxLength(30).IsRequired();
+            b.Property(x => x.CodeHash).HasMaxLength(200).IsRequired();
+            b.Property(x => x.CodeSalt).HasMaxLength(200).IsRequired();
+            b.Property(x => x.CreatedAtUtc).IsRequired();
+            b.Property(x => x.ExpiresAtUtc).IsRequired();
+            b.Property(x => x.AttemptCount).HasDefaultValue(0);
+
+            b.Property(x => x.TenantId).IsRequired();
+            b.HasQueryFilter(x => x.TenantId == _tenant.TenantId);
+
+            b.HasIndex(x => new { x.TenantId, x.Phone, x.CreatedAtUtc });
         });
 
         modelBuilder.Entity<User>(b =>
@@ -204,7 +220,7 @@ public sealed class AppDbContext : DbContext
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            b.HasIndex(x => x.UserId).IsUnique().HasFilter("\"UserId\" IS NOT NULL");
+            b.HasIndex(x => x.UserId).IsUnique().HasFilter("UserId IS NOT NULL");
 
             b.HasOne(x => x.Department)
                 .WithMany(x => x.Doctors)

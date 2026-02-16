@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   const origin = getBackendOrigin();
   const body = await req.text();
 
-  const res = await fetch(`${origin}/api/auth/register`, {
+  const res = await fetch(`${origin}/api/auth/patient/register/confirm`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body,
@@ -40,5 +40,12 @@ export async function POST(req: Request) {
   return new NextResponse(text, {
     status: 200,
     headers: { "Content-Type": "application/json" },
+  });
+}
+
+export async function GET() {
+  return new NextResponse("Kayıt için POST isteği kullanın.", {
+    status: 405,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
   });
 }

@@ -132,12 +132,14 @@ export default function ProfilePage() {
 
       <Card>
         <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <div className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">E-posta</div>
-            <div className="rounded-2xl border-2 border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
-              {session?.email ?? ""}
+          {session?.role !== "Patient" ? (
+            <div>
+              <div className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">E-posta</div>
+              <div className="rounded-2xl border-2 border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+                {session?.email ?? ""}
+              </div>
             </div>
-          </div>
+          ) : null}
           <div>
             <div className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Rol</div>
             <div className="rounded-2xl border-2 border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
@@ -152,7 +154,9 @@ export default function ProfilePage() {
           <div className="text-sm font-medium text-slate-700 dark:text-slate-300">Hesap Bilgilerini Güncelle</div>
           <div className="grid gap-3 sm:grid-cols-3">
             <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Mevcut şifre" />
-            <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="Yeni e-posta (opsiyonel)" />
+            {session?.role !== "Patient" ? (
+              <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="Yeni e-posta (opsiyonel)" />
+            ) : null}
             <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Yeni şifre (opsiyonel)" />
           </div>
           <Button onClick={save} disabled={!canSave}>

@@ -8,8 +8,20 @@ const REFRESH_COOKIE = "mhrs_rt";
 export async function POST(req: Request) {
   const origin = getBackendOrigin();
   const body = await req.text();
+  let target = "auth/login";
 
-  const res = await fetch(`${origin}/api/auth/login`, {
+  try {
+    const parsed = JSON.parse(body) as { tcKimlikNo?: string; email?: string };
+    if (parsed?.tcKimlikNo) {
+      target = "auth/patient/login";
+    } else if (parsed?.email) {
+      target = "auth/login";
+    }
+  } catch {
+    target = "auth/login";
+  }
+
+  const res = await fetch(`${origin}/api/${target}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body,

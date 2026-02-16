@@ -10,5 +10,17 @@
             Usage: from the Infrastructure folder, run: dotnet ef migrations add YourMigrationName and dotnet ef database update.
             </summary>
         </member>
+        <member name="T:WebAppointmentApi.Infrastructure.Migrations.AddPhoneVerificationCodes">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddPhoneVerificationCodes.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddPhoneVerificationCodes.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddPhoneVerificationCodes.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
     </members>
 </doc>

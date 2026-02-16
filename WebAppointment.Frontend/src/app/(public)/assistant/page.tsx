@@ -31,13 +31,30 @@ function withTurkeyOffset(date: string, time: string) {
   return `${dateTimeLocal}+03:00`;
 }
 
+function formatDateLocal(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function isWithinOneYear(dateText: string) {
+  const target = new Date(`${dateText}T00:00:00`);
+  if (Number.isNaN(target.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const max = new Date(today);
+  max.setFullYear(max.getFullYear() + 1);
+  return target >= today && target <= max;
+}
+
 export default function AssistantPage() {
   const { session } = useContext(SessionContext);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<Step>("email");
-  const [input, setInput] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState("");
   const [departments, setDepartments] = useState<DepartmentDto[]>([]);
   const [departmentId, setDepartmentId] = useState<number>(0);
@@ -179,6 +196,8 @@ export default function AssistantPage() {
         const ok = /^\d{4}-\d{2}-\d{2}$/.test(content);
         if (!ok) {
           addAssistant("Lütfen 'yyyy-aa-gg' (ör. 2026-02-10) formatında tarih yazın.");
+        } else if (!isWithinOneYear(content)) {
+          addAssistant("Randevu tarihi bugünden itibaren en fazla 1 yıl içinde olmalıdır.");
         } else {
           setDate(content);
           const text = await replyWithGemini("Teşekkürler. Saat için 'SS:dd' (ör. 09:00 veya 13:30) yazın.");
@@ -223,7 +242,6 @@ export default function AssistantPage() {
     <div className="grid gap-6">
       <PageHeader title="Asistan ile Randevu" subtitle="Giriş ve seçimleri sohbetle tamamlayın." />
       <Card>
-        <div className="h-[60vh] overflow-y-auto space-y-3 pr-1">
       <PageHeader title="Asistan" subtitle="Randevu sohbeti ve Hızlı Tanı." />
       <div className="grid md:grid-cols-2 gap-6">
         <div>
@@ -274,32 +292,6 @@ export default function AssistantPage() {
           </Card>
         </div>
       </div>
-            <div
-              key={m.id}
-              className={
-                m.role === "assistant"
-                  ? "text-slate-800 dark:text-slate-100"
-                  : "text-blue-700 dark:text-blue-300"
-              }
-            >
-              <div className="rounded-2xl border border-slate-200 bg-white p-3 soft-shadow inline-block max-w-[80%] dark:border-slate-700 dark:bg-slate-800/90">
-                <pre className="whitespace-pre-wrap text-sm leading-6">{m.text}</pre>
-              </div>
-            </div>
-          ))}
-          <div ref={listEndRef} />
-        </div>
-        <div className="mt-4 flex gap-2">
-          <Input
-            placeholder={busy ? "Bekleyin..." : "Mesajınızı yazın"}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") onSend(); }}
-            disabled={busy}
-            className="flex-1"
-          />
-          <Button onClick={onSend} disabled={busy || !input.trim()}>Gönder</Button>
-        </div>
       </Card>
     </div>
   );

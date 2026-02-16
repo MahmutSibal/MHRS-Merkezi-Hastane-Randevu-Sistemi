@@ -19,7 +19,7 @@ using WebAppointmentApi.WebApi.Security;
 var builder = WebApplication.CreateBuilder(args);
 
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-if (!string.IsNullOrEmpty(databaseUrl))
+if (!string.IsNullOrEmpty(databaseUrl) && databaseUrl.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
 {
     var uri = new Uri(databaseUrl);
     var userInfo = uri.UserInfo.Split(':');
@@ -32,7 +32,7 @@ if (!string.IsNullOrEmpty(databaseUrl))
     builder.Configuration["ConnectionStrings:DefaultConnection"] = connStr;
 }
 
-builder.WebHost.UseUrls("http://localhost:3000");
+builder.WebHost.UseUrls("http://localhost:5233");
 
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)

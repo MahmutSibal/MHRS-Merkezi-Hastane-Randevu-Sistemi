@@ -1,3 +1,8 @@
+using System.Globalization;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using FluentValidation;
 using Microsoft.Extensions.Logging;
 using WebAppointmentApi.Application.Auth.Abstractions;
 using WebAppointmentApi.Application.Auth.Dtos;
@@ -24,6 +29,8 @@ public sealed class AuthService : IAuthService
     private readonly IUnitOfWork _uow;
     private readonly ILogger<AuthService> _logger;
     private readonly ITenantContext _tenant;
+    private readonly IPhoneVerificationRepository _phoneVerifications;
+    private readonly IPhoneVerificationSender _phoneSender;
 
     public AuthService(
         IUserRepository users,
@@ -35,7 +42,9 @@ public sealed class AuthService : IAuthService
         IDateTimeProvider clock,
         IUnitOfWork uow,
         ILogger<AuthService> logger,
-        ITenantContext tenant)
+        ITenantContext tenant,
+        IPhoneVerificationRepository phoneVerifications,
+        IPhoneVerificationSender phoneSender)
     {
         _users = users;
         _patients = patients;
@@ -47,6 +56,8 @@ public sealed class AuthService : IAuthService
         _uow = uow;
         _logger = logger;
         _tenant = tenant;
+        _phoneVerifications = phoneVerifications;
+        _phoneSender = phoneSender;
     }
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request, CancellationToken ct)
@@ -133,6 +144,109 @@ public sealed class AuthService : IAuthService
 
     public async Task<LoginResponse> RegisterAsync(CreatePatientRequest request, CancellationToken ct)
     {
+        await _uow.BeginAsync(ct);
+        try
+        {
+            var response = await RegisterCoreAsync(request, ct);
+            await _uow.CommitAsync(ct);
+            return response;
+        }
+        catch
+        {
+            await _uow.RollbackAsync(ct);
+            throw;
+        }
+    }
+
+    public async Task RequestPhoneVerificationCodeAsync(PhoneVerificationRequest request, CancellationToken ct)
+    {
+        var normalizedPhone = NormalizePhone(request.Phone);
+        var now = _clock.UtcNow;
+
+        var latest = await _phoneVerifications.FindLatestByPhoneAsync(normalizedPhone, ct);
+        if (latest is not null && latest.UsedAtUtc is null && latest.ExpiresAtUtc > now)
+        {
+            var remaining = (int)Math.Ceiling((latest.ExpiresAtUtc - now).TotalSeconds);
+            throw new TooManyRequestsException($"Kod zaten gonderildi. {remaining} saniye sonra tekrar deneyin.");
+        }
+
+        var code = GenerateCode();
+        var salt = CreateSalt();
+        var hash = HashCode(code, salt);
+
+        var entry = new PhoneVerificationCode
+        {
+            Id = Guid.NewGuid(),
+            Phone = normalizedPhone,
+            CodeHash = hash,
+            CodeSalt = salt,
+            CreatedAtUtc = now,
+            ExpiresAtUtc = now.AddSeconds(90),
+            TenantId = _tenant.TenantId
+        };
+
+        await _phoneVerifications.AddAsync(entry, ct);
+        await _phoneVerifications.SaveChangesAsync(ct);
+
+        try
+        {
+            await _phoneSender.SendCodeAsync(normalizedPhone, code, ct);
+        }
+        catch (Exception ex)
+        {
+            entry.ExpiresAtUtc = now;
+            await _phoneVerifications.SaveChangesAsync(ct);
+            _logger.LogError(ex, "Failed to send phone verification code.");
+            throw new ConflictException("Dogrulama kodu gonderilemedi. Lutfen tekrar deneyin.");
+        }
+    }
+
+    public async Task<LoginResponse> RegisterWithPhoneVerificationAsync(RegisterWithPhoneVerificationRequest request, CancellationToken ct)
+    {
+        var normalizedPhone = NormalizePhone(request.Phone);
+        var now = _clock.UtcNow;
+
+        var latest = await _phoneVerifications.FindLatestByPhoneAsync(normalizedPhone, ct);
+        if (latest is null || latest.UsedAtUtc is not null || latest.ExpiresAtUtc <= now)
+        {
+            throw new ValidationException("Dogrulama kodu suresi doldu. Lutfen yeniden isteyin.");
+        }
+
+        if (!IsCodeMatch(latest, request.Code))
+        {
+            latest.AttemptCount++;
+            await _phoneVerifications.SaveChangesAsync(ct);
+            throw new ValidationException("Dogrulama kodu hatali.");
+        }
+
+        await _uow.BeginAsync(ct);
+        try
+        {
+            latest.UsedAtUtc = now;
+
+            var mapped = new CreatePatientRequest(
+                Email: null,
+                Password: request.Password,
+                TcKimlikNo: request.TcKimlikNo,
+                FirstName: request.FirstName,
+                LastName: request.LastName,
+                Phone: request.Phone
+            );
+
+            var response = await RegisterCoreAsync(mapped, ct);
+
+            await _uow.CommitAsync(ct);
+            return response;
+        }
+        catch
+        {
+            await _uow.RollbackAsync(ct);
+            throw;
+        }
+    }
+
+    private async Task<LoginResponse> RegisterCoreAsync(CreatePatientRequest request, CancellationToken ct)
+    {
         // FluentValidation validates formatting. Here we enforce business constraints.
         var hasEmail = !string.IsNullOrWhiteSpace(request.Email);
         if (hasEmail)
@@ -149,46 +263,66 @@ public sealed class AuthService : IAuthService
         var tcExists = await _patients.FindByTcAsync(tc, ct);
         if (tcExists is not null)
         {
-            throw new ConflictException("Bu TC Kimlik No ile kay�t zaten mevcut.");
+            throw new ConflictException("Bu TC Kimlik No ile kayit zaten mevcut.");
         }
 
-        await _uow.BeginAsync(ct);
-        try
+        var emailValue = hasEmail
+            ? request.Email!.Trim()
+            : string.Format(CultureInfo.InvariantCulture, "patient-{0}@mhrs.local", tc);
+
+        var user = new User
         {
-            var user = new User
-            {
-                Id = Guid.NewGuid(),
-                Email = (request.Email ?? string.Empty).Trim(),
-                PasswordHash = _passwordHasher.Hash(request.Password),
-                Role = UserRole.Patient,
-                TenantId = _tenant.TenantId,
-            };
+            Id = Guid.NewGuid(),
+            Email = emailValue,
+            PasswordHash = _passwordHasher.Hash(request.Password),
+            Role = UserRole.Patient,
+            TenantId = _tenant.TenantId,
+        };
 
-            await _users.AddAsync(user, ct);
+        await _users.AddAsync(user, ct);
 
-            await _patients.AddAsync(new Patient
-            {
-                UserId = user.Id,
-                TcKimlikNo = tc,
-                FirstName = request.FirstName.Trim(),
-                LastName = request.LastName.Trim(),
-                Phone = request.Phone.Trim(),
-                TenantId = _tenant.TenantId,
-            }, ct);
-
-            await _users.SaveChangesAsync(ct);
-
-            var response = await IssueTokensAsync(user, ct);
-
-            await _uow.CommitAsync(ct);
-            return response;
-        }
-        catch
+        await _patients.AddAsync(new Patient
         {
-            await _uow.RollbackAsync(ct);
-            throw;
-        }
+            UserId = user.Id,
+            TcKimlikNo = tc,
+            FirstName = request.FirstName.Trim(),
+            LastName = request.LastName.Trim(),
+            Phone = request.Phone.Trim(),
+            TenantId = _tenant.TenantId,
+        }, ct);
+
+        await _users.SaveChangesAsync(ct);
+
+        var response = await IssueTokensAsync(user, ct);
+        return response;
     }
+
+    private static string NormalizePhone(string phone)
+    {
+        var digits = new string(phone.Where(char.IsDigit).ToArray());
+        if (digits.Length == 11 && digits.StartsWith("0", StringComparison.Ordinal))
+        {
+            digits = digits[1..];
+        }
+
+        return digits;
+    }
+
+    private static string GenerateCode()
+        => RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6", CultureInfo.InvariantCulture);
+
+    private static string CreateSalt()
+        => Convert.ToBase64String(RandomNumberGenerator.GetBytes(16));
+
+    private static string HashCode(string code, string salt)
+    {
+        var input = string.Concat(salt, ":", code);
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
+        return Convert.ToHexString(bytes);
+    }
+
+    private static bool IsCodeMatch(PhoneVerificationCode entry, string code)
+        => string.Equals(entry.CodeHash, HashCode(code, entry.CodeSalt), StringComparison.Ordinal);
 
     public async Task<LoginResponse> RefreshAsync(RefreshTokenRequest request, CancellationToken ct)
     {

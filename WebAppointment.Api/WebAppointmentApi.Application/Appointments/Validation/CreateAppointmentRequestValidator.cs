@@ -17,6 +17,8 @@ public sealed class CreateAppointmentRequestValidator : AbstractValidator<Create
             .NotEmpty()
             .Must(BeInFuture)
             .WithMessage("Randevu tarihi geçmişte olamaz")
+            .Must(BeWithinOneYear)
+            .WithMessage("Randevu tarihi en fazla 1 yıl içinde olmalıdır")
             .Must(BeWeekday)
             .WithMessage("Hafta sonu randevu alınamaz.")
             .Must(HaveValidMinutes)
@@ -34,4 +36,7 @@ public sealed class CreateAppointmentRequestValidator : AbstractValidator<Create
 
     private static bool HaveValidMinutes(DateTimeOffset date)
         => date.Minute is 0 or 30;
+
+    private static bool BeWithinOneYear(DateTimeOffset date)
+        => date.ToUniversalTime() <= DateTimeOffset.UtcNow.AddYears(1);
 }

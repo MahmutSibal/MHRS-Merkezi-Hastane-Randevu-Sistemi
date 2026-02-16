@@ -193,7 +193,7 @@ export function AssistantWidget({ className }: { className?: string }) {
         if (content.toLowerCase() !== "onayliyorum") addAssistant("Onaylamak için 'onayliyorum' yazın veya bilgileri değiştirin.");
         else {
           try {
-            await apiJson("/session/register", {
+            await apiJson("/api/session/register", {
               method: "POST",
               body: JSON.stringify({ email, password, tcKimlikNo, firstName, lastName, phone }),
             });

@@ -6,6 +6,7 @@ using WebAppointmentApi.Application.Auth.Abstractions;
 using WebAppointmentApi.Application.Waitlist.Abstractions;
 using WebAppointmentApi.Infrastructure.BackgroundJobs;
 using WebAppointmentApi.Infrastructure.Data;
+using WebAppointmentApi.Infrastructure.Messaging;
 using WebAppointmentApi.Infrastructure.Repositories;
 using WebAppointmentApi.Infrastructure.Security;
 
@@ -18,7 +19,7 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(options =>
         {
             var cs = configuration.GetConnectionString("DefaultConnection");
-            options.UseNpgsql(cs);
+            options.UseSqlServer(cs);
         });
 
         services.AddScoped<IUserRepository, UserRepository>();
@@ -37,12 +38,20 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IReportRepository, ReportRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<IPhoneVerificationRepository, PhoneVerificationRepository>();
 
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddSingleton<IBackgroundJobQueue, BackgroundJobQueue>();
         services.AddHostedService<QueuedBackgroundService>();
+
+        services.Configure<WhatsAppBridgeOptions>(configuration.GetSection("WhatsAppBridge"));
+        services.AddHttpClient<IPhoneVerificationSender, WhatsAppPhoneVerificationSender>((sp, client) =>
+        {
+            var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<WhatsAppBridgeOptions>>().Value;
+            client.BaseAddress = new Uri(options.BaseUrl);
+        });
 
         return services;
     }

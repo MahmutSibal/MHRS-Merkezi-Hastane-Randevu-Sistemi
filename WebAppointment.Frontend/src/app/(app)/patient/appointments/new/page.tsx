@@ -37,6 +37,13 @@ function withTurkeyOffset(date: string, time: string) {
   return `${dateTimeLocal}+03:00`;
 }
 
+function formatDateLocal(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 export default function NewAppointmentPage() {
   const router = useRouter();
   const toast = useToast();
@@ -61,6 +68,13 @@ export default function NewAppointmentPage() {
 
   const [slots, setSlots] = useState<DoctorDailySlotPublicDto[]>([]);
   const [isSlotsLoading, setIsSlotsLoading] = useState(false);
+
+  const minDate = useMemo(() => formatDateLocal(new Date()), []);
+  const maxDate = useMemo(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    return formatDateLocal(d);
+  }, []);
 
   async function loadDependents() {
     try {
@@ -360,10 +374,25 @@ export default function NewAppointmentPage() {
                       setTime("");
                       return;
                     }
+                    if (next < minDate) {
+                      toast.error("Geçmiş tarihe randevu alınamaz.");
+                      setDate("");
+                      setSlots([]);
+                      setTime("");
+                      return;
+                    }
+                      if (next > maxDate) {
+                        toast.error("En fazla 1 yıl içinde randevu alınabilir.");
+                        setDate("");
+                        setSlots([]);
+                        setTime("");
+                        return;
+                      }
                   }
                   setDate(next);
                 }}
-                min={new Date().toISOString().split('T')[0]}
+                  min={minDate}
+                  max={maxDate}
                 required
                 className="w-full rounded-lg border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-medium outline-none transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-900 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-60 hover:[&::-webkit-calendar-picker-indicator]:opacity-100"
               />

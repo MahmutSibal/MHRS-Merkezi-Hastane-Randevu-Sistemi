@@ -30,6 +30,7 @@ public sealed class AuthController : ControllerBase
     [HttpPost("login")]
     [AllowAnonymous]
     [EnableRateLimiting("login")]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public Task<LoginResponse> Login([FromBody] LoginRequest request, CancellationToken ct)
         => _auth.LoginAsync(request, ct);
 

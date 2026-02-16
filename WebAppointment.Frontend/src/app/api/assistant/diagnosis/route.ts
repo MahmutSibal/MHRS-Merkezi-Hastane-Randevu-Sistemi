@@ -83,3 +83,10 @@ export async function POST(req: NextRequest) {
     return new Response(msg, { status: 500, headers: { "Content-Type": "text/plain; charset=utf-8" } });
   }
 }
+
+export async function GET() {
+  return new Response("Tanı için POST isteği gönderin.", {
+    status: 405,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
