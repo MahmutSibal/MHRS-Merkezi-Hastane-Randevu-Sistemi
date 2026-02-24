@@ -29,5 +29,8 @@ public interface IAppointmentRepository
     Task<Appointment?> FindByIdAsync(Guid appointmentId, CancellationToken ct);
     Task AddLogAsync(AppointmentLog log, CancellationToken ct);
     Task AddNotificationAsync(Notification notification, CancellationToken ct);
+    Task RescheduleWithLockAsync(Guid appointmentId, Guid userId, int doctorId, DateTimeOffset newStartUtc, DateTimeOffset newEndUtc, DateTimeOffset newDayStartUtc, DateTimeOffset newDayEndUtc, DateTimeOffset nowUtc, CancellationToken ct);
+    Task<IReadOnlyList<Appointment>> ListUpcomingUnremindedAsync(DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken ct);
+    Task MarkReminderSentAsync(Guid appointmentId, DateTimeOffset sentAtUtc, CancellationToken ct);
     Task SaveChangesAsync(CancellationToken ct);
 }

@@ -28,7 +28,8 @@ WebAppointment.Frontend/.turbo/
 
 # WhatsApp bot session data
 mhrs-whatsapp-bot/tokens/
-
+mhrs-whatsapp-bot/sessions/
+mhrs-whatsapp-bot/node_modules/
 # Env files
 WebAppointment.Frontend/.env*
 

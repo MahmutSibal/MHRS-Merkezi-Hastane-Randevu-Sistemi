@@ -45,6 +45,9 @@ public static class DependencyInjection
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddSingleton<IBackgroundJobQueue, BackgroundJobQueue>();
         services.AddHostedService<QueuedBackgroundService>();
+        services.AddHostedService<AppointmentReminderService>();
+
+        services.AddHttpClient<INviKimlikService, NviKimlikService>();
 
         services.Configure<WhatsAppBridgeOptions>(configuration.GetSection("WhatsAppBridge"));
         services.AddHttpClient<IPhoneVerificationSender, WhatsAppPhoneVerificationSender>((sp, client) =>

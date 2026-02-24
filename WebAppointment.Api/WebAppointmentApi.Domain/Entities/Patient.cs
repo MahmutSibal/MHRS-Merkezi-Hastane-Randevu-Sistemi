@@ -13,6 +13,7 @@ public sealed class Patient : IMultiTenant
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
+    public DateOnly BirthDate { get; set; }
 
     public bool IsDeleted { get; set; }
 
@@ -20,4 +21,12 @@ public sealed class Patient : IMultiTenant
 
     // No-show risk score (0-100)
     public int NoShowScore { get; set; }
+
+    // Health profile (patient fills from profile page)
+    public string? BloodType { get; set; }
+    public string? Allergies { get; set; }
+    public string? ChronicDiseases { get; set; }
+    public string? Medications { get; set; }
+    public string? EmergencyContactName { get; set; }
+    public string? EmergencyContactPhone { get; set; }
 }

@@ -6,5 +6,6 @@ public sealed record CreatePatientNoEmailRequest(
     string TcKimlikNo,
     string FirstName,
     string LastName,
-    string Phone
+    string Phone,
+    DateOnly BirthDate
 );

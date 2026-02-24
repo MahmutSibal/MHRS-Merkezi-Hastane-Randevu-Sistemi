@@ -6,14 +6,10 @@ import Link from "next/link";
 export default function Hero() {
   return (
     <section className="relative overflow-hidden rounded-2xl border border-slate-200 shadow-lg dark:border-slate-800">
-      {/* Background image */}
-      <div className="absolute inset-0 hero-bg">
-        <div className="absolute inset-0 hidden md:block hero-overlay" />
-        <div className="absolute inset-0 md:hidden light-hero-overlay" />
-      </div>
-
-      {/* Fallback gradient if image missing */}
-      <div className="absolute inset-0 md:hidden brand-gradient opacity-20" />
+      {/* Gradient background */}
+      <div className="absolute inset-0 hero-gradient" />
+      {/* Animated mesh pattern */}
+      <div className="absolute inset-0 hero-mesh opacity-30" />
 
       {/* Content */}
       <div className="relative z-10 grid gap-6 p-6 sm:p-10 lg:p-12 md:grid-cols-2">
@@ -56,8 +52,8 @@ export default function Hero() {
         <div className="relative hidden md:block">
           <div className="absolute -right-6 -bottom-6 h-48 w-48 rounded-full bg-[var(--brand-accent)]/20 blur-2xl" />
           <div className="absolute -right-8 -top-8 h-64 w-64 rounded-full bg-[var(--brand-primary)]/20 blur-2xl" />
-          <div className="relative mx-auto max-w-md rounded-xl bg-white/50 p-4 shadow-2xl backdrop-blur dark:bg-slate-900/60">
-            <Image src="/mhrs-hero.jpg" alt="MHRS" width={640} height={400} className="h-auto w-full rounded-lg object-cover" priority />
+          <div className="relative mx-auto max-w-md rounded-xl bg-white/10 p-3 shadow-2xl backdrop-blur-sm border border-white/20">
+            <Image src="/mhrs-hero.svg" alt="MHRS Dashboard" width={640} height={400} className="h-auto w-full rounded-lg" priority />
           </div>
         </div>
       </div>

@@ -29,7 +29,8 @@ public sealed class PatientAuthController : ControllerBase
             TcKimlikNo: request.TcKimlikNo,
             FirstName: request.FirstName,
             LastName: request.LastName,
-            Phone: request.Phone
+            Phone: request.Phone,
+            BirthDate: request.BirthDate
         );
         return _auth.RegisterAsync(mapped, ct);
     }

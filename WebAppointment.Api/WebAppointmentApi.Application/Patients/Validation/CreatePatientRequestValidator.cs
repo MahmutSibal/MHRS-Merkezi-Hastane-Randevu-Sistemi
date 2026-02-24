@@ -48,6 +48,10 @@ public sealed class CreatePatientRequestValidator : AbstractValidator<CreatePati
             .Length(11)
             .Must(BeValidTcKimlikNo)
             .WithMessage("Geçersiz TC Kimlik No");
+
+        RuleFor(x => x.BirthDate)
+            .Must(d => d.Year >= 1900 && d <= DateOnly.FromDateTime(DateTime.UtcNow))
+            .WithMessage("Geçersiz doğum tarihi.");
     }
 
     private static bool BeValidTcKimlikNo(string tc)

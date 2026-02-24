@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useEffect, useMemo, useState } from "react";
 
 export type Session = {
   userId: string;
@@ -24,7 +24,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch("/api/session/me", { cache: "no-store" });
@@ -37,12 +37,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     void refresh();
-  }, []);
+  }, [refresh]);
 
-  const value = useMemo(() => ({ session, isLoading, refresh }), [session, isLoading]);
+  const value = useMemo(() => ({ session, isLoading, refresh }), [session, isLoading, refresh]);
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

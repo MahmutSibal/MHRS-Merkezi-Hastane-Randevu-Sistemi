@@ -1,4 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="12" cy="12" r="9" />
-  <path d="M4 12h3l2-3 2 6 2-4 2 2h3" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <defs>
+    <linearGradient id="icon-bg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset=".5" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#1e40af"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon box -->
+  <rect x="2" y="4" width="40" height="40" rx="11" fill="url(#icon-bg)"/>
+  <!-- Shield inside icon -->
+  <path d="M22 12l-8 3.6v4.4c0 5 3.4 9.6 8 10.8 4.6-1.2 8-5.8 8-10.8v-4.4L22 12z" fill="none" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/>
+  <!-- Heartbeat inside shield -->
+  <path d="M16 22h2.5l1.2-2.5 1.6 5.5 1.6-4.2 1.2 1.2H28" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Cross -->
+  <line x1="22" y1="13.5" x2="22" y2="16" stroke="#fff" stroke-width="1.2" opacity=".55"/>
+  <line x1="20.7" y1="14.8" x2="23.3" y2="14.8" stroke="#fff" stroke-width="1.2" opacity=".55"/>
+  <!-- Text: MHRS -->
+  <text x="50" y="22" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="700" fill="#1e293b" letter-spacing=".5">MHRS</text>
+  <!-- Subtitle -->
+  <text x="50" y="36" font-family="system-ui,-apple-system,sans-serif" font-size="9" fill="#64748b" letter-spacing=".3">Merkezi Hastane Randevu Sistemi</text>
 </svg>

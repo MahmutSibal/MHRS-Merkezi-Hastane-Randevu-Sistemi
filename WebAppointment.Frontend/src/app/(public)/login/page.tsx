@@ -9,8 +9,8 @@ export default function LoginPage() {
         MHRS — Giriş Portalı Seçimi
       </div>
       <div className="relative overflow-hidden rounded-2xl">
-        <div className="absolute inset-0 hero-bg" />
-        <div className="absolute inset-0 light-hero-overlay md:hero-overlay" />
+        <div className="absolute inset-0 hero-gradient" />
+        <div className="absolute inset-0 hero-mesh opacity-30" />
         <div className="relative mx-auto w-full max-w-3xl p-6 sm:p-8">
         <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <Card 

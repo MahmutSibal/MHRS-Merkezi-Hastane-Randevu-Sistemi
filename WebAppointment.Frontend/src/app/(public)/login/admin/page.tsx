@@ -8,8 +8,8 @@ export default function AdminLoginPage() {
         MHRS — Yönetim Girişi
       </div>
       <div className="relative overflow-hidden rounded-2xl">
-        <div className="absolute inset-0 hero-bg" />
-        <div className="absolute inset-0 light-hero-overlay md:hero-overlay" />
+        <div className="absolute inset-0 hero-gradient" />
+        <div className="absolute inset-0 hero-mesh opacity-30" />
         <div className="relative mx-auto w-full max-w-md p-6 sm:p-8">
           <Suspense fallback={<div className="text-sm text-slate-200">Yükleniyor…</div>}>
             <LoginClient />

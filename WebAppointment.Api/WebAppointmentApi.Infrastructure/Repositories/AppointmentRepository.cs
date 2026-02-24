@@ -352,5 +352,145 @@ public sealed class AppointmentRepository : IAppointmentRepository
         return Task.CompletedTask;
     }
 
+    public async Task RescheduleWithLockAsync(
+        Guid appointmentId, Guid userId, int doctorId,
+        DateTimeOffset newStartUtc, DateTimeOffset newEndUtc,
+        DateTimeOffset newDayStartUtc, DateTimeOffset newDayEndUtc,
+        DateTimeOffset nowUtc, CancellationToken ct)
+    {
+        var connection = _db.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync(ct);
+
+        var tx = _db.Database.CurrentTransaction?.GetDbTransaction()
+            ?? throw new InvalidOperationException("UnitOfWork transaction is required for reschedule.");
+
+        // Lock doctor row
+        var doctorDepartmentId = await connection.ExecuteScalarAsync<int?>(
+            new CommandDefinition(
+                @"SELECT d.[DepartmentId]
+                  FROM [Doctors] d WITH (UPDLOCK, ROWLOCK)
+                  INNER JOIN [Departments] dep WITH (UPDLOCK, ROWLOCK) ON dep.[Id] = d.[DepartmentId]
+                  WHERE d.[Id] = @DoctorId AND d.[IsActive] = 1 AND dep.[IsDeleted] = 0
+                    AND d.[TenantId] = @TenantId AND dep.[TenantId] = @TenantId;",
+                new { DoctorId = doctorId, TenantId = _tenant.TenantId },
+                transaction: tx, cancellationToken: ct));
+
+        if (doctorDepartmentId is null)
+            throw new InvalidOperationException("Doctor not found.");
+
+        // Check same department same day (exclude this appointment)
+        var sameDeptDay = await connection.ExecuteScalarAsync<int?>(
+            new CommandDefinition(
+                @"SELECT TOP 1 1
+                  FROM [Appointments] a WITH (UPDLOCK, ROWLOCK)
+                  INNER JOIN [Doctors] d WITH (UPDLOCK, ROWLOCK) ON d.[Id] = a.[DoctorId] AND d.[TenantId] = @TenantId
+                  WHERE a.[UserId] = @UserId AND a.[TenantId] = @TenantId
+                    AND a.[Id] <> @AppointmentId
+                    AND a.[StartAt] >= @DayStartUtc AND a.[StartAt] < @DayEndUtc
+                    AND d.[DepartmentId] = @DepartmentId
+                    AND a.[Status] IN (@Pending, @Approved, @Completed);",
+                new
+                {
+                    UserId = userId, TenantId = _tenant.TenantId, AppointmentId = appointmentId,
+                    DayStartUtc = newDayStartUtc, DayEndUtc = newDayEndUtc,
+                    DepartmentId = doctorDepartmentId.Value,
+                    Pending = (int)AppointmentStatus.Pending,
+                    Approved = (int)AppointmentStatus.Approved,
+                    Completed = (int)AppointmentStatus.Completed,
+                },
+                transaction: tx, cancellationToken: ct));
+
+        if (sameDeptDay is not null)
+            throw new InvalidOperationException("Aynı gün aynı branş için birden fazla randevu alamazsınız.");
+
+        // Doctor slot conflict (exclude this appointment)
+        var doctorConflict = await connection.ExecuteScalarAsync<int?>(
+            new CommandDefinition(
+                @"SELECT TOP 1 1
+                  FROM [Appointments] WITH (UPDLOCK, ROWLOCK)
+                  WHERE [DoctorId] = @DoctorId AND [TenantId] = @TenantId
+                    AND [Id] <> @AppointmentId
+                    AND [Status] IN (@Pending, @Approved)
+                    AND @StartAtUtc < [EndAt] AND @EndAtUtc > [StartAt];",
+                new
+                {
+                    DoctorId = doctorId, TenantId = _tenant.TenantId, AppointmentId = appointmentId,
+                    StartAtUtc = newStartUtc, EndAtUtc = newEndUtc,
+                    Pending = (int)AppointmentStatus.Pending,
+                    Approved = (int)AppointmentStatus.Approved,
+                },
+                transaction: tx, cancellationToken: ct));
+
+        if (doctorConflict is not null)
+            throw new InvalidOperationException("Seçilen slotta doktorun başka randevusu var.");
+
+        // User slot conflict (exclude this appointment)
+        var userConflict = await connection.ExecuteScalarAsync<int?>(
+            new CommandDefinition(
+                @"SELECT TOP 1 1
+                  FROM [Appointments] WITH (UPDLOCK, ROWLOCK)
+                  WHERE [UserId] = @UserId AND [TenantId] = @TenantId
+                    AND [Id] <> @AppointmentId
+                    AND [Status] IN (@Pending, @Approved)
+                    AND @StartAtUtc < [EndAt] AND @EndAtUtc > [StartAt];",
+                new
+                {
+                    UserId = userId, TenantId = _tenant.TenantId, AppointmentId = appointmentId,
+                    StartAtUtc = newStartUtc, EndAtUtc = newEndUtc,
+                    Pending = (int)AppointmentStatus.Pending,
+                    Approved = (int)AppointmentStatus.Approved,
+                },
+                transaction: tx, cancellationToken: ct));
+
+        if (userConflict is not null)
+            throw new InvalidOperationException("Seçilen slotta başka randevunuz var.");
+
+        // Update appointment times
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                @"UPDATE [Appointments]
+                  SET [StartAt] = @NewStartUtc, [EndAt] = @NewEndUtc, [UpdatedAtUtc] = @NowUtc
+                  WHERE [Id] = @AppointmentId AND [TenantId] = @TenantId;",
+                new { AppointmentId = appointmentId, NewStartUtc = newStartUtc, NewEndUtc = newEndUtc, NowUtc = nowUtc, TenantId = _tenant.TenantId },
+                transaction: tx, cancellationToken: ct));
+
+        // Log
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                @"INSERT INTO [AppointmentLogs] ([AppointmentId], [Action], [CreatedAtUtc], [TenantId])
+                  VALUES (@AppointmentId, @Action, @CreatedAtUtc, @TenantId);",
+                new { AppointmentId = appointmentId, Action = "Rescheduled", CreatedAtUtc = nowUtc, TenantId = _tenant.TenantId },
+                transaction: tx, cancellationToken: ct));
+
+        // Notification
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                @"INSERT INTO [Notifications] ([AppointmentId], [UserId], [Message], [CreatedAtUtc], [IsSent], [TenantId])
+                  VALUES (@AppointmentId, @UserId, @Message, @CreatedAtUtc, 0, @TenantId);",
+                new { AppointmentId = appointmentId, UserId = userId, Message = "Randevunuz ertelendi.", CreatedAtUtc = nowUtc, TenantId = _tenant.TenantId },
+                transaction: tx, cancellationToken: ct));
+    }
+
+    public async Task<IReadOnlyList<Appointment>> ListUpcomingUnremindedAsync(
+        DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken ct)
+    {
+        return await _db.Appointments
+            .IgnoreQueryFilters()
+            .Include(x => x.Doctor).ThenInclude(d => d!.Department).ThenInclude(dep => dep!.Hospital)
+            .Where(x => x.Status == AppointmentStatus.Pending || x.Status == AppointmentStatus.Approved)
+            .Where(x => x.StartAt >= fromUtc && x.StartAt <= toUtc)
+            .Where(x => x.ReminderSentAtUtc == null)
+            .ToListAsync(ct);
+    }
+
+    public async Task MarkReminderSentAsync(Guid appointmentId, DateTimeOffset sentAtUtc, CancellationToken ct)
+    {
+        await _db.Appointments
+            .IgnoreQueryFilters()
+            .Where(x => x.Id == appointmentId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.ReminderSentAtUtc, sentAtUtc), ct);
+    }
+
     public Task SaveChangesAsync(CancellationToken ct) => _db.SaveChangesAsync(ct);
 }

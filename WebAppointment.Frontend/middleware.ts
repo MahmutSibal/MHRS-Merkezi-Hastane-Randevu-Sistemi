@@ -32,7 +32,8 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/admin") ||
     pathname.startsWith("/doctor") ||
     pathname.startsWith("/patient") ||
-    pathname.startsWith("/app");
+    pathname.startsWith("/app") ||
+    pathname.startsWith("/profile");
 
   if (!accessToken && isProtected) {
     const url = req.nextUrl.clone();

@@ -1,13 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0b61da"/>
-      <stop offset="0.6" stop-color="#0c49a1"/>
-      <stop offset="1" stop-color="#0a2b6f"/>
+    <linearGradient id="bg" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset=".45" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#1e40af"/>
     </linearGradient>
+    <linearGradient id="shine" x1="4" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#1e3a8a" flood-opacity=".35"/>
+    </filter>
   </defs>
-  <rect x="6" y="6" width="36" height="36" rx="10" fill="url(#g)"/>
-  <g stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M10 24h7l3-4 3 9 3-6 3 3h6" />
-  </g>
+  <!-- Base -->
+  <rect x="4" y="4" width="40" height="40" rx="12" fill="url(#bg)" filter="url(#shadow)"/>
+  <!-- Shine overlay -->
+  <rect x="4" y="4" width="40" height="40" rx="12" fill="url(#shine)"/>
+  <!-- Subtle medical cross -->
+  <rect x="21" y="12" width="6" height="24" rx="1.5" fill="#fff" opacity=".1"/>
+  <rect x="12" y="21" width="24" height="6" rx="1.5" fill="#fff" opacity=".1"/>
+  <!-- Heartbeat pulse -->
+  <path d="M9 24h6l2-5 3 11 3-8 2.5 2H39" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Small heart accent -->
+  <path d="M35 11c-.8-.8-2.1-.8-2.9 0l-.1.1-.1-.1c-.8-.8-2.1-.8-2.9 0-.8.8-.8 2.1 0 2.9l3 3 3-3c.8-.8.8-2.1 0-2.9z" fill="#fff" opacity=".35"/>
 </svg>

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WebAppointmentApi.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+921eb03e2490c1fdd26e4aac37f3cc2d3ecd784e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d759a5fcd47b31c71bb417c1659ec1487be18a3d")]
 [assembly: System.Reflection.AssemblyProductAttribute("WebAppointmentApi.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WebAppointmentApi.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

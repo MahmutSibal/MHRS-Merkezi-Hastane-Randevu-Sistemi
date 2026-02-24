@@ -1,17 +1,18 @@
 # MHRS – Merkezi Hastane Randevu Sistemi
 
-![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
-![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
-![License: MIT](https://img.shields.io/badge/License-MIT-green)
 
-Modern, ölçeklenebilir ve güvenli bir hastane randevu yönetim platformu. Çok rollü erişim (Hasta, Doktor, Hastane Yöneticisi, Admin), JWT tabanlı kimlik doğrulama, güçlü kurallar ve sezgisel bir Next.js arayüzü ile gelir.
+**Teknoloji Yığını:** .NET 8 · Next.js 16 · TypeScript 5.x · SQL Server · Node.js (WhatsApp Bridge)
+**Lisans:** MIT
+
+Kurumsal ölçekte kurgulanmış, yüksek güvenlik ve operasyonel süreklilik odaklı bir hastane randevu yönetim platformu.
+Çok rollü erişim (Hasta, Doktor, Hastane Yöneticisi, Admin), güçlü iş kuralları, izlenebilirlik (audit), çok kiracılı yapı (tenant), WhatsApp bildirim köprüsü ve modern Next.js arayüzü ile üretim ortamına hazır bir temel sunar.
 
 ---
 
 ## İçindekiler
 
 - [Özellikler](#özellikler)
+- [Kurumsal Değer Önerisi](#kurumsal-değer-önerisi)
 - [Mimari](#mimari)
 - [Hızlı Başlangıç](#hızlı-başlangıç)
 - [Backend – Ayrıntılar](#backend--ayrıntılar)
@@ -24,6 +25,16 @@ Modern, ölçeklenebilir ve güvenli bir hastane randevu yönetim platformu. Ço
 - [QA Düzeltme Kontrol Listesi](#qa-düzeltme-kontrol-listesi)
 - [Lisans](#lisans)
 
+## Kurumsal Değer Önerisi
+
+- **Güvenilir Operasyon:** Kritik randevu akışlarında kural tabanlı doğrulama, çakışma önleme ve rol bazlı yetki kontrolü.
+- **İzlenebilirlik ve Uyum:** Değişikliklerin audit log ile kayıt altına alınması; kurumsal denetim ve uyumluluk süreçlerine hazır altyapı.
+- **Ölçeklenebilir Mimari:** Clean Architecture, katmanlı ayrım ve tenant tabanlı veri izolasyonu ile sürdürülebilir büyüme.
+- **Omnichannel İletişim:** WhatsApp üzerinden doğrulama, şifre işlemleri ve randevu bildirimleriyle yüksek kullanıcı erişilebilirliği.
+- **Bakım Kolaylığı:** Ayrık backend/frontend yapısı, net API sınırları ve geliştirici dostu proje organizasyonu.
+
+---
+
 ### Dokümantasyon
 - Ayrıntılı açıklama: [docs/MHRS-Nedir-ve-Bu-Sistemi-Neden-Kullanmalisiniz.md](docs/MHRS-Nedir-ve-Bu-Sistemi-Neden-Kullanmalisiniz.md)
 
@@ -33,7 +44,9 @@ Modern, ölçeklenebilir ve güvenli bir hastane randevu yönetim platformu. Ço
 
 - **Roller:** Patient, Doctor, HospitalAdmin, Admin
 - **Randevu Yönetimi:** Alma, listeleme, iptal (kurallı), doktor onayı/tamamlama
+- **Randevu Yönetimi:** Alma, listeleme, iptal (kurallı), erteleme, doktor onayı/tamamlama
 - **Veli / Çocuk (Dependent):** Hasta hesabına bağlı çocuk kaydı ekleme ve çocuk adına randevu oluşturma
+- **Kimlik Doğrulama (NVI):** Hasta kaydı ve hasta yakını ekleme akışlarında TC Kimlik doğrulama entegrasyonu
 - **Katalog:** Hastaneler (konum bazlı), bölümler, doktorlar
 - **Doktor Profil Onayı:** Doktor mezuniyet (üniversite) + deneyim bilgisi girer; Hastane Yöneticisi onaylar; hasta sadece onaylı bilgiyi görür
 - **Raporlar:** En popüler doktorlar (Chart.js görselleştirme)
@@ -43,6 +56,8 @@ Modern, ölçeklenebilir ve güvenli bir hastane randevu yönetim platformu. Ço
 - **Telefon Doğrulama:** 6 haneli kod ile kayıt onayı (90 sn geçerli)
 - **Şifremi Unuttum (Hasta):** Ad + Soyad + TC + Telefon ile doğrulama, yeni şifre WhatsApp üzerinden gönderilir
 - **Randevu WhatsApp Bildirimi:** Randevu alınca hastaneye, bölüme, doktora ve tarih-saat bilgisini içeren mesaj
+- **Otomatik WhatsApp Hatırlatma:** Randevuya 24 saat kala arka plan servisi ile otomatik hatırlatma
+- **Sağlık Profili:** Hastanın alerji, kronik hastalık, ilaç ve acil iletişim bilgilerini profilinden yönetebilmesi
 - **WhatsApp Köprüsü:** Kod, şifre ve randevu bildirimlerini ileten Node.js servis
 - **Dev Deneyimi:** Otomatik EF migrasyonları, Swagger, Serilog loglama
 
@@ -311,6 +326,15 @@ WhatsApp köprü servisi (Web API) örneği:
 - ProblemDetails ile tutarlı hata formatı; frontend `apiJson` bunları kullanıcı dostu mesaja çevirir
 - Rate limiting, JWT secret ve bağlantı dizileri gibi kritik değerleri production ortamında bir secret manager üzerinden yönetin.
 
+## Operasyonel Olgunluk
+
+- **Arka Plan İşleri:** Periyodik çalışan servisler ile zaman bazlı bildirim süreçleri merkezi olarak yönetilir.
+- **Hata Dayanıklılığı:** Global exception middleware, tutarlı ProblemDetails çıktısı ve Serilog tabanlı izleme ile hızlı kök neden analizi.
+- **Veri Bütünlüğü:** Transaction ve kilitleme stratejileriyle randevu çakışması ve yarış durumu riskleri azaltılır.
+- **Sürüm Güvenliği:** EF Core migration yaklaşımı ile şema değişiklikleri kontrollü ve izlenebilir şekilde taşınır.
+
+---
+
 ---
 
 ## Katkı Rehberi (CONTRIBUTING)
@@ -344,64 +368,6 @@ WhatsApp köprü servisi (Web API) örneği:
 ## Lisans
 
 Bu proje MIT lisansı ile sunulmaktadır. Ayrıntılar için `LICENSE` dosyasına bakınız.
-
----
-
-## Screenshots
-
-Sistemin güncel ekran görüntüleri ve kısa açıklamaları aşağıdadır:
-
-### Giriş Ekranı
-![Giriş Ekranı](WebAppointment.Screenshots/Giris_Ekrani.jfif)
-_Kullanıcıların e-posta/şifre ile oturum açtığı ekran. Başarılı giriş sonrası rolüne göre yönlendirme yapılır._
-
-### Hasta Kayıt Ekranı
-![Hasta Kayıt Ekranı](WebAppointment.Screenshots/Hasta_Kayit_Ekrani.jfif)
-_Yeni hasta kaydı için kimlik bilgileri ve iletişim bilgileri girilir; doğrulamalar anlık olarak uygulanır._
-
-### Ana Dashboard Ekranı
-![Ana Dashboard Ekranı](WebAppointment.Screenshots/Ana_Dashboard_Ekrani.jfif)
-_Rol bazlı özet kartları ve hızlı erişimler. Son randevular, bekleyen onaylar ve kısa yollar görüntülenir._
-
-### Asistan Ekranı
-![Asistan Ekranı](WebAppointment.Screenshots/Asistan_Ekrani.png)
-_AI asistan ile doğal dilde etkileşim kurarak randevu arama/oluşturma akışına destek sağlar._
-
-### Hasta – Yeni Randevu Ekranı
-![Hasta Yeni Randevu Ekranı](WebAppointment.Screenshots/Hasta_Yeni_Randevu_Ekrani.png)
-_Hasta, hastane → bölüm → doktor → tarih/saat adımlarında seçim yaparak randevu oluşturur. Çakışmalar ve kurallar kontrol edilir._
-
-### Doktor – Randevularım
-![Doktor Randevularım Ekranı](WebAppointment.Screenshots/Doktor_Randevularim_Ekrani.png)
-_Doktorun kendisine atanmış randevuları listeler. Randevu **Onayla** ve **Tamamla** işlemleri buradan yapılır._
-
-### Doktor – Takvim
-![Doktor Takvim Ekranı](WebAppointment.Screenshots/Doktor_Takvim_Ekrani.png)
-_Günlük/haftalık zaman dilimleri ve uygun slotlar gösterilir; yoğunluk planlaması yapılır._
-
-### Hastane Yönetimi – Genel
-![Hastane Yönetim Ekranı](WebAppointment.Screenshots/Hastane_Yonetim_Ekrani.jfif)
-_Hastane yöneticisi için üst seviye kontrol paneli; bölümler, doktorlar ve randevulara hızlı erişim._
-
-### Hastane – Bölümler
-![Hastane Bölümler Ekranı](WebAppointment.Screenshots/Hastane_Bolumler_Ekrani.png)
-_Bölüm CRUD işlemleri: ekleme, düzenleme, silme ve listeleme. Tenant kısıtları otomatik uygulanır._
-
-### Hastane – Doktorlar
-![Hastane Doktorlar Ekranı](WebAppointment.Screenshots/Hastane_Doktorlar_Ekrani.png)
-_Doktor yönetimi: atama, profil düzenleme ve bölüm/çalışma takvimi ilişkileri._
-
-### Hastane – Hastalar
-![Hastane Hastalar Ekranı](WebAppointment.Screenshots/Hastane_Hastalar_Ekrani.png)
-_Hastane kapsamındaki hastaların listesi ve temel demografik/iletişim bilgileri._
-
-### Hastane – Randevular
-![Hastane Randevular Ekranı](WebAppointment.Screenshots/Hastane_Randevular_Ekrani.png)
-_Hastane genelindeki randevuların takibi; filtreleme ve durum yönetimi._
-
-### Admin – Yönetim
-![Admin Yönetim Ekranı](WebAppointment.Screenshots/Admin_Yonetim_Ekrani.png)
-_Sistem geneli yönetim ve raporlara erişim. Tenant, kullanıcı ve güvenlik politikaları üzerinde tam yetki._
 
 ---
 

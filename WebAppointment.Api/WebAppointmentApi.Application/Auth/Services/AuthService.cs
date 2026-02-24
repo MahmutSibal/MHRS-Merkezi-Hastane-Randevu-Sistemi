@@ -32,6 +32,7 @@ public sealed class AuthService : IAuthService
     private readonly IPhoneVerificationRepository _phoneVerifications;
     private readonly IPhoneVerificationSender _phoneSender;
     private readonly IWhatsAppMessageSender _whatsappSender;
+    private readonly INviKimlikService _nviKimlik;
 
     public AuthService(
         IUserRepository users,
@@ -46,7 +47,8 @@ public sealed class AuthService : IAuthService
         ITenantContext tenant,
         IPhoneVerificationRepository phoneVerifications,
         IPhoneVerificationSender phoneSender,
-        IWhatsAppMessageSender whatsappSender)
+        IWhatsAppMessageSender whatsappSender,
+        INviKimlikService nviKimlik)
     {
         _users = users;
         _patients = patients;
@@ -61,6 +63,7 @@ public sealed class AuthService : IAuthService
         _phoneVerifications = phoneVerifications;
         _phoneSender = phoneSender;
         _whatsappSender = whatsappSender;
+        _nviKimlik = nviKimlik;
     }
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request, CancellationToken ct)
@@ -233,7 +236,8 @@ public sealed class AuthService : IAuthService
                 TcKimlikNo: request.TcKimlikNo,
                 FirstName: request.FirstName,
                 LastName: request.LastName,
-                Phone: request.Phone
+                Phone: request.Phone,
+                BirthDate: request.BirthDate
             );
 
             var response = await RegisterCoreAsync(mapped, ct);
@@ -317,6 +321,27 @@ public sealed class AuthService : IAuthService
             throw new ConflictException("Bu TC Kimlik No ile kayit zaten mevcut.");
         }
 
+        // NVI üzerinden TC Kimlik No doğrulaması
+        try
+        {
+            var nviValid = await _nviKimlik.ValidateAsync(
+                long.Parse(tc, CultureInfo.InvariantCulture),
+                request.FirstName.Trim(),
+                request.LastName.Trim(),
+                request.BirthDate,
+                ct);
+
+            if (!nviValid)
+            {
+                throw new ValidationException("TC Kimlik No, ad, soyad veya dogum tarihi NVI kayitlari ile eslesmedi.");
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "NVI servisi erisilemedi. TC dogrulama atlanıyor. TC={TC}", tc);
+            // NVI servisi çalışmıyorsa kayıt devam edebilir (graceful degradation)
+        }
+
         var emailValue = hasEmail
             ? request.Email!.Trim()
             : string.Format(CultureInfo.InvariantCulture, "patient-{0}@mhrs.local", tc);
@@ -339,6 +364,7 @@ public sealed class AuthService : IAuthService
             FirstName = request.FirstName.Trim(),
             LastName = request.LastName.Trim(),
             Phone = request.Phone.Trim(),
+            BirthDate = request.BirthDate,
             TenantId = _tenant.TenantId,
         }, ct);
 

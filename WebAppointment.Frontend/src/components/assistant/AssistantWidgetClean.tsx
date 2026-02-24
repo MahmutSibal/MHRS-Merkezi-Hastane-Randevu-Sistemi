@@ -23,8 +23,8 @@ type DoctorDailySlotPublicDto = {
 type Step =
   | "start"
   | "complete"
-  | "regFirstName" | "regLastName" | "regTC" | "regPhone" | "regEmail" | "regPassword" | "regConfirm"
-  | "email" | "password" | "confirmLogin" | "hospital" | "department" | "doctor" | "date" | "time" | "finalConfirm"
+  | "regFirstName" | "regLastName" | "regTC" | "regBirthDate" | "regPhone" | "regPassword" | "regConfirm"
+  | "loginTC" | "password" | "confirmLogin" | "hospital" | "department" | "doctor" | "date" | "time" | "finalConfirm"
   | "diagSymptoms" | "diagDuration" | "diagSeverity" | "diagFever" | "diagPain" | "diagChronic" | "diagMeds" | "diagPregnant" | "diagRun";
 
 function uid() { return Math.random().toString(36).slice(2); }
@@ -37,11 +37,12 @@ export function AssistantWidget({ className }: { className?: string }) {
   const [busy, setBusy] = useState(false);
   const [intent, setIntent] = useState<Intent>("none");
   const [step, setStep] = useState<Step>("start");
-  const [email, setEmail] = useState("");
+  const [loginTC, setLoginTC] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [tcKimlikNo, setTcKimlikNo] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [phone, setPhone] = useState("");
   const [departments, setDepartments] = useState<DepartmentDto[]>([]);
   const [departmentId, setDepartmentId] = useState<number>(0);
@@ -164,26 +165,37 @@ export function AssistantWidget({ className }: { className?: string }) {
       if (step === "regTC") {
         const ok = /^\d{11}$/.test(content);
         if (!ok) addAssistant("Lütfen 11 haneli TC Kimlik No girin.");
-        else { setTcKimlikNo(content); addAssistant("Telefon numaranızı girin (örn. 5551234567). "); setStep("regPhone"); }
+        else { setTcKimlikNo(content); addAssistant("Doğum tarihinizi girin (GG.AA.YYYY formatında, örn. 15.06.1990)."); setStep("regBirthDate"); }
+        return;
+      }
+      if (step === "regBirthDate") {
+        const match = content.match(/^(\d{1,2})[\.\-\/](\d{1,2})[\.\-\/](\d{4})$/);
+        if (!match) addAssistant("Lütfen geçerli bir doğum tarihi girin (GG.AA.YYYY, örn. 15.06.1990).");
+        else {
+          const [, day, month, year] = match;
+          const y = parseInt(year), m = parseInt(month), d = parseInt(day);
+          if (y < 1900 || y > new Date().getFullYear() || m < 1 || m > 12 || d < 1 || d > 31) {
+            addAssistant("Lütfen geçerli bir doğum tarihi girin.");
+          } else {
+            const dateStr = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+            setBirthDate(dateStr);
+            addAssistant("Telefon numaranızı girin (örn. 5551234567). ");
+            setStep("regPhone");
+          }
+        }
         return;
       }
       if (step === "regPhone") {
         const ok = /^\d{10,11}$/.test(content);
         if (!ok) addAssistant("Lütfen geçerli bir telefon numarası girin.");
-        else { setPhone(content); addAssistant("E-posta adresinizi girin."); setStep("regEmail"); }
-        return;
-      }
-      if (step === "regEmail") {
-        const ok = /.+@.+\..+/.test(content);
-        if (!ok) addAssistant("Geçerli bir e-posta adresi girin.");
-        else { setEmail(content); addAssistant("Şifrenizi girin (en az 6 karakter)."); setStep("regPassword"); }
+        else { setPhone(content); addAssistant("Şifrenizi girin (en az 6 karakter)."); setStep("regPassword"); }
         return;
       }
       if (step === "regPassword") {
         if (content.length < 6) addAssistant("Lütfen en az 6 karakterli bir şifre girin.");
         else {
           setPassword(content);
-          const summary = `Ad: ${firstName}\nSoyad: ${lastName}\nTC: ${tcKimlikNo}\nTelefon: ${phone}\nE-posta: ${email}`;
+          const summary = `Ad: ${firstName}\nSoyad: ${lastName}\nTC: ${tcKimlikNo}\nDoğum Tarihi: ${birthDate}\nTelefon: ${phone}`;
           addAssistant(`${summary}\nKayıt işlemini onaylıyorsanız 'onayliyorum' yazın.`);
           setStep("regConfirm");
         }
@@ -195,7 +207,7 @@ export function AssistantWidget({ className }: { className?: string }) {
           try {
             await apiJson("/api/session/register", {
               method: "POST",
-              body: JSON.stringify({ email, password, tcKimlikNo, firstName, lastName, phone }),
+              body: JSON.stringify({ password, tcKimlikNo, firstName, lastName, phone, birthDate }),
             });
             addAssistant("Kayıt başarıyla tamamlandı. Hoş geldiniz!");
             setStep("complete");
@@ -212,25 +224,25 @@ export function AssistantWidget({ className }: { className?: string }) {
 
     // Randevu akışı
     if (intent === "appointment") {
-      if (step === "email") {
-        const ok = /.+@.+\..+/.test(content);
-        if (!ok) addAssistant("Geçerli bir e-posta adresi girin.");
-        else { setEmail(content); addAssistant("Teşekkürler. Şifrenizi girin."); setStep("password"); }
+      if (step === "loginTC") {
+        const ok = /^\d{11}$/.test(content);
+        if (!ok) addAssistant("Lütfen 11 haneli TC Kimlik No girin.");
+        else { setLoginTC(content); addAssistant("Teşekkürler. Şifrenizi girin."); setStep("password"); }
         return;
       }
       if (step === "password") {
         setPassword(content);
-        addAssistant(`E-posta: ${email}. Giriş yapmamı onaylıyorsanız 'onayliyorum' yazın.`);
+        addAssistant(`TC: ${loginTC}. Giriş yapmamı onaylıyorsanız 'onayliyorum' yazın.`);
         setStep("confirmLogin"); return;
       }
       if (step === "confirmLogin") {
         if (content.toLowerCase() !== "onayliyorum") addAssistant("Girişe devam etmek için lütfen 'onayliyorum' yazın.");
         else {
           try {
-            const res = await fetch("/api/session/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
+            const res = await fetch("/api/session/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tcKimlikNo: loginTC, password }) });
             if (!res.ok) {
-              addAssistant("Giriş başarısız. Lütfen e-postayı tekrar yazın.");
-              setStep("email");
+              addAssistant("Giriş başarısız. Lütfen TC Kimlik No'nuzu tekrar yazın.");
+              setStep("loginTC");
             } else {
               const hosps = await apiJson<HospitalDto[]>("/backend/catalog/hospitals");
               setHospitals(hosps);
@@ -241,8 +253,8 @@ export function AssistantWidget({ className }: { className?: string }) {
           } catch (e) {
             const msg = e instanceof Error ? e.message : "Giriş/hastane listesi alınamadı.";
             addAssistant(`Hata: ${msg}`);
-            addAssistant("Lütfen tekrar e-postanızı yazın.");
-            setStep("email");
+            addAssistant("Lütfen tekrar TC Kimlik No'nuzu yazın.");
+            setStep("loginTC");
           }
         }
         return;
@@ -360,7 +372,7 @@ export function AssistantWidget({ className }: { className?: string }) {
 
         setTime(normalized);
         const selectedHospital = hospitals.find(h => h.id === hospitalId) ?? null;
-        const summary = `E-posta: ${email}\nHastane: ${selectedHospital?.name}\nBölüm: ${selectedDepartment?.name}\nDoktor: ${selectedDoctor?.name}\nTarih: ${date}\nSaat: ${normalized}`;
+        const summary = `Hastane: ${selectedHospital?.name}\nBölüm: ${selectedDepartment?.name}\nDoktor: ${selectedDoctor?.name}\nTarih: ${date}\nSaat: ${normalized}`;
         addAssistant(`${summary}\nOnaylıyorsanız 'onayliyorum' yazın.`);
         setStep("finalConfirm");
         return;
@@ -399,7 +411,7 @@ export function AssistantWidget({ className }: { className?: string }) {
         return;
       }
       // Intent seçildi ama adım yoksa başlangıç
-      addAssistant("Lütfen e-postanızı yazın."); setStep("email"); return;
+      addAssistant("Lütfen TC Kimlik Numaranızı yazın."); setStep("loginTC"); return;
     }
 
     // Hızlı Tanı akışı
@@ -522,8 +534,8 @@ export function AssistantWidget({ className }: { className?: string }) {
                 size="sm"
                 onClick={() => {
                   setIntent("appointment");
-                  setStep("email");
-                  addAssistant("Randevu Alma seçildi. Lütfen e-posta adresinizi girin.");
+                  setStep("loginTC");
+                  addAssistant("Randevu Alma seçildi. Lütfen TC Kimlik Numaranızı girin.");
                 }}
               >
                 Randevu Alma

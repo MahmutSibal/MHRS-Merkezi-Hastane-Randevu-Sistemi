@@ -134,17 +134,15 @@ button, a {
   background: rgba(2, 6, 23, 0.6);
 }
 
-/* Hero background using provided image (add public/mhrs-hero.jpg) */
-.hero-bg {
-  background-image: url('/mhrs-hero.jpg');
-  background-position: center;
-  background-size: cover;
+/* Hero gradient background */
+.hero-gradient {
+  background: linear-gradient(135deg, #0c4a6e 0%, #1e3a8a 30%, #312e81 60%, #1e1b4b 100%);
 }
 
-.hero-overlay {
-  background: linear-gradient(90deg, rgba(2, 6, 23, 0.85) 0%, rgba(2, 6, 23, 0.45) 40%, rgba(2, 6, 23, 0) 100%);
-}
-
-.light-hero-overlay {
-  background: linear-gradient(90deg, rgba(12, 74, 110, 0.85) 0%, rgba(12, 74, 110, 0.45) 40%, rgba(12, 74, 110, 0) 100%);
+/* Subtle animated mesh overlay */
+.hero-mesh {
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(56,189,248,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(99,102,241,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 80%, rgba(34,211,238,0.10) 0%, transparent 50%);
 }

@@ -6,5 +6,6 @@ public sealed record RegisterWithPhoneVerificationRequest(
     string FirstName,
     string LastName,
     string Phone,
+    DateOnly BirthDate,
     string Code
 );

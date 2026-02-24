@@ -6,6 +6,7 @@ using WebAppointmentApi.Domain.Entities;
 using WebAppointmentApi.Domain.Enums;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace WebAppointmentApi.Application.Dependents.Services;
 
@@ -22,19 +23,25 @@ public sealed class DependentService : IDependentService
     private readonly IPatientRepository _patients;
     private readonly IDateTimeProvider _clock;
     private readonly ITenantContext _tenant;
+    private readonly INviKimlikService _nvi;
+    private readonly ILogger<DependentService> _logger;
 
     public DependentService(
         IDependentRepository dependents,
         IUserRepository users,
         IPatientRepository patients,
         IDateTimeProvider clock,
-        ITenantContext tenant)
+        ITenantContext tenant,
+        INviKimlikService nvi,
+        ILogger<DependentService> logger)
     {
         _dependents = dependents;
         _users = users;
         _patients = patients;
         _clock = clock;
         _tenant = tenant;
+        _nvi = nvi;
+        _logger = logger;
     }
 
     public async Task<IReadOnlyList<DependentDto>> ListMyAsync(Guid userId, CancellationToken ct)
@@ -116,6 +123,32 @@ public sealed class DependentService : IDependentService
         if (existing.Any(x => x.TcKimlikNo == tckn))
         {
             throw new ConflictException("Bu TCKN zaten eklenmiş.");
+        }
+
+        // NVI TC Kimlik No doğrulama (hasta kayıt ile aynı sistem)
+        try
+        {
+            var nameParts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var nviFirstName = string.Join(" ", nameParts.Take(nameParts.Length - 1));
+            var nviLastName = nameParts[^1];
+
+            var isValid = await _nvi.ValidateAsync(
+                long.Parse(tckn, CultureInfo.InvariantCulture),
+                nviFirstName,
+                nviLastName,
+                request.BirthDate,
+                ct);
+
+            if (!isValid)
+            {
+                throw new ConflictException("NVI kimlik doğrulama başarısız. Lütfen bilgileri kontrol edin.");
+            }
+        }
+        catch (ConflictException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "NVI doğrulama servisi yakın ekleme sırasında erişilemedi. TCKN={Tckn}", tckn);
+            // Graceful degradation: NVI erişilemezse kayıt devam eder
         }
 
         var entity = new Dependent

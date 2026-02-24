@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface LoadingState {
@@ -20,16 +20,18 @@ const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
 export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<LoadingState>({ isLoading: false });
 
-  const start = (message?: string) => {
+  const start = useCallback((message?: string) => {
     setState({ isLoading: true, message });
-  };
+  }, []);
 
-  const stop = () => {
+  const stop = useCallback(() => {
     setState({ isLoading: false, message: undefined });
-  };
+  }, []);
+
+  const value = useMemo(() => ({ ...state, start, stop }), [state, start, stop]);
 
   return (
-    <LoadingContext.Provider value={{ ...state, start, stop }}>
+    <LoadingContext.Provider value={value}>
       {children}
       {state.isLoading && (
         <LoadingSpinner fullscreen={true} message={state.message} />

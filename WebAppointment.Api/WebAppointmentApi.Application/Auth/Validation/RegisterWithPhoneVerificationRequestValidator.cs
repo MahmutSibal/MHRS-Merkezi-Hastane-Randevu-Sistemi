@@ -42,6 +42,10 @@ public sealed class RegisterWithPhoneVerificationRequestValidator : AbstractVali
             .Must(BeValidTcKimlikNo)
             .WithMessage("Gecersiz TC Kimlik No");
 
+        RuleFor(x => x.BirthDate)
+            .Must(d => d.Year >= 1900 && d <= DateOnly.FromDateTime(DateTime.UtcNow))
+            .WithMessage("Gecersiz dogum tarihi.");
+
         RuleFor(x => x.Code)
             .NotEmpty()
             .Length(6)

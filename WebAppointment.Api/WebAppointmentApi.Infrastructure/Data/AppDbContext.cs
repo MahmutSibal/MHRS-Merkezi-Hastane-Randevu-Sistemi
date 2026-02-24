@@ -115,6 +115,12 @@ public sealed class AppDbContext : DbContext
             b.Property(x => x.IsDeleted).IsRequired();
             b.Property(x => x.TenantId).IsRequired();
             b.Property(x => x.NoShowScore).HasDefaultValue(0);
+            b.Property(x => x.BloodType).HasMaxLength(5);
+            b.Property(x => x.Allergies).HasMaxLength(500);
+            b.Property(x => x.ChronicDiseases).HasMaxLength(500);
+            b.Property(x => x.Medications).HasMaxLength(500);
+            b.Property(x => x.EmergencyContactName).HasMaxLength(100);
+            b.Property(x => x.EmergencyContactPhone).HasMaxLength(20);
             b.HasQueryFilter(x => !x.IsDeleted && x.TenantId == _tenant.TenantId);
             b.HasIndex(x => x.TcKimlikNo).IsUnique();
 
@@ -257,6 +263,9 @@ public sealed class AppDbContext : DbContext
             b.HasIndex(x => new { x.TenantId, x.DoctorId, x.StartAt, x.EndAt });
             b.HasIndex(x => new { x.TenantId, x.UserId, x.StartAt, x.EndAt });
             b.HasIndex(x => new { x.TenantId, x.CreatedAtUtc, x.DoctorId });
+            b.HasIndex(x => new { x.Status, x.StartAt, x.ReminderSentAtUtc })
+                .HasFilter("[ReminderSentAtUtc] IS NULL")
+                .HasDatabaseName("IX_Appointments_Reminder");
         });
 
         modelBuilder.Entity<AppointmentLog>(b =>

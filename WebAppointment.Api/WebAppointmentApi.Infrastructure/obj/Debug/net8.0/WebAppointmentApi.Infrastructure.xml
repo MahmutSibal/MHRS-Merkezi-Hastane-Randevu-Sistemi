@@ -4,6 +4,12 @@
         <name>WebAppointmentApi.Infrastructure</name>
     </assembly>
     <members>
+        <member name="T:WebAppointmentApi.Infrastructure.BackgroundJobs.AppointmentReminderService">
+            <summary>
+            Runs every 15 minutes and sends WhatsApp reminders for appointments
+            starting within the next 24 hours that haven't been reminded yet.
+            </summary>
+        </member>
         <member name="T:WebAppointmentApi.Infrastructure.Data.AppDbContextFactory">
             <summary>
             Design-time DbContext factory so that EF CLI can run without needing the startup project.
@@ -21,6 +27,29 @@
         </member>
         <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddPhoneVerificationCodes.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
+        </member>
+        <member name="T:WebAppointmentApi.Infrastructure.Migrations.AddReminderAndHealthProfile">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddReminderAndHealthProfile.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddReminderAndHealthProfile.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddReminderAndHealthProfile.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:WebAppointmentApi.Infrastructure.Security.NviKimlikService">
+            <summary>
+            NVI (Nüfus ve Vatandaşlık İşleri) TC Kimlik No doğrulama servisi.
+            SOAP API: https://tckimlik.nvi.gov.tr/Service/KPSPublicV2.asmx
+            </summary>
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Security.NviKimlikService.SecurityElement(System.String)">
+            <summary>
+            XML injection'ı önlemek için özel karakterleri escape eder.
+            </summary>
         </member>
     </members>
 </doc>

@@ -70,4 +70,11 @@ public sealed class AppointmentsController : ControllerBase
         await _appointments.CancelAsync(_user.UserId, id, request ?? new CancelAppointmentRequest(null), ct);
         return NoContent();
     }
+
+    [HttpPut("{id:guid}/reschedule")]
+    [ProducesResponseType(typeof(AppointmentDto), StatusCodes.Status200OK)]
+    public async Task<AppointmentDto> Reschedule([FromRoute] Guid id, [FromBody] RescheduleAppointmentRequest request, CancellationToken ct)
+    {
+        return await _appointments.RescheduleAsync(_user.UserId, id, request, ct);
+    }
 }
