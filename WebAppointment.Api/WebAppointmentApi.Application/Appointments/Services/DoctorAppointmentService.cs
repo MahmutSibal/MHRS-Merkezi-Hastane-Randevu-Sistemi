@@ -3,6 +3,7 @@ using WebAppointmentApi.Application.Appointments.Dtos;
 using WebAppointmentApi.Application.Appointments.State;
 using WebAppointmentApi.Application.Common.Abstractions;
 using WebAppointmentApi.Application.Common.Exceptions;
+using WebAppointmentApi.Application.Patients.Services;
 using WebAppointmentApi.Domain.Entities;
 using WebAppointmentApi.Domain.Enums;
 
@@ -12,17 +13,20 @@ public sealed class DoctorAppointmentService : IDoctorAppointmentService
 {
     private readonly IAppointmentRepository _appointments;
     private readonly IDoctorRepository _doctors;
+    private readonly IPatientRepository _patients;
     private readonly IDateTimeProvider _clock;
     private readonly IAppointmentStateMachine _stateMachine;
 
     public DoctorAppointmentService(
         IAppointmentRepository appointments,
         IDoctorRepository doctors,
+        IPatientRepository patients,
         IDateTimeProvider clock,
         IAppointmentStateMachine stateMachine)
     {
         _appointments = appointments;
         _doctors = doctors;
+        _patients = patients;
         _clock = clock;
         _stateMachine = stateMachine;
     }
@@ -126,5 +130,52 @@ public sealed class DoctorAppointmentService : IDoctorAppointmentService
         }, ct);
 
         await _appointments.SaveChangesAsync(ct);
+
+        await AdjustNoShowScoreAsync(appt.UserId, NoShowScoring.AttendedOrConfirmedBonus, ct);
+    }
+
+    public async Task MarkNoShowAsync(Guid doctorUserId, Guid appointmentId, CancellationToken ct)
+    {
+        var doctor = await _doctors.FindByUserIdAsync(doctorUserId, ct);
+        if (doctor is null)
+        {
+            throw new ForbiddenException("Doctor profile not found for current user.");
+        }
+
+        var appt = await _appointments.FindByIdAsync(appointmentId, ct);
+        if (appt is null)
+        {
+            throw new NotFoundException("Appointment not found.");
+        }
+
+        if (appt.DoctorId != doctor.Id)
+        {
+            throw new ForbiddenException("Cannot manage another doctor's appointment.");
+        }
+
+        _stateMachine.Transition(appt, AppointmentStatus.NoShow, _clock.UtcNow);
+
+        await _appointments.AddLogAsync(new AppointmentLog
+        {
+            AppointmentId = appt.Id,
+            Action = "NoShow",
+            CreatedAtUtc = _clock.UtcNow,
+        }, ct);
+
+        await _appointments.SaveChangesAsync(ct);
+
+        await AdjustNoShowScoreAsync(appt.UserId, NoShowScoring.NoShowPenalty, ct);
+    }
+
+    private async Task AdjustNoShowScoreAsync(Guid patientUserId, int delta, CancellationToken ct)
+    {
+        var patient = await _patients.FindByUserIdAsync(patientUserId, ct);
+        if (patient is null)
+        {
+            return;
+        }
+
+        patient.NoShowScore = NoShowScoring.Apply(patient.NoShowScore, delta);
+        await _patients.SaveChangesAsync(ct);
     }
 }

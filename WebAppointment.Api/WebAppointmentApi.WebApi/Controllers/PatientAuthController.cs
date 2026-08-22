@@ -57,7 +57,8 @@ public sealed class PatientAuthController : ControllerBase
         var mapped = new LoginRequest(
             Email: null,
             TcKimlikNo: request.TcKimlikNo,
-            Password: request.Password
+            Password: request.Password,
+            RecaptchaToken: request.RecaptchaToken
         );
         return _auth.LoginAsync(mapped, ct);
     }

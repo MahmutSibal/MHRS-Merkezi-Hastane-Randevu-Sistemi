@@ -39,6 +39,29 @@ public sealed class AuthController : ControllerBase
     public Task<LoginResponse> Refresh([FromBody] RefreshTokenRequest request, CancellationToken ct)
         => _auth.RefreshAsync(request, ct);
 
+    [HttpPost("email-verification/request-code")]
+    [AllowAnonymous]
+    [EnableRateLimiting("login")]
+    public async Task<IActionResult> RequestEmailVerificationCode([FromBody] EmailVerificationRequest request, CancellationToken ct)
+    {
+        await _auth.RequestEmailVerificationCodeAsync(request, ct);
+        return NoContent();
+    }
+
+    [HttpPost("email-verification/confirm")]
+    [AllowAnonymous]
+    [EnableRateLimiting("login")]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    public Task<LoginResponse> ConfirmEmailVerification([FromBody] ConfirmEmailVerificationRequest request, CancellationToken ct)
+        => _auth.ConfirmEmailVerificationAsync(request, ct);
+
+    [HttpPost("google-login")]
+    [AllowAnonymous]
+    [EnableRateLimiting("login")]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    public Task<LoginResponse> GoogleLogin([FromBody] GoogleLoginRequest request, CancellationToken ct)
+        => _auth.LoginWithGoogleAsync(request, ct);
+
     [HttpPost("logout")]
     [AllowAnonymous]
     public async Task<IActionResult> Logout([FromBody] LogoutRequest request, CancellationToken ct)

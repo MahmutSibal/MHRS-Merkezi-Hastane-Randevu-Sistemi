@@ -23,6 +23,10 @@ public sealed class PatientRepository : IPatientRepository
     public Task<Patient?> FindByUserIdAsync(Guid userId, CancellationToken ct)
         => _db.Patients.SingleOrDefaultAsync(x => x.UserId == userId, ct);
 
+    public Task<Patient?> FindByPhoneSuffixAsync(string last10Digits, CancellationToken ct)
+        => _db.Patients.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(x => EF.Functions.Like(x.Phone, "%" + last10Digits), ct);
+
     public async Task<IReadOnlyList<Patient>> ListAsync(CancellationToken ct)
         => await _db.Patients.AsNoTracking().Include(x => x.User).OrderBy(x => x.Id).ToListAsync(ct);
 

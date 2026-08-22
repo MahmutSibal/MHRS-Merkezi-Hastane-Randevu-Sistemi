@@ -33,12 +33,23 @@ type AppointmentSummaryDto = {
   };
   dailyCounts: { date: string; count: number }[];
 };
+type NoShowRiskAppointmentDto = {
+  appointmentId: string;
+  patientName: string;
+  patientPhone: string;
+  noShowScore: number;
+  doctorName: string;
+  hospitalName: string;
+  startAtUtc: string;
+  reminderConfirmed: boolean;
+};
 
 export default function AdminReportsPage() {
   const [days, setDays] = useState("30");
   const [take, setTake] = useState("10");
   const [items, setItems] = useState<TopDoctorDto[]>([]);
   const [summary, setSummary] = useState<AppointmentSummaryDto | null>(null);
+  const [riskItems, setRiskItems] = useState<NoShowRiskAppointmentDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,14 +57,16 @@ export default function AdminReportsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const [doctors, summaryResponse] = await Promise.all([
+      const [doctors, summaryResponse, riskResponse] = await Promise.all([
         apiJson<TopDoctorDto[]>(
           `/backend/admin/reports/top-doctors?days=${encodeURIComponent(days)}&take=${encodeURIComponent(take)}`
         ),
         apiJson<AppointmentSummaryDto>(`/backend/admin/reports/appointment-summary?days=${encodeURIComponent(days)}`),
+        apiJson<NoShowRiskAppointmentDto[]>(`/backend/admin/reports/no-show-risk?days=7&minScore=40`),
       ]);
       setItems(doctors);
       setSummary(summaryResponse);
+      setRiskItems(riskResponse);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Yükleme başarısız.");
     } finally {
@@ -239,6 +252,47 @@ export default function AdminReportsPage() {
                   <td className="py-2">{d.appointmentCount}</td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <Card title="Riskli Randevular (Önümüzdeki 7 Gün)" description="Gelmeme riski yüksek, henüz onaylamamış hastalar — tüm hastaneler.">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="text-xs text-zinc-600">
+              <tr>
+                <th className="py-2">Hasta</th>
+                <th className="py-2">Telefon</th>
+                <th className="py-2">Hastane</th>
+                <th className="py-2">Doktor</th>
+                <th className="py-2">Randevu</th>
+                <th className="py-2">Risk Skoru</th>
+                <th className="py-2">Onay</th>
+              </tr>
+            </thead>
+            <tbody>
+              {riskItems.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-3 text-center text-zinc-500">Riskli randevu bulunmuyor.</td>
+                </tr>
+              ) : (
+                riskItems.map((r) => (
+                  <tr key={r.appointmentId} className="border-t border-black/5">
+                    <td className="py-2">{r.patientName}</td>
+                    <td className="py-2">{r.patientPhone}</td>
+                    <td className="py-2">{r.hospitalName}</td>
+                    <td className="py-2">{r.doctorName}</td>
+                    <td className="py-2">{new Date(r.startAtUtc).toLocaleString("tr-TR")}</td>
+                    <td className="py-2">
+                      <span className={r.noShowScore >= 60 ? "font-semibold text-red-600" : "font-semibold text-amber-600"}>
+                        {r.noShowScore}
+                      </span>
+                    </td>
+                    <td className="py-2">{r.reminderConfirmed ? "Onayladı" : "Bekliyor"}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

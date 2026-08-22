@@ -6,8 +6,17 @@
     <members>
         <member name="T:WebAppointmentApi.Infrastructure.BackgroundJobs.AppointmentReminderService">
             <summary>
-            Runs every 15 minutes and sends WhatsApp reminders for appointments
-            starting within the next 24 hours that haven't been reminded yet.
+            Runs every 15 minutes: sends a personalized WhatsApp reminder ~24 hours out, a second
+            same-day reminder as the appointment nears its 3-hour-out cutoff, and sweeps unconfirmed
+            appointments at that cutoff — auto-cancelling the high-risk ones to free the slot for the
+            waitlist, and leaving the rest alone for staff to judge.
+            </summary>
+        </member>
+        <member name="T:WebAppointmentApi.Infrastructure.BackgroundJobs.WhatsAppBridgeProcessService">
+            <summary>
+            Spawns and supervises the mhrs-whatsapp-bot Node.js process (wppconnect bridge) so it
+            doesn't need to be started manually in a separate terminal. Skips silently if the bridge
+            is already reachable (e.g. someone started it by hand) or its folder isn't found.
             </summary>
         </member>
         <member name="T:WebAppointmentApi.Infrastructure.Data.AppDbContextFactory">
@@ -15,6 +24,18 @@
             Design-time DbContext factory so that EF CLI can run without needing the startup project.
             Usage: from the Infrastructure folder, run: dotnet ef migrations add YourMigrationName and dotnet ef database update.
             </summary>
+        </member>
+        <member name="P:WebAppointmentApi.Infrastructure.Messaging.WhatsAppBridgeOptions.WebhookSecret">
+            <summary>
+            Shared secret the wppconnect bridge must send in the X-Bridge-Secret header when it
+            forwards inbound WhatsApp messages to our webhook. Empty means the webhook is disabled.
+            </summary>
+        </member>
+        <member name="P:WebAppointmentApi.Infrastructure.Messaging.WhatsAppBridgeOptions.AutoStart">
+            <summary>Whether the API should spawn the Node bridge process itself on startup.</summary>
+        </member>
+        <member name="P:WebAppointmentApi.Infrastructure.Messaging.WhatsAppBridgeOptions.WorkingDirectory">
+            <summary>Path to the mhrs-whatsapp-bot folder, relative to the WebApi content root.</summary>
         </member>
         <member name="T:WebAppointmentApi.Infrastructure.Migrations.AddPhoneVerificationCodes">
             <inheritdoc />
@@ -40,6 +61,66 @@
         <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddReminderAndHealthProfile.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:WebAppointmentApi.Infrastructure.Migrations.AddWhatsAppReplyAndNoShow">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddWhatsAppReplyAndNoShow.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddWhatsAppReplyAndNoShow.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddWhatsAppReplyAndNoShow.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:WebAppointmentApi.Infrastructure.Migrations.AddEmailVerificationAndGoogleAuth">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddEmailVerificationAndGoogleAuth.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddEmailVerificationAndGoogleAuth.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddEmailVerificationAndGoogleAuth.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:WebAppointmentApi.Infrastructure.Migrations.AddSecondReminder">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddSecondReminder.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddSecondReminder.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddSecondReminder.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:WebAppointmentApi.Infrastructure.Migrations.AddSmaCases">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddSmaCases.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddSmaCases.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddSmaCases.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:WebAppointmentApi.Infrastructure.Migrations.AddSiteSettings">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddSiteSettings.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddSiteSettings.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:WebAppointmentApi.Infrastructure.Migrations.AddSiteSettings.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:WebAppointmentApi.Infrastructure.Security.NviKimlikService">
             <summary>
             NVI (Nüfus ve Vatandaşlık İşleri) TC Kimlik No doğrulama servisi.
@@ -50,6 +131,9 @@
             <summary>
             XML injection'ı önlemek için özel karakterleri escape eder.
             </summary>
+        </member>
+        <member name="P:WebAppointmentApi.Infrastructure.Security.RecaptchaOptions.Disabled">
+            <summary>Dev/test escape hatch — when true, all tokens pass without calling Google.</summary>
         </member>
     </members>
 </doc>

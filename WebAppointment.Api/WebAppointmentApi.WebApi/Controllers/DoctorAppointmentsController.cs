@@ -38,4 +38,11 @@ public sealed class DoctorAppointmentsController : ControllerBase
         await _doctorAppointments.CompleteAsync(_user.UserId, appointmentId, ct);
         return NoContent();
     }
+
+    [HttpPut("{appointmentId:guid}/no-show")]
+    public async Task<IActionResult> NoShow([FromRoute] Guid appointmentId, CancellationToken ct)
+    {
+        await _doctorAppointments.MarkNoShowAsync(_user.UserId, appointmentId, ct);
+        return NoContent();
+    }
 }

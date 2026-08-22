@@ -47,7 +47,7 @@ export default function RegisterPage() {
   }, [expiresAt]);
 
   function startCountdown() {
-    const next = Date.now() + 90 * 1000;
+    const next = Date.now() + 5 * 60 * 1000;
     setExpiresAt(next);
     setRemainingSeconds(90);
   }
@@ -237,7 +237,7 @@ export default function RegisterPage() {
                       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div className="text-sm text-slate-600 dark:text-slate-300">
-                            Kod 90 saniye geçerlidir.
+                            Kod 5 dakika geçerlidir.
                           </div>
                           <div className="text-sm font-semibold text-slate-900 dark:text-white">
                             Süre: {formatCountdown(remainingSeconds)}

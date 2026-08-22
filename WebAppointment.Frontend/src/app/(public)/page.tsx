@@ -1,9 +1,14 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Hero from "@/components/layout/Hero";
+import { getServerSession } from "@/lib/server-session";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await getServerSession();
+  if (session) redirect("/app");
+
   return (
     <div className="space-y-12">
       {/* Hero section with provided image */}

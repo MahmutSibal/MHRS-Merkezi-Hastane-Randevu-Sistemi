@@ -44,9 +44,12 @@ public sealed class AppDbContext : DbContext
 
     public DbSet<LoginLockout> LoginLockouts => Set<LoginLockout>();
     public DbSet<PhoneVerificationCode> PhoneVerificationCodes => Set<PhoneVerificationCode>();
+    public DbSet<EmailVerificationCode> EmailVerificationCodes => Set<EmailVerificationCode>();
 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<WaitlistEntry> Waitlist => Set<WaitlistEntry>();
+    public DbSet<SmaCase> SmaCases => Set<SmaCase>();
+    public DbSet<SiteSetting> SiteSettings => Set<SiteSetting>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -73,11 +76,33 @@ public sealed class AppDbContext : DbContext
             b.HasIndex(x => new { x.TenantId, x.Phone, x.CreatedAtUtc });
         });
 
+        modelBuilder.Entity<EmailVerificationCode>(b =>
+        {
+            b.HasKey(x => x.Id);
+            b.Property(x => x.CodeHash).HasMaxLength(200).IsRequired();
+            b.Property(x => x.CodeSalt).HasMaxLength(200).IsRequired();
+            b.Property(x => x.CreatedAtUtc).IsRequired();
+            b.Property(x => x.ExpiresAtUtc).IsRequired();
+            b.Property(x => x.AttemptCount).HasDefaultValue(0);
+
+            b.Property(x => x.TenantId).IsRequired();
+            b.HasQueryFilter(x => x.TenantId == _tenant.TenantId);
+
+            b.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasIndex(x => new { x.TenantId, x.UserId, x.CreatedAtUtc });
+        });
+
         modelBuilder.Entity<User>(b =>
         {
             b.HasKey(x => x.Id);
             b.Property(x => x.Email).HasMaxLength(320).IsRequired();
             b.Property(x => x.PasswordHash).HasMaxLength(500).IsRequired();
+            b.Property(x => x.FirstName).HasMaxLength(100);
+            b.Property(x => x.LastName).HasMaxLength(100);
 
             b.Property(x => x.TenantId).IsRequired();
             b.HasIndex(x => new { x.TenantId, x.Email }).IsUnique();
@@ -88,6 +113,34 @@ public sealed class AppDbContext : DbContext
                 .HasForeignKey(x => x.HospitalId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+        modelBuilder.Entity<SmaCase>(b =>
+        {
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Slug).HasMaxLength(150).IsRequired();
+            b.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();
+            b.Property(x => x.ProvinceSlug).HasMaxLength(50).IsRequired();
+            b.Property(x => x.ProvinceName).HasMaxLength(100).IsRequired();
+            b.Property(x => x.Story).HasMaxLength(4000);
+            b.Property(x => x.Iban).HasMaxLength(34).IsRequired();
+            b.Property(x => x.BankAccountHolderName).HasMaxLength(200).IsRequired();
+            b.Property(x => x.PhotoUrl).HasMaxLength(500);
+            b.Property(x => x.CreatedAtUtc).IsRequired();
+            b.Property(x => x.TenantId).IsRequired();
+            b.HasQueryFilter(x => x.TenantId == _tenant.TenantId);
+
+            b.HasIndex(x => x.Slug).IsUnique();
+            b.HasIndex(x => new { x.TenantId, x.ProvinceSlug, x.IsVerified, x.IsPublished });
+        });
+
+        modelBuilder.Entity<SiteSetting>(b =>
+        {
+            b.HasKey(x => x.Id);
+            b.Property(x => x.IsSmaEnabled).HasDefaultValue(true);
+            b.Property(x => x.TenantId).IsRequired();
+            b.HasQueryFilter(x => x.TenantId == _tenant.TenantId);
+            b.HasIndex(x => x.TenantId).IsUnique();
+        });
+
         modelBuilder.Entity<Hospital>(b =>
         {
             b.HasKey(x => x.Id);

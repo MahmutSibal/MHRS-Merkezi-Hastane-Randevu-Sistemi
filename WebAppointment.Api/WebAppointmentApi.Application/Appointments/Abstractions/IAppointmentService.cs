@@ -10,4 +10,11 @@ public interface IAppointmentService
     Task<AppointmentDto> GetMyByIdAsync(Guid userId, Guid appointmentId, CancellationToken ct);
     Task<IReadOnlyList<AdminAppointmentDto>> GetAdminAllAsync(CancellationToken ct);
     Task CancelAsync(Guid userId, Guid appointmentId, CancelAppointmentRequest request, CancellationToken ct);
+
+    /// <summary>
+    /// Cancels an appointment without checking caller ownership. Used for system-initiated
+    /// cancellations (WhatsApp reply, unconfirmed-reminder auto-cancel) where there is no
+    /// authenticated patient session to check against.
+    /// </summary>
+    Task ForceCancelAsync(Guid appointmentId, string reason, CancellationToken ct);
 }

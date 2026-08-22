@@ -79,6 +79,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <div className="mt-2 space-y-1">
                     <NavLink href="/admin/hospitals" label="Hastaneler" icon={DepartmentIcon} />
                     <NavLink href="/admin/audit-logs" label="Audit Log" />
+                    <NavLink href="/admin/whatsapp" label="WhatsApp Bağlantısı" />
+                    <NavLink href="/admin/sma" label="SMA Bağış Yönetimi" />
                   </div>
                 </div>
               </>

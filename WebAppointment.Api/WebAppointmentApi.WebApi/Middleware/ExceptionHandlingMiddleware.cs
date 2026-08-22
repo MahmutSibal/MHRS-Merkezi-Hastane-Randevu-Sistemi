@@ -31,6 +31,7 @@ public sealed class ExceptionHandlingMiddleware : IMiddleware
                 NotFoundException => (int)HttpStatusCode.NotFound,
                 ConflictException => (int)HttpStatusCode.Conflict,
                 TooManyRequestsException => StatusCodes.Status429TooManyRequests,
+                EmailVerificationRequiredException => (int)HttpStatusCode.Forbidden,
                 _ => (int)HttpStatusCode.InternalServerError
             };
 
@@ -64,6 +65,11 @@ public sealed class ExceptionHandlingMiddleware : IMiddleware
             else if (ex is TooManyRequestsException)
             {
                 userMessage = string.IsNullOrWhiteSpace(ex.Message) ? "Çok fazla istek. Lütfen daha sonra tekrar deneyin." : ex.Message;
+            }
+            else if (ex is EmailVerificationRequiredException)
+            {
+                // Sabit bir kod: frontend bu metni "EMAIL_NOT_VERIFIED" olarak tanıyıp doğrulama ekranına geçiyor.
+                userMessage = ex.Message;
             }
             else
             {

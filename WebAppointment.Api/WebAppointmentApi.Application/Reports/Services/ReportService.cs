@@ -18,4 +18,7 @@ public sealed class ReportService : IReportService
 
     public Task<AppointmentSummaryDto> GetAppointmentSummaryAsync(int days, CancellationToken ct)
         => _reports.GetAppointmentSummaryAsync(days, ct);
+
+    public Task<IReadOnlyList<NoShowRiskAppointmentDto>> GetNoShowRiskAppointmentsAsync(int days, int minScore, int? hospitalId, CancellationToken ct)
+        => _reports.GetNoShowRiskAppointmentsAsync(days, minScore, hospitalId, ct);
 }

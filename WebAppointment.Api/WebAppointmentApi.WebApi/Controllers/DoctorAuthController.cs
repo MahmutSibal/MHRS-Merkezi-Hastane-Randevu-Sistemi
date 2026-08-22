@@ -25,7 +25,8 @@ public sealed class DoctorAuthController : ControllerBase
         var mapped = new LoginRequest(
             Email: request.Email,
             TcKimlikNo: null,
-            Password: request.Password
+            Password: request.Password,
+            RecaptchaToken: request.RecaptchaToken
         );
 
         var response = await _auth.LoginAsync(mapped, ct);

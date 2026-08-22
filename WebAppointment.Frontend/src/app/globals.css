@@ -7,6 +7,12 @@
 */
 @custom-variant dark (&:where(html.dark, html.dark *));
 
+/* Always reserve the scrollbar gutter so centered headers don't shift a few px between a
+   tall page (scrollbar visible) and a short one (no scrollbar) — e.g. MHRS <-> SMA nav. */
+html {
+  scrollbar-gutter: stable;
+}
+
 :root {
   /* Light theme per spec */
   --background: #F8FAFC; /* slate-50 */
@@ -145,4 +151,31 @@ button, a {
     radial-gradient(ellipse at 20% 50%, rgba(56,189,248,0.15) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 20%, rgba(99,102,241,0.15) 0%, transparent 50%),
     radial-gradient(ellipse at 60% 80%, rgba(34,211,238,0.10) 0%, transparent 50%);
+}
+
+/*
+  MHRS <-> SMA site-switch: "yeni sayfaya giriyor" slide effect.
+  Plain CSS animation on the incoming page's wrapper (PageSlideWrapper), triggered by a
+  key-based remount on route change. Direction is set on <html data-transition-direction>
+  right before navigating (see SiteSwitchTabs) and read here to flip the slide side.
+  (The native View Transitions API was tried first but timed out unreliably against
+  Next.js App Router's async route updates, so this simpler approach replaced it.)
+*/
+.page-slide-in {
+  animation: page-slide-in-forward 320ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+@keyframes page-slide-in-forward {
+  from {
+    transform: translateX(6%);
+    opacity: 0;
+  }
+}
+@keyframes page-slide-in-back {
+  from {
+    transform: translateX(-6%);
+    opacity: 0;
+  }
+}
+:root[data-transition-direction="back"] .page-slide-in {
+  animation-name: page-slide-in-back;
 }

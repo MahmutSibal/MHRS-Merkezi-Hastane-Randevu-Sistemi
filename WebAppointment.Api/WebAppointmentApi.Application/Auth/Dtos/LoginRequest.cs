@@ -4,5 +4,6 @@ namespace WebAppointmentApi.Application.Auth.Dtos;
 public sealed record LoginRequest(
     string? Email,
     string? TcKimlikNo,
-    string Password
+    string Password,
+    string? RecaptchaToken = null
 );

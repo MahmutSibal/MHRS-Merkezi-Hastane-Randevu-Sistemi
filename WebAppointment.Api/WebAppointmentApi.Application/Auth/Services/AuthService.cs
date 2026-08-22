@@ -33,6 +33,10 @@ public sealed class AuthService : IAuthService
     private readonly IPhoneVerificationSender _phoneSender;
     private readonly IWhatsAppMessageSender _whatsappSender;
     private readonly INviKimlikService _nviKimlik;
+    private readonly IEmailVerificationRepository _emailVerifications;
+    private readonly IEmailSender _emailSender;
+    private readonly IGoogleIdTokenValidator _googleValidator;
+    private readonly IRecaptchaValidator _recaptcha;
 
     public AuthService(
         IUserRepository users,
@@ -48,7 +52,11 @@ public sealed class AuthService : IAuthService
         IPhoneVerificationRepository phoneVerifications,
         IPhoneVerificationSender phoneSender,
         IWhatsAppMessageSender whatsappSender,
-        INviKimlikService nviKimlik)
+        INviKimlikService nviKimlik,
+        IEmailVerificationRepository emailVerifications,
+        IEmailSender emailSender,
+        IGoogleIdTokenValidator googleValidator,
+        IRecaptchaValidator recaptcha)
     {
         _users = users;
         _patients = patients;
@@ -64,10 +72,19 @@ public sealed class AuthService : IAuthService
         _phoneSender = phoneSender;
         _whatsappSender = whatsappSender;
         _nviKimlik = nviKimlik;
+        _emailVerifications = emailVerifications;
+        _emailSender = emailSender;
+        _googleValidator = googleValidator;
+        _recaptcha = recaptcha;
     }
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request, CancellationToken ct)
     {
+        if (!await _recaptcha.IsValidAsync(request.RecaptchaToken, ct))
+        {
+            throw new UnauthorizedException("Robot dogrulamasi basarisiz. Lutfen tekrar deneyin.");
+        }
+
         // TC ile hasta girişi
         if (!string.IsNullOrWhiteSpace(request.TcKimlikNo))
         {
@@ -145,6 +162,12 @@ public sealed class AuthService : IAuthService
 
         await _loginSecurity.RegisterSuccessAsync(normalizedEmail, ct);
 
+        if (userByEmail.Role != UserRole.Patient && userByEmail.EmailConfirmedAtUtc is null)
+        {
+            await EnsureEmailVerificationCodeSentAsync(userByEmail, ct);
+            throw new EmailVerificationRequiredException("EMAIL_NOT_VERIFIED");
+        }
+
         return await IssueTokensAsync(userByEmail, ct);
     }
 
@@ -187,7 +210,7 @@ public sealed class AuthService : IAuthService
             CodeHash = hash,
             CodeSalt = salt,
             CreatedAtUtc = now,
-            ExpiresAtUtc = now.AddSeconds(90),
+            ExpiresAtUtc = now.AddMinutes(5),
             TenantId = _tenant.TenantId
         };
 
@@ -299,6 +322,164 @@ public sealed class AuthService : IAuthService
             throw new ConflictException("Yeni sifre gonderilemedi. Lutfen tekrar deneyin.");
         }
     }
+
+    public async Task RequestEmailVerificationCodeAsync(EmailVerificationRequest request, CancellationToken ct)
+    {
+        var user = await FindVerifiableUserOrThrowAsync(request.Email, request.Password, ct);
+
+        var now = _clock.UtcNow;
+        var latest = await _emailVerifications.FindLatestByUserIdAsync(user.Id, ct);
+        if (latest is not null && latest.UsedAtUtc is null && latest.ExpiresAtUtc > now)
+        {
+            var remaining = (int)Math.Ceiling((latest.ExpiresAtUtc - now).TotalSeconds);
+            throw new TooManyRequestsException($"Kod zaten gonderildi. {remaining} saniye sonra tekrar deneyin.");
+        }
+
+        await SendNewEmailVerificationCodeAsync(user, ct);
+    }
+
+    public async Task<LoginResponse> ConfirmEmailVerificationAsync(ConfirmEmailVerificationRequest request, CancellationToken ct)
+    {
+        var user = await FindVerifiableUserOrThrowAsync(request.Email, request.Password, ct);
+
+        var now = _clock.UtcNow;
+        var latest = await _emailVerifications.FindLatestByUserIdAsync(user.Id, ct);
+        if (latest is null || latest.UsedAtUtc is not null || latest.ExpiresAtUtc <= now)
+        {
+            throw new ValidationException("Dogrulama kodu suresi doldu. Lutfen yeniden isteyin.");
+        }
+
+        if (!IsCodeMatch(latest, request.Code))
+        {
+            latest.AttemptCount++;
+            await _emailVerifications.SaveChangesAsync(ct);
+            throw new ValidationException("Dogrulama kodu hatali.");
+        }
+
+        latest.UsedAtUtc = now;
+        user.EmailConfirmedAtUtc = now;
+        await _emailVerifications.SaveChangesAsync(ct);
+        await _users.SaveChangesAsync(ct);
+
+        return await IssueTokensAsync(user, ct);
+    }
+
+    public async Task<LoginResponse> LoginWithGoogleAsync(GoogleLoginRequest request, CancellationToken ct)
+    {
+        var identity = await _googleValidator.ValidateAsync(request.IdToken, ct);
+        if (identity is null)
+        {
+            throw new UnauthorizedException("Google ile giris dogrulanamadi.");
+        }
+
+        var normalizedEmail = identity.Email.Trim().ToUpperInvariant();
+        var user = await _users.FindByEmailAsync(normalizedEmail, ct);
+        if (user is null || user.Role == UserRole.Patient)
+        {
+            throw new NotFoundException("Bu e-posta ile kayitli bir hesap bulunamadi.");
+        }
+
+        var now = _clock.UtcNow;
+        var changed = false;
+
+        if (string.IsNullOrWhiteSpace(user.FirstName) && !string.IsNullOrWhiteSpace(identity.GivenName))
+        {
+            user.FirstName = identity.GivenName;
+            changed = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(user.LastName) && !string.IsNullOrWhiteSpace(identity.FamilyName))
+        {
+            user.LastName = identity.FamilyName;
+            changed = true;
+        }
+
+        if (user.EmailConfirmedAtUtc is null)
+        {
+            // Google already proved ownership of this email address.
+            user.EmailConfirmedAtUtc = now;
+            changed = true;
+        }
+
+        if (changed)
+        {
+            await _users.SaveChangesAsync(ct);
+        }
+
+        return await IssueTokensAsync(user, ct);
+    }
+
+    private async Task<User> FindVerifiableUserOrThrowAsync(string email, string password, CancellationToken ct)
+    {
+        var normalizedEmail = email.Trim().ToUpperInvariant();
+        var user = await _users.FindByEmailAsync(normalizedEmail, ct);
+        if (user is null || user.Role == UserRole.Patient)
+        {
+            throw new UnauthorizedException("Invalid credentials.");
+        }
+
+        if (!_passwordHasher.Verify(password, user.PasswordHash ?? string.Empty))
+        {
+            throw new UnauthorizedException("Invalid credentials.");
+        }
+
+        return user;
+    }
+
+    private async Task EnsureEmailVerificationCodeSentAsync(User user, CancellationToken ct)
+    {
+        var now = _clock.UtcNow;
+        var latest = await _emailVerifications.FindLatestByUserIdAsync(user.Id, ct);
+        if (latest is not null && latest.UsedAtUtc is null && latest.ExpiresAtUtc > now)
+        {
+            // A still-valid code was already sent; don't spam another one.
+            return;
+        }
+
+        await SendNewEmailVerificationCodeAsync(user, ct);
+    }
+
+    private async Task SendNewEmailVerificationCodeAsync(User user, CancellationToken ct)
+    {
+        var now = _clock.UtcNow;
+        var code = GenerateCode();
+        var salt = CreateSalt();
+        var hash = HashCode(code, salt);
+
+        var entry = new EmailVerificationCode
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            CodeHash = hash,
+            CodeSalt = salt,
+            CreatedAtUtc = now,
+            ExpiresAtUtc = now.AddMinutes(5),
+            TenantId = user.TenantId,
+        };
+
+        await _emailVerifications.AddAsync(entry, ct);
+        await _emailVerifications.SaveChangesAsync(ct);
+
+        try
+        {
+            var subject = "MHRS Dogrulama Kodunuz";
+            var html = string.Format(CultureInfo.InvariantCulture,
+                "<p>MHRS dogrulama kodunuz: <strong>{0}</strong></p><p>Kod 5 dakika gecerlidir.</p>",
+                code);
+
+            await _emailSender.SendAsync(user.Email, subject, html, ct);
+        }
+        catch (Exception ex)
+        {
+            entry.ExpiresAtUtc = now;
+            await _emailVerifications.SaveChangesAsync(ct);
+            _logger.LogError(ex, "Failed to send email verification code. UserId={UserId}", user.Id);
+            throw new ConflictException("Dogrulama kodu gonderilemedi. Lutfen tekrar deneyin.");
+        }
+    }
+
+    private static bool IsCodeMatch(EmailVerificationCode entry, string code)
+        => string.Equals(entry.CodeHash, HashCode(code, entry.CodeSalt), StringComparison.Ordinal);
 
     private async Task<LoginResponse> RegisterCoreAsync(CreatePatientRequest request, CancellationToken ct)
     {

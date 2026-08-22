@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.WebApi\\WebAppointmentApi.WebApi.csproj": {}
+    "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.WebApi\\WebAppointmentApi.WebApi.csproj": {}
   },
   "projects": {
-    "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj": {
+    "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj",
+        "projectUniqueName": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj",
         "projectName": "WebAppointmentApi.Application",
-        "projectPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj",
-        "packagesPath": "C:\\Users\\-\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\obj\\",
+        "projectPath": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj",
+        "packagesPath": "C:\\Users\\Mahmu\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\-\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Mahmu\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -30,10 +30,11 @@
         },
         "frameworks": {
           "net8.0": {
+            "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj": {
-                "projectPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj"
+              "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj": {
+                "projectPath": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj"
               }
             }
           }
@@ -48,10 +49,11 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
         "net8.0": {
+          "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
             "AutoMapper": {
@@ -82,29 +84,43 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.28, 8.0.28]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.28, 8.0.28]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.28, 8.0.28]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.302/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj": {
+    "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj",
+        "projectUniqueName": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj",
         "projectName": "WebAppointmentApi.Domain",
-        "projectPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj",
-        "packagesPath": "C:\\Users\\-\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\obj\\",
+        "projectPath": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj",
+        "packagesPath": "C:\\Users\\Mahmu\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\-\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Mahmu\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -117,6 +133,7 @@
         },
         "frameworks": {
           "net8.0": {
+            "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {}
           }
@@ -131,10 +148,11 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
         "net8.0": {
+          "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
             "Microsoft.EntityFrameworkCore.Tools": {
@@ -155,29 +173,43 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.28, 8.0.28]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.28, 8.0.28]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.28, 8.0.28]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.302/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\WebAppointmentApi.Infrastructure.csproj": {
+    "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\WebAppointmentApi.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\WebAppointmentApi.Infrastructure.csproj",
+        "projectUniqueName": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\WebAppointmentApi.Infrastructure.csproj",
         "projectName": "WebAppointmentApi.Infrastructure",
-        "projectPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\WebAppointmentApi.Infrastructure.csproj",
-        "packagesPath": "C:\\Users\\-\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\obj\\",
+        "projectPath": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\WebAppointmentApi.Infrastructure.csproj",
+        "packagesPath": "C:\\Users\\Mahmu\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\-\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Mahmu\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -190,13 +222,14 @@
         },
         "frameworks": {
           "net8.0": {
+            "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj": {
-                "projectPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj"
+              "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj": {
+                "projectPath": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj"
               },
-              "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj": {
-                "projectPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj"
+              "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj": {
+                "projectPath": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj"
               }
             }
           }
@@ -211,10 +244,11 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
         "net8.0": {
+          "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
             "AutoMapper": {
@@ -224,6 +258,10 @@
             "Dapper": {
               "target": "Package",
               "version": "[2.1.66, )"
+            },
+            "Google.Apis.Auth": {
+              "target": "Package",
+              "version": "[1.*, )"
             },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
@@ -263,6 +301,20 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.28, 8.0.28]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.28, 8.0.28]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.28, 8.0.28]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -271,24 +323,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.302/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.WebApi\\WebAppointmentApi.WebApi.csproj": {
+    "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.WebApi\\WebAppointmentApi.WebApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.WebApi\\WebAppointmentApi.WebApi.csproj",
+        "projectUniqueName": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.WebApi\\WebAppointmentApi.WebApi.csproj",
         "projectName": "WebAppointmentApi.WebApi",
-        "projectPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.WebApi\\WebAppointmentApi.WebApi.csproj",
-        "packagesPath": "C:\\Users\\-\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.WebApi\\obj\\",
+        "projectPath": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.WebApi\\WebAppointmentApi.WebApi.csproj",
+        "packagesPath": "C:\\Users\\Mahmu\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.WebApi\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\-\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Mahmu\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -301,16 +353,17 @@
         },
         "frameworks": {
           "net8.0": {
+            "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj": {
-                "projectPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj"
+              "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj": {
+                "projectPath": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Application\\WebAppointmentApi.Application.csproj"
               },
-              "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj": {
-                "projectPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj"
+              "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj": {
+                "projectPath": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Domain\\WebAppointmentApi.Domain.csproj"
               },
-              "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\WebAppointmentApi.Infrastructure.csproj": {
-                "projectPath": "C:\\Users\\-\\Desktop\\YildizGithub\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\WebAppointmentApi.Infrastructure.csproj"
+              "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\WebAppointmentApi.Infrastructure.csproj": {
+                "projectPath": "C:\\Users\\Mahmu\\Desktop\\MHRS-Merkezi-Hastane-Randevu-Sistemi\\WebAppointment.Api\\WebAppointmentApi.Infrastructure\\WebAppointmentApi.Infrastructure.csproj"
               }
             }
           }
@@ -325,10 +378,11 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
         "net8.0": {
+          "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
             "FluentValidation.AspNetCore": {
@@ -373,6 +427,24 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.28, 8.0.28]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[8.0.28, 8.0.28]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.28, 8.0.28]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.28, 8.0.28]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -381,7 +453,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.302/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

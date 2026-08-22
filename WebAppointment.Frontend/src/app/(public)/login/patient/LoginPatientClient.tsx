@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Panel } from "@/components/ui/panel";
 import { useToast } from "@/components/session/ToastProvider";
+import { RecaptchaWidget } from "@/components/auth/RecaptchaWidget";
 
 export default function LoginPatientClient() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function LoginPatientClient() {
 
   const [tcKimlikNo, setTcKimlikNo] = useState("");
   const [password, setPassword] = useState("");
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -29,7 +31,7 @@ export default function LoginPatientClient() {
       const res = await fetch("/api/session/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tcKimlikNo, password }),
+        body: JSON.stringify({ tcKimlikNo, password, recaptchaToken }),
       });
 
       if (!res.ok) {
@@ -72,13 +74,15 @@ export default function LoginPatientClient() {
             required 
           />
 
+          <RecaptchaWidget onChange={setRecaptchaToken} />
+
           {error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
               {error}
             </div>
           ) : null}
 
-          <Button type="submit" isLoading={isLoading} size="md" className="w-full">
+          <Button type="submit" isLoading={isLoading} disabled={!recaptchaToken} size="md" className="w-full">
             Giriş Yap
           </Button>
 

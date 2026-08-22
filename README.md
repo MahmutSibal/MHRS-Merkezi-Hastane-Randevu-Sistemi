@@ -126,7 +126,7 @@ node index.js
 - **Telefon Doğrulama (Hasta Kaydı)**
   - Kod gönderme: `POST /api/auth/patient/register/request-code`
   - Kodu onaylayıp kayıt: `POST /api/auth/patient/register/confirm`
-  - Kod süresi: 90 saniye, yanlış denemeler kayıt altına alınır
+  - Kod süresi: 5 dakika, yanlış denemeler kayıt altına alınır
 - **Şifremi Unuttum (Hasta)**
   - İstek: `POST /api/auth/patient/forgot-password`
   - Girdi: Ad, soyad, TC Kimlik No, telefon

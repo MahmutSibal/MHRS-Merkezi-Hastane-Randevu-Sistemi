@@ -28,6 +28,8 @@ public sealed class Appointment : IMultiTenant
     public DateTimeOffset? UpdatedAtUtc { get; set; }
 
     public DateTimeOffset? ReminderSentAtUtc { get; set; }
+    public DateTimeOffset? ReminderConfirmedAtUtc { get; set; }
+    public DateTimeOffset? SecondReminderSentAtUtc { get; set; }
 
     public int TenantId { get; set; }
 }

@@ -16,6 +16,7 @@ public sealed class AppointmentStateMachine : IAppointmentStateMachine
             [AppointmentStatus.Approved] = new ApprovedState(),
             [AppointmentStatus.Cancelled] = new TerminalState(AppointmentStatus.Cancelled),
             [AppointmentStatus.Completed] = new TerminalState(AppointmentStatus.Completed),
+            [AppointmentStatus.NoShow] = new TerminalState(AppointmentStatus.NoShow),
         };
     }
 
@@ -83,11 +84,11 @@ public sealed class AppointmentStateMachine : IAppointmentStateMachine
     {
         public bool CanTransitionTo(Appointment appointment, AppointmentStatus targetStatus, DateTimeOffset nowUtc, out string reason)
         {
-            if (targetStatus == AppointmentStatus.Completed)
+            if (targetStatus == AppointmentStatus.Completed || targetStatus == AppointmentStatus.NoShow)
             {
                 if (appointment.EndAt > nowUtc)
                 {
-                    reason = "Appointment can only be completed after it ends.";
+                    reason = "Appointment can only be closed out after it ends.";
                     return false;
                 }
 

@@ -31,6 +31,11 @@ public sealed class AdminReportsController : ControllerBase
     public Task<AppointmentSummaryDto> AppointmentSummary([FromQuery] int days = 30, CancellationToken ct = default)
         => _reports.GetAppointmentSummaryAsync(days, ct);
 
+    [HttpGet("no-show-risk")]
+    public Task<IReadOnlyList<NoShowRiskAppointmentDto>> NoShowRisk(
+        [FromQuery] int days = 7, [FromQuery] int minScore = 40, CancellationToken ct = default)
+        => _reports.GetNoShowRiskAppointmentsAsync(days, minScore, hospitalId: null, ct);
+
     [HttpPost("refresh-cache")]
     public IActionResult RefreshCache([FromQuery] int days = 30, [FromQuery] int take = 10)
     {

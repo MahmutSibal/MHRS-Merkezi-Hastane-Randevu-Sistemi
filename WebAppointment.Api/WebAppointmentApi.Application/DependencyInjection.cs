@@ -22,6 +22,8 @@ using WebAppointmentApi.Application.Dependents.Abstractions;
 using WebAppointmentApi.Application.Dependents.Services;
 using WebAppointmentApi.Application.Waitlist.Abstractions;
 using WebAppointmentApi.Application.Waitlist.Services;
+using WebAppointmentApi.Application.Sma.Abstractions;
+using WebAppointmentApi.Application.Sma.Services;
 
 namespace WebAppointmentApi.Application;
 
@@ -36,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<ILoginSecurityService, LoginSecurityService>();
         services.AddScoped<IAppointmentService, AppointmentService>();
         services.AddScoped<IDoctorAppointmentService, DoctorAppointmentService>();
+        services.AddScoped<IWhatsAppReplyService, WhatsAppReplyService>();
         services.AddScoped<IDoctorCalendarService, DoctorCalendarService>();
         services.AddScoped<IPublicDoctorCalendarService, PublicDoctorCalendarService>();
         services.AddSingleton<IAppointmentStateMachine, AppointmentStateMachine>();
@@ -48,6 +51,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<IWaitlistService, WaitlistService>();
         services.AddScoped<IDependentService, DependentService>();
+        services.AddScoped<ISmaCaseService, SmaCaseService>();
 
         return services;
     }

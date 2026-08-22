@@ -309,9 +309,25 @@ public sealed class AppointmentService : IAppointmentService
             throw new ForbiddenException("Cannot cancel another user's appointment.");
         }
 
+        await CancelCoreAsync(appt, request.Reason, ct);
+    }
+
+    public async Task ForceCancelAsync(Guid appointmentId, string reason, CancellationToken ct)
+    {
+        var appt = await _appointments.FindByIdAsync(appointmentId, ct);
+        if (appt is null)
+        {
+            throw new NotFoundException("Appointment not found.");
+        }
+
+        await CancelCoreAsync(appt, reason, ct);
+    }
+
+    private async Task CancelCoreAsync(Appointment appt, string? reason, CancellationToken ct)
+    {
         var nowUtc = _clock.UtcNow;
 
-        appt.CancellationReason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim();
+        appt.CancellationReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
         appt.CancelledAtUtc = nowUtc;
 
         _stateMachine.Transition(appt, AppointmentStatus.Cancelled, nowUtc);

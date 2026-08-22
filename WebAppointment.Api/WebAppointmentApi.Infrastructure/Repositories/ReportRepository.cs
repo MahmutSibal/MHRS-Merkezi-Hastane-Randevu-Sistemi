@@ -89,4 +89,42 @@ public sealed class ReportRepository : IReportRepository
 
         return new AppointmentSummaryDto(days, statusSummary, dailyCounts);
     }
+
+    public async Task<IReadOnlyList<NoShowRiskAppointmentDto>> GetNoShowRiskAppointmentsAsync(
+        int days, int minScore, int? hospitalId, CancellationToken ct)
+    {
+        if (days <= 0) days = 7;
+        if (days > 30) days = 30;
+        if (minScore < 0) minScore = 0;
+
+        var nowUtc = DateTimeOffset.UtcNow;
+        var toUtc = nowUtc.AddDays(days);
+
+        var query =
+            from a in _db.Appointments.AsNoTracking()
+            join p in _db.Patients.AsNoTracking() on a.UserId equals p.UserId
+            where a.Status == AppointmentStatus.Approved
+                  && a.StartAt >= nowUtc && a.StartAt <= toUtc
+                  && p.NoShowScore >= minScore
+            select new { a, p };
+
+        if (hospitalId is not null)
+        {
+            query = query.Where(x => x.a.Doctor!.Department!.HospitalId == hospitalId.Value);
+        }
+
+        return await query
+            .OrderByDescending(x => x.p.NoShowScore)
+            .ThenBy(x => x.a.StartAt)
+            .Select(x => new NoShowRiskAppointmentDto(
+                x.a.Id,
+                x.p.FirstName + " " + x.p.LastName,
+                x.p.Phone,
+                x.p.NoShowScore,
+                x.a.Doctor!.Name,
+                x.a.Doctor!.Department!.Hospital!.Name,
+                x.a.StartAt,
+                x.a.ReminderConfirmedAtUtc != null))
+            .ToListAsync(ct);
+    }
 }

@@ -11,6 +11,10 @@ public sealed class User : IMultiTenant
     public string PasswordHash { get; set; } = string.Empty;
     public UserRole Role { get; set; }
 
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public DateTimeOffset? EmailConfirmedAtUtc { get; set; }
+
     public int TenantId { get; set; }
 
     public int? HospitalId { get; set; }

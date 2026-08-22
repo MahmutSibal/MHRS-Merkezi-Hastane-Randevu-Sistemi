@@ -23,7 +23,7 @@ type DoctorDailySlotPublicDto = {
 type Step =
   | "start"
   | "complete"
-  | "regFirstName" | "regLastName" | "regTC" | "regBirthDate" | "regPhone" | "regPassword" | "regConfirm"
+  | "regFirstName" | "regLastName" | "regTC" | "regBirthDate" | "regPhone" | "regCode" | "regPassword" | "regConfirm"
   | "loginTC" | "password" | "confirmLogin" | "hospital" | "department" | "doctor" | "date" | "time" | "finalConfirm"
   | "diagSymptoms" | "diagDuration" | "diagSeverity" | "diagFever" | "diagPain" | "diagChronic" | "diagMeds" | "diagPregnant" | "diagRun";
 
@@ -44,6 +44,7 @@ export function AssistantWidget({ className }: { className?: string }) {
   const [tcKimlikNo, setTcKimlikNo] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [phone, setPhone] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
   const [departments, setDepartments] = useState<DepartmentDto[]>([]);
   const [departmentId, setDepartmentId] = useState<number>(0);
   const [doctors, setDoctors] = useState<DoctorDto[]>([]);
@@ -187,8 +188,27 @@ export function AssistantWidget({ className }: { className?: string }) {
       }
       if (step === "regPhone") {
         const ok = /^\d{10,11}$/.test(content);
-        if (!ok) addAssistant("Lütfen geçerli bir telefon numarası girin.");
-        else { setPhone(content); addAssistant("Şifrenizi girin (en az 6 karakter)."); setStep("regPassword"); }
+        if (!ok) { addAssistant("Lütfen geçerli bir telefon numarası girin."); return; }
+        setPhone(content);
+        try {
+          await apiJson("/session/register/request-code", {
+            method: "POST",
+            body: JSON.stringify({ phone: content }),
+          });
+          addAssistant("Telefonunuza WhatsApp üzerinden 6 haneli bir doğrulama kodu gönderdik (5 dakika geçerlidir). Lütfen kodu girin.");
+          setStep("regCode");
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Doğrulama kodu gönderilemedi.";
+          addAssistant(`${msg} Lütfen telefon numaranızı tekrar yazın.`);
+        }
+        return;
+      }
+      if (step === "regCode") {
+        const ok = /^\d{6}$/.test(content);
+        if (!ok) { addAssistant("Lütfen 6 haneli doğrulama kodunu girin."); return; }
+        setVerificationCode(content);
+        addAssistant("Şifrenizi girin (en az 6 karakter).");
+        setStep("regPassword");
         return;
       }
       if (step === "regPassword") {
@@ -205,9 +225,9 @@ export function AssistantWidget({ className }: { className?: string }) {
         if (content.toLowerCase() !== "onayliyorum") addAssistant("Onaylamak için 'onayliyorum' yazın veya bilgileri değiştirin.");
         else {
           try {
-            await apiJson("/api/session/register", {
+            await apiJson("/session/register", {
               method: "POST",
-              body: JSON.stringify({ password, tcKimlikNo, firstName, lastName, phone, birthDate }),
+              body: JSON.stringify({ password, tcKimlikNo, firstName, lastName, phone, birthDate, code: verificationCode }),
             });
             addAssistant("Kayıt başarıyla tamamlandı. Hoş geldiniz!");
             setStep("complete");

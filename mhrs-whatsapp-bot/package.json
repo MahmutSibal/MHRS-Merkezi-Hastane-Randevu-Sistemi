@@ -10,7 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@wppconnect-team/wppconnect": "^1.38.0",
+    "@wppconnect-team/wppconnect": "^2.2.6",
     "express": "^5.2.1"
   }
 }

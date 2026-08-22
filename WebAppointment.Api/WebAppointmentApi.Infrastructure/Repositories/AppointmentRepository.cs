@@ -492,5 +492,58 @@ public sealed class AppointmentRepository : IAppointmentRepository
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.ReminderSentAtUtc, sentAtUtc), ct);
     }
 
+    public async Task MarkReminderConfirmedAsync(Guid appointmentId, DateTimeOffset confirmedAtUtc, CancellationToken ct)
+    {
+        await _db.Appointments
+            .IgnoreQueryFilters()
+            .Where(x => x.Id == appointmentId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.ReminderConfirmedAtUtc, confirmedAtUtc), ct);
+    }
+
+    public Task<Appointment?> FindActiveReminderByUserAsync(Guid userId, DateTimeOffset nowUtc, CancellationToken ct)
+    {
+        return _db.Appointments
+            .IgnoreQueryFilters()
+            .Include(x => x.Doctor).ThenInclude(d => d!.Department).ThenInclude(dep => dep!.Hospital)
+            .Where(x => x.UserId == userId)
+            .Where(x => x.Status == AppointmentStatus.Approved)
+            .Where(x => x.ReminderSentAtUtc != null && x.ReminderConfirmedAtUtc == null)
+            .Where(x => x.StartAt > nowUtc)
+            .OrderBy(x => x.StartAt)
+            .FirstOrDefaultAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<Appointment>> ListUnconfirmedNearingAsync(
+        DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken ct)
+    {
+        return await _db.Appointments
+            .IgnoreQueryFilters()
+            .Include(x => x.Doctor).ThenInclude(d => d!.Department).ThenInclude(dep => dep!.Hospital)
+            .Where(x => x.Status == AppointmentStatus.Approved)
+            .Where(x => x.ReminderSentAtUtc != null && x.ReminderConfirmedAtUtc == null)
+            .Where(x => x.StartAt >= fromUtc && x.StartAt <= toUtc)
+            .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<Appointment>> ListUpcomingUnremindedSecondAsync(
+        DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken ct)
+    {
+        return await _db.Appointments
+            .IgnoreQueryFilters()
+            .Include(x => x.Doctor).ThenInclude(d => d!.Department).ThenInclude(dep => dep!.Hospital)
+            .Where(x => x.Status == AppointmentStatus.Approved)
+            .Where(x => x.StartAt >= fromUtc && x.StartAt <= toUtc)
+            .Where(x => x.ReminderSentAtUtc != null && x.SecondReminderSentAtUtc == null)
+            .ToListAsync(ct);
+    }
+
+    public async Task MarkSecondReminderSentAsync(Guid appointmentId, DateTimeOffset sentAtUtc, CancellationToken ct)
+    {
+        await _db.Appointments
+            .IgnoreQueryFilters()
+            .Where(x => x.Id == appointmentId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.SecondReminderSentAtUtc, sentAtUtc), ct);
+    }
+
     public Task SaveChangesAsync(CancellationToken ct) => _db.SaveChangesAsync(ct);
 }

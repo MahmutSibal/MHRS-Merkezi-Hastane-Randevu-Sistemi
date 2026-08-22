@@ -182,8 +182,17 @@ var app = builder.Build();
 // Dev/Local kolaylığı: migration uygula + seed çalıştır.
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.EnsureCreatedAsync();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseInitialization");
+
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await db.Database.EnsureCreatedAsync();
+    }
+    catch (Exception ex)
+    {
+        logger.LogWarning(ex, "Veritabanı başlatılamadı. Uygulama veritabanı olmadan çalışmaya devam edecek.");
+    }
     // Not: DB seed işlemi kaldırıldı. Veritabanı tamamen boş kalmalıdır.
     // await DbSeeder.SeedAsync(app.Services);
 }
