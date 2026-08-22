@@ -1,7 +1,7 @@
 # MHRS – Merkezi Hastane Randevu Sistemi
 
 
-**Teknoloji Yığını:** .NET 8 · Next.js 16 · TypeScript 5.x · SQL Server · Node.js (WhatsApp Bridge)
+**Teknoloji Yığını:** .NET 8 · Next.js 16 · TypeScript 5.x · SQL Server · Node.js (WPPConnect WhatsApp Bridge) · Brevo (E-posta) · Google Identity Services · Google reCAPTCHA
 **Lisans:** MIT
 
 Kurumsal ölçekte kurgulanmış, yüksek güvenlik ve operasyonel süreklilik odaklı bir hastane randevu yönetim platformu.
@@ -12,6 +12,7 @@ Kurumsal ölçekte kurgulanmış, yüksek güvenlik ve operasyonel süreklilik o
 ## İçindekiler
 
 - [Özellikler](#özellikler)
+- [Son Eklenen Özellikler](#son-eklenen-özellikler)
 - [Kurumsal Değer Önerisi](#kurumsal-değer-önerisi)
 - [Mimari](#mimari)
 - [Hızlı Başlangıç](#hızlı-başlangıç)
@@ -56,10 +57,46 @@ Kurumsal ölçekte kurgulanmış, yüksek güvenlik ve operasyonel süreklilik o
 - **Telefon Doğrulama:** 6 haneli kod ile kayıt onayı (90 sn geçerli)
 - **Şifremi Unuttum (Hasta):** Ad + Soyad + TC + Telefon ile doğrulama, yeni şifre WhatsApp üzerinden gönderilir
 - **Randevu WhatsApp Bildirimi:** Randevu alınca hastaneye, bölüme, doktora ve tarih-saat bilgisini içeren mesaj
-- **Otomatik WhatsApp Hatırlatma:** Randevuya 24 saat kala arka plan servisi ile otomatik hatırlatma
+- **Otomatik WhatsApp Hatırlatma:** Randevuya 24 saat kala ve 3 saat kala (ikinci/son dakika) arka plan servisi ile otomatik, kişiselleştirilmiş hatırlatma
+- **İki Yönlü WhatsApp Onay/İptal:** Hasta hatırlatmaya "1" (katılacağım) / "2" (gelemeyeceğim) yazarak yanıt verir; iptal otomatik olarak bekleme listesindeki bir sonraki hastaya açılır
+- **No-Show Risk Skoru:** Hastanın geçmiş katılım/iptal davranışına göre risk skoru hesaplanır; yanıt vermeyen yüksek riskli randevular otomatik iptal edilip slot boşaltılır; yönetim/hastane raporlarında riskli randevular panosu gösterilir
 - **Sağlık Profili:** Hastanın alerji, kronik hastalık, ilaç ve acil iletişim bilgilerini profilinden yönetebilmesi
-- **WhatsApp Köprüsü:** Kod, şifre ve randevu bildirimlerini ileten Node.js servis
+- **WhatsApp Köprüsü:** Kod, şifre ve randevu bildirimlerini ileten Node.js servis; API tarafından otomatik başlatılıp yönetilir, bağlantı QR kodu terminal yerine Yönetim panelinde gösterilir
+- **E-posta Doğrulama (Doktor/Yönetim):** İlk girişte e-postaya gönderilen 6 haneli kod girilmeden panele erişilemez
+- **Google ile Giriş:** Doktor/Yönetim girişinde, mevcut hesapla eşleşen Google hesabıyla giriş yapabilme (yeni hesap açmaz)
+- **reCAPTCHA:** Hasta, Doktor ve Yönetim girişlerinin tamamında bot koruması
+- **SMA Bağış Dizini:** İnteraktif Türkiye il haritası üzerinden SMA'lı hastalar için IBAN bilgisi gösteren, ödeme işlemi yapmayan bir bağış rehberi; süperadmin panelinden tek tuşla açılıp kapatılabilir
 - **Dev Deneyimi:** Otomatik EF migrasyonları, Swagger, Serilog loglama
+
+---
+
+## Son Eklenen Özellikler
+
+Bu bölüm, en son geliştirme turunda eklenen dört ana özelliği özetler.
+
+### 1) İki Yönlü WhatsApp Hatırlatma & No-Show Risk Skoru
+- Randevudan 24 saat önce kişiselleştirilmiş ("Sayın Ad,") hatırlatma; randevuya 3 saat kala ikinci/son bir hatırlatma.
+- Hasta WhatsApp'tan "1" veya "2" yazarak randevusunu onaylayabilir/iptal edebilir.
+- Onaylanmayan yüksek risk skorlu (`Patient.NoShowScore`) randevular otomatik iptal edilip bekleme listesindeki bir sonraki hastaya açılır; düşük riskli hastalara dokunulmaz, personel kararına bırakılır.
+- Doktor bir randevuyu "Gelmedi" olarak işaretlediğinde veya hasta WhatsApp'tan iptal/onay verdiğinde risk skoru otomatik güncellenir.
+- İlgili kodlar: [AppointmentReminderService.cs](WebAppointment.Api/WebAppointmentApi.Infrastructure/BackgroundJobs/AppointmentReminderService.cs), [WhatsAppReplyService.cs](WebAppointment.Api/WebAppointmentApi.Application/Appointments/Services/WhatsAppReplyService.cs), [NoShowScoring.cs](WebAppointment.Api/WebAppointmentApi.Application/Patients/Services/NoShowScoring.cs)
+
+### 2) Doktor/Yönetim Girişi: E-posta Doğrulama + Google ile Giriş + reCAPTCHA
+- İlk girişte şifre doğruysa ama e-posta henüz doğrulanmamışsa, hesaba bağlı e-postaya (Brevo ile) 6 haneli kod gönderilir; kod girilmeden token verilmez.
+- "Google ile Giriş" butonu, Google hesabının e-postası sistemde **kayıtlı** bir hesapla eşleşirse giriş yaptırır (yeni hesap açmaz) ve Google zaten e-postayı doğruladığı için doğrulama adımını da otomatik tamamlar.
+- Hasta, Doktor ve Yönetim girişlerinin üçünde de reCAPTCHA v2 zorunludur.
+- İlgili kodlar: [AuthService.cs](WebAppointment.Api/WebAppointmentApi.Application/Auth/Services/AuthService.cs), [LoginClient.tsx](WebAppointment.Frontend/src/app/(public)/login/LoginClient.tsx)
+
+### 3) WhatsApp Bridge Otomatik Yönetimi + Web'den QR Bağlantısı
+- `mhrs-whatsapp-bot` artık elle `node index.js` ile ayrı bir terminalde başlatılmak zorunda değil — .NET API açılırken kendisi başlatır ve kapanışta kapatır (`WhatsAppBridgeProcessService`); zaten çalışan bir bridge varsa tekrar başlatmaz.
+- Bağlantı durumu ve (gerekiyorsa) QR kodu artık terminal yerine **Yönetim → WhatsApp Bağlantısı** sayfasında gösterilir.
+- İlgili kodlar: [WhatsAppBridgeProcessService.cs](WebAppointment.Api/WebAppointmentApi.Infrastructure/BackgroundJobs/WhatsAppBridgeProcessService.cs), [admin/whatsapp/page.tsx](WebAppointment.Frontend/src/app/(app)/admin/whatsapp/page.tsx)
+
+### 4) SMA Bağış Dizini
+- `/sma` altında, gerçek il sınırlarıyla interaktif bir Türkiye haritası; bir ile tıklanınca o ildeki doğrulanmış SMA vakaları listelenir.
+- Vaka detay sayfası (`/sma/[slug]`) sadece hikaye + IBAN + hesap sahibi adını gösterir — **platform bağış toplamaz veya iletmez**, bağışçı kendi banka uygulamasından doğrudan gönderir.
+- Süperadmin, **Yönetim → SMA Bağış Yönetimi** ekranından vaka ekler, doğrular, yayınlar; **Sistem Durumu** anahtarıyla tüm özelliği tek tuşla kapatabilir — kapalıyken ana sayfadaki menüden kaybolur ve `/sma` adresine doğrudan girmek de 404 döner.
+- İlgili kodlar: [SmaCaseService.cs](WebAppointment.Api/WebAppointmentApi.Application/Sma/Services/SmaCaseService.cs), [sma/page.tsx](WebAppointment.Frontend/src/app/(public)/sma/page.tsx), [admin/sma/page.tsx](WebAppointment.Frontend/src/app/(app)/admin/sma/page.tsx)
 
 ---
 
@@ -158,6 +195,26 @@ node index.js
 - **Admin**
   - Tam kapsam CRUD controller’ları (Doktor yönetimi artık HospitalAdmin panelindedir)
   - Raporlar: `GET /api/admin/reports/top-doctors?days=30&take=10`
+  - Riskli randevular (no-show): `GET /api/admin/reports/no-show-risk`
+- **Hastane Raporları**
+  - Riskli randevular (no-show): `GET /api/hospital/reports/no-show-risk`
+- **E-posta Doğrulama (Doktor/Yönetim)**
+  - Kod gönder: `POST /api/auth/email/request-code`
+  - Kodu onayla: `POST /api/auth/email/confirm`
+  - Google ile giriş: `POST /api/auth/google-login` (yalnızca eşleşen mevcut hesapla giriş yapar, yeni hesap açmaz)
+  - Girişlerde reCAPTCHA doğrulaması: `Recaptcha:Disabled=false` iken hasta/doktor/admin login isteklerinin tümünde token zorunludur
+- **WhatsApp İki Yönlü Mesajlaşma & No-Show Risk**
+  - Gelen mesaj webhook’u: köprü servisinden `.NET` API’ye iletilir, "1"/"2" yanıtları randevuyu onaylar/iptal eder
+  - Risk skoru hesaplama ve otomatik iptal: [NoShowScoring.cs](WebAppointment.Api/WebAppointmentApi.Application/Patients/Services/NoShowScoring.cs)
+  - Hatırlatma zamanlaması (24 saat + 3 saat kala): [AppointmentReminderService.cs](WebAppointment.Api/WebAppointmentApi.Infrastructure/BackgroundJobs/AppointmentReminderService.cs)
+- **WhatsApp Köprü Yönetimi (Admin)**
+  - Durum: `GET /api/admin/whatsapp/status`
+  - QR kod: `GET /api/admin/whatsapp/qr`
+  - Köprü süreci .NET API tarafından otomatik başlatılır/kapatılır: [WhatsAppBridgeProcessService.cs](WebAppointment.Api/WebAppointmentApi.Infrastructure/BackgroundJobs/WhatsAppBridgeProcessService.cs)
+- **SMA Bağış Dizini**
+  - Herkese açık: `GET /api/sma/cases?province={slug}`, `GET /api/sma/cases/{slug}`
+  - Yönetim (Admin): `GET/POST/PUT/DELETE /api/admin/sma`, durum: `PATCH /api/admin/sma/{id}/status`
+  - Sistem aç/kapa: `GET/PATCH /api/admin/sma/settings` (kapatıldığında herkese açık uçlar da devre dışı kalır)
 - **Altyapı**
   - Rate limiting (dakikada 60 istek)
   - Serilog request logging
@@ -188,9 +245,18 @@ node index.js
     - Bölümler: [WebAppointment.Frontend/src/app/(app)/hospital/departments/page.tsx](WebAppointment.Frontend/src/app/(app)/hospital/departments/page.tsx)
     - Doktor onayları: [WebAppointment.Frontend/src/app/(app)/hospital/doctor-profiles/page.tsx](WebAppointment.Frontend/src/app/(app)/hospital/doctor-profiles/page.tsx)
   - Admin: [WebAppointment.Frontend/src/app/(app)/admin](WebAppointment.Frontend/src/app/(app)/admin)
-    - Raporlar: [WebAppointment.Frontend/src/app/(app)/admin/reports/page.tsx](WebAppointment.Frontend/src/app/(app)/admin/reports/page.tsx)
+    - Raporlar (riskli randevular dahil): [WebAppointment.Frontend/src/app/(app)/admin/reports/page.tsx](WebAppointment.Frontend/src/app/(app)/admin/reports/page.tsx)
+    - SMA Bağış Yönetimi (vaka CRUD + sistem aç/kapa): [WebAppointment.Frontend/src/app/(app)/admin/sma/page.tsx](WebAppointment.Frontend/src/app/(app)/admin/sma/page.tsx)
+    - WhatsApp Bağlantısı (QR/durum): [WebAppointment.Frontend/src/app/(app)/admin/whatsapp/page.tsx](WebAppointment.Frontend/src/app/(app)/admin/whatsapp/page.tsx)
     - Not: Admin doktor yönetimi kaldırılmıştır; doktor ekleme/güncelleme sadece HospitalAdmin tarafındadır.
-- **Harita Bileşeni**: [WebAppointment.Frontend/src/components/map/HospitalMap.tsx](WebAppointment.Frontend/src/components/map/HospitalMap.tsx)
+  - Hastane Yöneticisi Raporları (riskli randevular): [WebAppointment.Frontend/src/app/(app)/hospital/reports/page.tsx](WebAppointment.Frontend/src/app/(app)/hospital/reports/page.tsx)
+- **Giriş Akışı (Doktor/Admin)**: E-posta doğrulama adımı + Google ile Giriş + reCAPTCHA — [WebAppointment.Frontend/src/app/(public)/login/LoginClient.tsx](WebAppointment.Frontend/src/app/(public)/login/LoginClient.tsx)
+- **SMA Bağış Dizini (Public)**
+  - İl haritası: [WebAppointment.Frontend/src/app/(public)/sma/page.tsx](WebAppointment.Frontend/src/app/(public)/sma/page.tsx), harita bileşeni: [WebAppointment.Frontend/src/components/sma/TurkeyMap.tsx](WebAppointment.Frontend/src/components/sma/TurkeyMap.tsx)
+  - Vaka detayı: [WebAppointment.Frontend/src/app/(public)/sma/[slug]/page.tsx](<WebAppointment.Frontend/src/app/(public)/sma/[slug]/page.tsx>)
+  - Erişim koruması (sistem kapalıyken 404): [WebAppointment.Frontend/src/app/(public)/sma/layout.tsx](WebAppointment.Frontend/src/app/(public)/sma/layout.tsx)
+  - MHRS/SMA menü geçişi + kayma efekti: [WebAppointment.Frontend/src/components/layout/SiteSwitchTabs.tsx](WebAppointment.Frontend/src/components/layout/SiteSwitchTabs.tsx), [WebAppointment.Frontend/src/components/layout/PageSlideWrapper.tsx](WebAppointment.Frontend/src/components/layout/PageSlideWrapper.tsx)
+- **Harita Bileşeni (Hastane)**: [WebAppointment.Frontend/src/components/map/HospitalMap.tsx](WebAppointment.Frontend/src/components/map/HospitalMap.tsx)
 - **AI Asistan**: [WebAppointment.Frontend/src/components/assistant/AssistantWidget.tsx](WebAppointment.Frontend/src/components/assistant/AssistantWidget.tsx) ve API: [WebAppointment.Frontend/src/app/api/assistant/chat/route.ts](WebAppointment.Frontend/src/app/api/assistant/chat/route.ts)
 
 ---
@@ -202,6 +268,7 @@ node index.js
 - Node.js 20+ ve pnpm/npm/yarn (örn. npm)
 - SQL Server (LocalDB/Developer/Container), `localhost` erişilebilir
 - Opsiyonel: Google Maps ve Gemini API anahtarları
+- Opsiyonel: Brevo API anahtarı (e-posta doğrulama), Google OAuth Client ID (Google ile Giriş), reCAPTCHA anahtar çifti — bunlar olmadan da sistem çalışır; `Recaptcha:Disabled=true` yapılabilir ve e-posta doğrulama/Google girişi yalnızca Doktor/Admin akışını etkiler
 
 ### Test ve Kalite Kontrolleri
 
@@ -272,6 +339,12 @@ GEMINI_API_KEY=your_gemini_key
 
 # Opsiyonel – Google Maps
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_maps_key
+
+# Google ile Giriş (Doktor/Admin) – Google Identity Services client ID
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_oauth_client_id
+
+# Google reCAPTCHA v2 site key (üç login formunda da kullanılır)
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
 ```
 
 > Frontend, backend’e `/api/backend/...` proxy’si ile gider; `BACKEND_ORIGIN` bu yüzden kritiktir.
@@ -288,8 +361,37 @@ WhatsApp köprü servisi (Web API) örneği:
 
 ```
 "WhatsAppBridge": {
-  "BaseUrl": "http://localhost:8080"
+  "BaseUrl": "http://localhost:8080",
+  "AutoStart": true,
+  "WorkingDirectory": "../../mhrs-whatsapp-bot"
 }
+```
+
+> `AutoStart: true` iken API açılırken köprü süreci otomatik başlar (zaten çalışıyorsa tekrar başlatmaz) ve API kapanırken kapatılır. Bağlantı QR kodu Yönetim → WhatsApp Bağlantısı sayfasından okutulur.
+
+E-posta doğrulama (Brevo), Google ile Giriş ve reCAPTCHA — gerçek değerler **asla** `appsettings.json`'a yazılmaz, sadece `dotnet user-secrets` ile ayarlanır:
+
+```
+"Brevo": {
+  "ApiKey": "__SET_VIA_USER_SECRETS__",
+  "SenderEmail": "__SET_VIA_USER_SECRETS__",
+  "SenderName": "MHRS"
+},
+"GoogleAuth": {
+  "ClientId": "__SET_VIA_USER_SECRETS__"
+},
+"Recaptcha": {
+  "SecretKey": "__SET_VIA_USER_SECRETS__",
+  "Disabled": false
+}
+```
+
+```powershell
+cd WebAppointment.Api/WebAppointmentApi.WebApi
+dotnet user-secrets set "Brevo:ApiKey" "..."
+dotnet user-secrets set "Brevo:SenderEmail" "..."
+dotnet user-secrets set "GoogleAuth:ClientId" "..."
+dotnet user-secrets set "Recaptcha:SecretKey" "..."
 ```
 
 ---
@@ -314,7 +416,30 @@ WhatsApp köprü servisi (Web API) örneği:
   3) Hasta olarak `/patient/appointments/new` ekranında doktor detayında onaylı bilgiler görünür
 - **Raporlar (Admin)**
   1) Admin olarak giriş yap
-  2) `/admin/reports` ekranından filtreleri kullanarak en popüler doktorları gör
+  2) `/admin/reports` ekranından filtreleri kullanarak en popüler doktorları ve riskli (no-show) randevuları gör
+- **Doktor/Admin Girişi – E-posta Doğrulama**
+  1) Doktor veya Admin hesabıyla ilk kez `/login` üzerinden giriş yap (şifre doğru olmalı)
+  2) reCAPTCHA'yı tamamla; sistem hesaba bağlı e-postaya 6 haneli kod gönderir
+  3) Kodu ekrana girip onayla; bundan sonraki girişlerde tekrar istenmez
+- **Google ile Giriş (Doktor/Admin)**
+  1) `/login` ekranında "Google ile Giriş" butonuna tıkla
+  2) Google hesabının e-postası sistemde kayıtlı bir Doktor/Admin hesabıyla eşleşiyorsa doğrudan giriş yapılır (yeni hesap açılmaz, eşleşme yoksa reddedilir)
+- **WhatsApp Bağlantısı**
+  1) Admin olarak `/admin/whatsapp` ekranına git
+  2) Bağlı değilse ekrana gelen QR kodu WhatsApp mobil uygulamasından okut
+  3) Bağlantı kurulunca hatırlatma/onay-iptal mesajları bu numaradan gönderilip alınır
+- **İki Yönlü WhatsApp Onay/İptal**
+  1) Bir hastanın yaklaşan randevusu için hatırlatma mesajı gönderilmesini bekle (24 saat veya 3 saat kala)
+  2) Hasta WhatsApp'tan "1" (katılacağım) veya "2" (gelemeyeceğim) yazar
+  3) "2" yanıtı randevuyu iptal eder ve bekleme listesindeki bir sonraki hastaya slotu açar; yüksek riskli hastalarda yanıt gelmezse randevu otomatik iptal edilir
+- **SMA Bağış Akışı**
+  1) Ana sayfanın üst-orta menüsünden **SMA Bağış**'a geç (kayma efektiyle sayfa değişir)
+  2) Türkiye haritasında bir ile tıkla → o ildeki doğrulanmış/yayınlanmış vakaları gör
+  3) Bir vakaya tıkla → hikaye + IBAN + hesap sahibi adını gör (ödeme formu yok, doğrudan banka üzerinden gönderilir)
+- **SMA Sistemini Aç/Kapa (Süperadmin)**
+  1) `/admin/sma` → **Sistem Durumu** kartından **Kapat**'a bas
+  2) Ana sayfadaki MHRS/SMA menüsü kaybolur; `/sma` adresine doğrudan girmeye çalışmak 404 döner
+  3) Aynı ekrandan **Aç**'a basarak tekrar herkese açık hale getirebilirsin
 
 ---
 
@@ -351,15 +476,21 @@ WhatsApp köprü servisi (Web API) örneği:
 - `Invalid object name 'PhoneVerificationCodes'`: Migration uygulanmamıştır. EF migration çalıştırın veya veritabanını sıfırlayın.
 - `Cannot insert duplicate key ... IX_Users_TenantId_Email`: Aynı tenant içinde boş e-posta ile kayıt denenmiştir. Yeni kayıtlarda benzersiz placeholder e-posta üretilir; eski yarım kayıtlar temizlenmelidir.
 - `Permission denied` Git uyarıları (tokens): [mhrs-whatsapp-bot/tokens](mhrs-whatsapp-bot/tokens) klasörünü git dışına alın (bkz. .gitignore).
+- WhatsApp köprüsünde `"No LID for user"` veya `"Cannot read properties of undefined"`: WhatsApp Web ile wppconnect sürüm uyumsuzluğudur, uygulama hatası değildir. `mhrs-whatsapp-bot/package.json` içindeki `@wppconnect-team/wppconnect` sürümünü güncelleyin (`npm install`).
+- E-posta doğrulama kodu gelmiyor / Brevo 401-403: `dotnet user-secrets list` ile `Brevo:ApiKey`/`Brevo:SenderEmail` değerlerinin ayarlı olduğunu doğrulayın; gönderen e-posta Brevo hesabında doğrulanmış olmalıdır.
+- Google ile Giriş "hesap bulunamadı" hatası: Bu akış yeni hesap açmaz — Google hesabının e-postası sistemde önceden kayıtlı bir Doktor/Admin hesabıyla birebir eşleşmelidir.
+- reCAPTCHA doğrulanamadı: `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` (frontend) ile `Recaptcha:SecretKey` (backend, user-secrets) aynı reCAPTCHA anahtar çiftine ait olmalıdır; test ortamında `Recaptcha:Disabled=true` ile geçici olarak kapatılabilir.
+- `/sma` adresine girince 404: SMA sistemi süperadmin tarafından `/admin/sma` üzerinden kapatılmıştır — bu kasıtlı bir erişim engelidir, hata değildir.
 
 ---
 
 ## WhatsApp Bot
 
-- Amaç: Kayıt doğrulama kodu, hasta şifre sıfırlama ve randevu bildirimlerini WhatsApp üzerinden göndermek.
+- Amaç: Kayıt doğrulama kodu, hasta şifre sıfırlama, randevu bildirimleri, hatırlatmalar ve iki yönlü onay/iptal mesajlarını WhatsApp üzerinden göndermek/almak.
 - Çalışma portu: `8080`
-- Endpoint: `POST /send-message` (body: `{ phone, message }`)
+- Endpoint'ler: `POST /send-message` (body: `{ phone, message }`), `GET /status`, `GET /qr`
 - Kod: [mhrs-whatsapp-bot/index.js](mhrs-whatsapp-bot/index.js)
+- **Otomatik yönetim**: Elle başlatmaya gerek yoktur — `WhatsAppBridge:AutoStart=true` iken .NET API kendisi başlatır/kapatır ([WhatsAppBridgeProcessService.cs](WebAppointment.Api/WebAppointmentApi.Infrastructure/BackgroundJobs/WhatsAppBridgeProcessService.cs)); bağlantı QR kodu Yönetim → WhatsApp Bağlantısı sayfasında gösterilir.
 
 > Not: `mhrs-whatsapp-bot/tokens` klasörü WhatsApp oturum ve cache dosyalarıdır. Repoya eklenmemelidir.
 
@@ -404,6 +535,11 @@ Bu proje MIT lisansı ile sunulmaktadır. Ayrıntılar için `LICENSE` dosyasın
 - ✅ Durum Yönetimi: Auth ve chat state izolasyonu; sızıntılar önlendi.
 - ✅ Veli/Çocuk: Hasta hesabına bağlı çocuk (dependent) ekleme ve çocuk adına randevu oluşturma akışı eklendi.
 - ✅ Doktor Profil Onayı: Doktor mezuniyet/deneyim bilgisi gönderir; HospitalAdmin onaylar; hasta sadece onaylı bilgiyi görür.
+- ✅ AI Asistan Kayıt Akışı: Çift `/api` öneki nedeniyle 404 veren hasta kayıt çağrısı düzeltildi; eksik WhatsApp doğrulama kodu adımı sohbet akışına eklendi.
+- ✅ Ana Sayfa Layout Hatası: Kök `src/app/page.tsx` dosyası `(public)/layout.tsx`'i atlayarak header'ın hiç render edilmemesine sebep oluyordu; dosya kaldırılıp yönlendirme mantığı `(public)/page.tsx`'e taşındı.
+- ✅ Sayfa Geçiş Efekti: Native View Transitions API, Next.js App Router ile kararsız çalışıp (`Transition was aborted...`) tarayıcıda görünür hata veriyordu; saf CSS remount tabanlı kayma animasyonuyla değiştirildi.
+- ✅ Menü Konum Kayması: MHRS/SMA sayfaları arasında üst-orta menünün birkaç piksel kayması, gizlenen sağ menünün her zaman aynı genişlikte render edilmesi ve `scrollbar-gutter: stable` ile giderildi.
+- ✅ MHRS/SMA Menüsü Login'de Görünmesin: `/login`, `/register`, `/forgot-password` sayfalarında geçiş menüsü gizlendi.
 
 ---
 
